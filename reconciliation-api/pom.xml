@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+ <modelVersion>4.0.0</modelVersion>
+ <parent><groupId>org.octavio</groupId><artifactId>payment-reconciliation-sim</artifactId><version>0.0.1-SNAPSHOT</version></parent>
+ <artifactId>reconciliation-api</artifactId>
+ <!-- Temporary bootstrap overrides: empty scaffolds have no unit tests or mutants.
+      Remove both overrides when handwritten logic lands in Task 4. -->
+ <properties><tests.failIfNoTests>false</tests.failIfNoTests><mutation.failWhenNoMutations>false</mutation.failWhenNoMutations></properties>
+ <dependencies>
+  <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-mongodb</artifactId></dependency>
+  <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc</artifactId></dependency>
+  <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-devtools</artifactId><scope>runtime</scope><optional>true</optional></dependency>
+  <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><optional>true</optional></dependency>
+  <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-mongodb-test</artifactId><scope>test</scope></dependency>
+  <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc-test</artifactId><scope>test</scope></dependency>
+ </dependencies>
+ <build><plugins>
+  <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId></plugin>
+  <plugin><groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId></plugin>
+  <plugin><groupId>org.pitest</groupId><artifactId>pitest-maven</artifactId></plugin>
+  <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId>
+    <configuration><classifier>exec</classifier><mainClass>org.octavio.paymentreconciliationsim.PaymentReconciliationSimApplication</mainClass></configuration>
+  </plugin>
+  <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
+    <configuration><annotationProcessorPaths><path><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId></path></annotationProcessorPaths></configuration>
+  </plugin>
+ </plugins></build>
+</project>

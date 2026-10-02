@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+ <modelVersion>4.0.0</modelVersion>
+ <parent><groupId>org.octavio</groupId><artifactId>payment-reconciliation-sim</artifactId><version>0.0.1-SNAPSHOT</version></parent>
+ <artifactId>scenario-generator</artifactId>
+ <!-- Temporary bootstrap overrides: empty scaffolds have no unit tests or mutants.
+      Remove both overrides when handwritten logic lands in Task 10. -->
+ <properties><tests.failIfNoTests>false</tests.failIfNoTests><mutation.failWhenNoMutations>false</mutation.failWhenNoMutations></properties>
+ <dependencies>
+  <dependency><groupId>org.apache.commons</groupId><artifactId>commons-csv</artifactId></dependency>
+  <dependency><groupId>tools.jackson.core</groupId><artifactId>jackson-databind</artifactId></dependency>
+  <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
+ </dependencies>
+ <build><plugins>
+  <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId></plugin>
+  <plugin><groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId></plugin>
+  <plugin><groupId>org.pitest</groupId><artifactId>pitest-maven</artifactId></plugin>
+  <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-shade-plugin</artifactId>
+    <configuration><shadedClassifierName>exec</shadedClassifierName>
+      <filters><filter><artifact>*:*</artifact><excludes><exclude>META-INF/*.SF</exclude><exclude>META-INF/*.RSA</exclude><exclude>META-INF/*.DSA</exclude></excludes></filter></filters>
+      <transformers>
+        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"><mainClass>org.octavio.paymentreconciliationsim.generator.ScenarioGeneratorMain</mainClass></transformer>
+      </transformers>
+    </configuration>
+  </plugin>
+ </plugins></build>
+</project>

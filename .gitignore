@@ -34,3 +34,7 @@ build/
 
 ### Isolated development ###
 .worktrees/
+
+### Python verification ###
+__pycache__/
+*.pyc

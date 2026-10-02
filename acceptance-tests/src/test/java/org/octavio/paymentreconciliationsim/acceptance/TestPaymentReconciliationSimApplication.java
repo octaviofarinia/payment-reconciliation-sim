@@ -1,6 +1,7 @@
-package org.octavio.paymentreconciliationsim;
+package org.octavio.paymentreconciliationsim.acceptance;
 
 import org.springframework.boot.SpringApplication;
+import org.octavio.paymentreconciliationsim.PaymentReconciliationSimApplication;
 
 public class TestPaymentReconciliationSimApplication {
 
