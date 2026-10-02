@@ -35,6 +35,7 @@
     <mode.mutation>false</mode.mutation>
     <build.mode.signature>${mode.all},${mode.unit},${mode.acceptance},${mode.mutation}</build.mode.signature>
     <argLine/>
+    <unitTestArgLine/>
     <cucumber.version>8.0.4</cucumber.version>
     <wiremock.version>3.13.2</wiremock.version>
     <jacoco.version>0.8.15</jacoco.version>
@@ -80,7 +81,7 @@
           <configuration>
             <skipTests>${tests.unit.skip}</skipTests>
             <failIfNoTests>${tests.failIfNoTests}</failIfNoTests>
-            <argLine>@{argLine}</argLine>
+            <argLine>@{argLine} @{unitTestArgLine}</argLine>
           </configuration>
         </plugin>
         <plugin>
@@ -96,12 +97,15 @@
           <groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId><version>${jacoco.version}</version>
           <configuration>
             <skip>${quality.skip}</skip>
-            <!-- Only runtime entrypoints are outside handwritten domain coverage. -->
+            <propertyName>unitTestArgLine</propertyName>
+            <destFile>${project.build.directory}/jacoco-unit.exec</destFile>
+            <dataFile>${project.build.directory}/jacoco-unit.exec</dataFile>
+            <!-- Runtime entrypoints and exact namespace holders are genuine boilerplate. -->
             <excludes>
               <exclude>**/PaymentReconciliationSimApplication.class</exclude>
               <exclude>**/ScenarioGeneratorMain.class</exclude>
             </excludes>
-            <rules><rule><element>BUNDLE</element><limits>
+            <rules><rule><element>CLASS</element><limits>
               <limit><counter>LINE</counter><value>MISSEDCOUNT</value><maximum>0</maximum></limit>
               <limit><counter>BRANCH</counter><value>MISSEDCOUNT</value><maximum>0</maximum></limit>
             </limits></rule></rules>
@@ -118,6 +122,8 @@
             <skip>${mutation.skip}</skip>
             <mutationThreshold>${mutation.threshold}</mutationThreshold>
             <failWhenNoMutations>${mutation.failWhenNoMutations}</failWhenNoMutations>
+            <mutators><mutator>DEFAULTS</mutator></mutators>
+            <targetTests><param>*Test</param></targetTests>
             <excludedClasses>
               <param>org.octavio.paymentreconciliationsim.PaymentReconciliationSimApplication</param>
               <param>org.octavio.paymentreconciliationsim.generator.ScenarioGeneratorMain</param>
