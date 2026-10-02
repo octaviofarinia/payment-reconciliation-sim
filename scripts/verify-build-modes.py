@@ -43,13 +43,51 @@ def plugin(project, artifact):
             return candidate
     raise AssertionError('missing active plugin ' + artifact)
 
+# Mojo defaults checked against the managed plugins' META-INF/maven/plugin.xml.
+# Bounds ensure tests/coverage have compiled inputs and gates finish by verify.
+LIFECYCLE = (
+    'validate', 'initialize', 'generate-sources', 'process-sources',
+    'generate-resources', 'process-resources', 'compile', 'process-classes',
+    'generate-test-sources', 'process-test-sources', 'generate-test-resources',
+    'process-test-resources', 'test-compile', 'process-test-classes', 'test',
+    'prepare-package', 'package', 'pre-integration-test', 'integration-test',
+    'post-integration-test', 'verify', 'install', 'deploy',
+)
+GOAL_PHASES = {
+    ('maven-surefire-plugin', 'test'): ('test', 'test', 'verify'),
+    ('maven-failsafe-plugin', 'integration-test'): ('integration-test', 'integration-test', 'verify'),
+    ('maven-failsafe-plugin', 'verify'): ('verify', 'verify', 'verify'),
+    ('jacoco-maven-plugin', 'prepare-agent'): ('initialize', 'initialize', 'process-test-classes'),
+    ('jacoco-maven-plugin', 'report'): ('verify', 'prepare-package', 'verify'),
+    ('jacoco-maven-plugin', 'check'): ('verify', 'prepare-package', 'verify'),
+    ('pitest-maven', 'mutationCoverage'): ('verify', 'prepare-package', 'verify'),
+}
+
 def enabled(project, artifact, skip_key, required_goals):
     selected = plugin(project, artifact)
-    goals = [g.text for g in selected.findall('m:executions/m:execution/m:goals/m:goal', NS)]
-    assert all(goals.count(goal) == 1 for goal in required_goals), f'{artifact} must bind each goal once: {goals}'
-    value = selected.findtext('m:configuration/m:' + skip_key, namespaces=NS)
-    assert value in ('true', 'false'), f'{artifact}.{skip_key} is unresolved: {value}'
-    return value == 'false'
+    executions = selected.findall('m:executions/m:execution', NS)
+    plugin_skip = selected.findtext('m:configuration/m:' + skip_key, namespaces=NS)
+    flags = []
+    for goal in sorted(required_goals):
+        matches = [execution for execution in executions
+                   for declared in execution.findall('m:goals/m:goal', NS)
+                   if declared.text == goal]
+        assert len(matches) == 1, f'{artifact} must bind {goal} once; found {len(matches)}'
+        execution = matches[0]
+        value = execution.findtext('m:configuration/m:' + skip_key, namespaces=NS)
+        if value is None:
+            value = plugin_skip
+        assert value in ('true', 'false'), f'{artifact}.{goal}.{skip_key} is unresolved: {value}'
+        assert (artifact, goal) in GOAL_PHASES, f'unknown Mojo lifecycle contract: {artifact}:{goal}'
+        default, earliest, latest = GOAL_PHASES[(artifact, goal)]
+        phase = execution.findtext('m:phase', namespaces=NS)
+        if phase is None:
+            phase = default
+        scheduled = (phase in LIFECYCLE and
+                     LIFECYCLE.index(earliest) <= LIFECYCLE.index(phase) <= LIFECYCLE.index(latest))
+        flags.append(scheduled and value == 'false')
+    assert flags and len(set(flags)) == 1, f'{artifact} has inconsistent required goal execution: {flags}'
+    return flags[0]
 
 def effective_mode(profile: str | None, skip: dict[str, bool] = {}) -> Mode:
     projects = effective_projects(profile, skip)
