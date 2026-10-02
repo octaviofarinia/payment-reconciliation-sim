@@ -9,7 +9,6 @@ The application is currently the Spring Initializr starter with empty purchase c
 ## Specification and development
 
 - [MVP specification and architecture diagram](docs/superpowers/specs/2026-10-01-payment-reconciliation-design.md)
-- [Spec driven development workflow](docs/spec-driven-development.md)
 
 Review the written specification first. The next artifact is an implementation plan whose tasks link requirements to acceptance criteria. This project processes generated data only and does not process cards or move money.
 

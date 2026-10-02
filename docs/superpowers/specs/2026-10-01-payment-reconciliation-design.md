@@ -252,7 +252,7 @@ Reuse this starter. Verify dependency compatibility before adding libraries; do 
 
 Delivery order: core comparison/fixtures; transactional date/purchase API; run registration and atomic result contracts; generator/local demonstration; AWS upload and Lambda integration; acceptance evidence and documentation. This ordering guides the future implementation plan, rather than constituting that plan. Reserve the final two days of the one-week timebox for cloud fixes, verification, README examples, architecture explanation, and teardown.
 
-See [Spec driven development workflow](../../spec-driven-development.md). The next stage is review of this written draft, followed by a task-by-task implementation plan linked to REQ and AC IDs. Changes to behavior update the spec and its acceptance criteria before code. Completion requires evidence for the criteria, not merely a successful Spring startup.
+The next stage is review of this written draft, followed by a task-by-task implementation plan linked to REQ and AC IDs. Changes to behavior update the spec and its acceptance criteria before code. Completion requires evidence for the criteria, not merely a successful Spring startup.
 
 ## Sources for platform behavior
 
