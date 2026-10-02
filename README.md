@@ -4,11 +4,13 @@ A personal Java project for learning AWS and MongoDB through simulated daily pay
 
 ## Project status
 
-The application is currently the Spring Initializr starter with empty purchase controller, model, repository and service classes. The documentation proposes the agreed one-week MVP; endpoints, reconciliation processing, Swagger and AWS infrastructure have not yet been implemented.
+The application is currently the Spring Initializr starter with empty purchase controller, model, repository and service classes. The documentation proposes the agreed one-week MVP and separate API, Lambda worker, scenario generator and acceptance-test Maven modules. Endpoints, reconciliation processing, Swagger, module conversion, test gates and AWS infrastructure have not yet been implemented.
 
 ## Specification and development
 
 - [MVP specification and architecture diagram](docs/superpowers/specs/2026-10-01-payment-reconciliation-design.md)
+
+The specification includes local Cucumber acceptance tests executing the real Lambda handler, 100% unit line/branch coverage for handwritten logic, mutation gates, and selectable Maven verification modes.
 
 Review the written specification first. The next artifact is an implementation plan whose tasks link requirements to acceptance criteria. This project processes generated data only and does not process cards or move money.
 

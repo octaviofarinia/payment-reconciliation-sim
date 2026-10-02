@@ -1,14 +1,14 @@
 # Payment Reconciliation Platform MVP Specification
 
-Status: Draft for review. Version: 0.1. Date: 2026-10-01.
+Status: Draft for review. Version: 0.2. Date: 2026-10-02.
 
 This specification consolidates the agreed scope for a one-week personal project demonstrating AWS and MongoDB through simulated payment reconciliation. It defines behavior, component responsibilities, contracts, and acceptance criteria. It is the proposed implementation baseline; the application remains a Spring Initializr starter until the written specification is reviewed.
 
 ## Purpose and business context
 
-A processor's internal purchase records may disagree with a later external settlement file. The platform compares the two datasets, classifies discrepancies, and exposes evidence through an API. It models an acquiring-side reconciliation control, without claiming to reproduce Payway's architecture.
+A processor's internal purchase records may disagree with a later external settlement file. The platform compares the two datasets, classifies discrepancies, and exposes evidence through an API. It models a simplified acquiring-side reconciliation control.
 
-Success is a repeatable demonstration that records purchases, closes a business date, uploads a settlement file, processes it through AWS Lambda, and displays correct results through Swagger. The developer should be able to explain compute choices, database modeling, indexing, retry behavior, and the limitations of the simplified domain.
+Success is a repeatable demonstration that records purchases, closes a business date, uploads a settlement file, processes it through AWS Lambda, and displays correct results through Swagger.
 
 ## Agreed scope and proposed defaults
 
@@ -22,7 +22,10 @@ The conversation established these requirements:
 - ARS is the only currency. Amounts use integer centavos.
 - The five outcomes are matched, missing in settlement, missing internally, amount mismatch, and duplicate settlement reference.
 - API-only interaction through Swagger; detection and display, with no investigation or resolution workflow.
-- An automated generator produces purchases, settlement files, and expected outcomes.
+- An automated generator produces purchases, settlement files, and expected outcomes. It is an isolated Maven module that interacts with the simulator only through its exposed HTTP APIs and the returned presigned S3 upload contract.
+- The repository includes the Java Lambda handler in a separately deployable Maven module. Local Cucumber acceptance tests execute that real handler, the real Spring API, and MongoDB, with simulated AWS dependencies and committed JSON fixtures.
+- Handwritten production logic in the API, worker, and generator requires 100% unit-test line and branch coverage. Boilerplate, interfaces, and generated code are excluded; mutation testing has a configurable enforced threshold.
+- The default Maven verification build runs unit tests, acceptance tests, coverage checks, and mutation checks. Explicit modes support running selected suites or packaging without tests.
 - Initial bounds: 1,000 internal purchases per business date, 2,000 settlement data rows, and a 2 MiB CSV.
 - Terraform makes AWS infrastructure reproducible. A new AWS Free account plan and Atlas M0 support a zero-out-of-pocket demo, subject to account eligibility and available benefits.
 - A presigned upload flow, as illustrated in the supplied diagram, is included.
@@ -62,7 +65,9 @@ flowchart LR
     A -->|"API responses"| U
 ```
 
-Spring owns purchase ingestion, business dates, database access, upload registration, persistence, and result queries. Lambda owns CSV parsing, validation, duplicate grouping, comparison, and generation of the structured comparison report. Lambda has no MongoDB credentials. Its comparison core must also run locally without AWS.
+Spring owns purchase ingestion, business dates, database access, upload registration, persistence, and result queries. Lambda owns CSV parsing, validation, duplicate grouping, comparison, and generation of the structured comparison report. Lambda has no MongoDB credentials. Its handler and comparison core must also run locally without AWS.
+
+The handler is Java source maintained and tested in this repository. Maven produces its deployable JAR/ZIP with dependencies; Terraform deploys that artifact and configures the Java runtime, handler entry point, permissions, and S3 notification. On AWS, an S3 event invokes the entry point. In acceptance tests, the harness invokes the same entry point with a representative event and local dependency configuration. Deployment is a separate operation from building and testing.
 
 S3 retains original files. The report is structured JSON persisted through Spring in MongoDB; a separate S3 report export is not required. MongoDB remains authoritative for internal purchases and published results.
 
@@ -197,7 +202,7 @@ Operate the cloud stack only during development/demos and document complete tear
 
 ## Scenario generator and validation
 
-**REQ-16 Repeatable scenarios.** A seeded local generator creates purchases through the API, closes a past date, registers/uploads its CSV, polls status, and compares returned results with a committed expected-output fixture. It never writes directly to MongoDB. For repeat runs, use a fresh synthetic dataset/date or an explicit local database reset; never bypass the closed-date invariant.
+**REQ-16 Repeatable scenarios.** A seeded local generator creates purchases through the API, closes a past date, registers/uploads its CSV, polls status, and compares returned results with a committed expected-output fixture. It never writes directly to MongoDB or imports simulator services, repositories, domain logic, or the worker implementation. It uses the public API and the returned presigned S3 upload contract; private worker operations are not available to it. Seeded generation, CSV/checksum creation, polling, response validation, and expected-result checks are generator logic subject to the same unit coverage and mutation gates. For repeat runs, use a fresh synthetic dataset/date or an explicit local database reset; never bypass the closed-date invariant.
 
 The canonical scenario is:
 
@@ -210,6 +215,83 @@ The canonical scenario is:
 | DUP-001 | 50000 | 50000, 50000 | DUPLICATE |
 
 Expected counts: four internal purchases, five settlement rows, four distinct settlement references, five results, and one of each outcome. Additional fixtures cover an unknown duplicated reference, different duplicate amounts, all matched, header-only settlement, and an empty internal date.
+
+## Maven modules and component boundaries
+
+**REQ-17 Module separation.** Convert the starter to a root Maven aggregator/parent with these modules:
+
+| Module | Contents and deployable artifact |
+| --- | --- |
+| reconciliation-api | Existing Spring Boot application, purchase classes, persistence and API contracts; executable Spring Boot JAR for EC2 |
+| reconciliation-worker | Java Lambda handler, CSV parser, comparator and HTTP/S3 adapters; deployable Lambda JAR/ZIP |
+| scenario-generator | Standalone local executable/CLI with its own scenario generation and API client |
+| acceptance-tests | Cucumber features, step definitions, committed fixtures and local test environment; no production deployment |
+
+The parent centralizes dependency/plugin versions and test-mode settings. API and worker are separate deployable applications. The generator has no Maven dependency on either application's implementation. It owns its client-side representations of the documented HTTP contract; no shared business library couples it to the simulator. API/worker communication remains HTTP even when both artifacts are available in the same reactor.
+
+The acceptance module may depend on API, worker, and generator artifacts for test startup and real-handler invocation. That test-only access does not allow the generator or acceptance steps to bypass APIs for business actions or result assertions. The harness may initialize/reset test storage and install validators/indexes; scenario purchases, date closure, upload registration, report submission and retrieval follow the same contracts as the demo. Execute the generator's actual entry point in at least one acceptance scenario rather than reproducing its workflow only in step definitions.
+
+Move the owner's existing classes into the API module during implementation, preserving their work and Git staging unless the owner requests otherwise. No module conversion is performed by this specification amendment.
+
+## Acceptance-test contract
+
+**REQ-18 Cucumber acceptance tests.** Write executable Gherkin `.feature` files with Cucumber-JVM on JUnit Platform. Features describe observable business behavior and reference REQ/AC IDs. Step definitions load committed JSON fixtures describing purchases and settlement rows, produce the actual settlement CSV, submit through the API/upload contract, and retrieve status, summaries, and paginated outcomes through HTTP for comparison with independently committed expected JSON. Use raw CSV fixtures where malformed encoding or syntax cannot be represented faithfully by valid JSON.
+
+For example:
+
+```gherkin
+@REQ-05 @REQ-06 @AC-10
+Feature: Daily payment reconciliation
+  Scenario: Publish the five reconciliation outcomes
+    Given a closed business date with purchases from "canonical-purchases.json"
+    And a settlement file generated from "canonical-settlement.json"
+    When the settlement file is uploaded and processed
+    Then the reconciliation report is available through the API
+    And its summary and results match "canonical-expected.json"
+```
+
+The local harness starts and tears down:
+
+- The real Spring Boot API on an ephemeral HTTP port with test credentials and a fixed controllable business clock.
+- A pinned Testcontainers MongoDB image configured as a replica set, supporting real MongoDB transactions, indexes, validation and atomic updates.
+- WireMock or an equivalent local HTTP substitute for the S3 operations used by the application/worker. Local configuration uses dummy AWS credentials and endpoint overrides.
+- The real Java worker handler configured to call that Spring API and the local S3 substitute.
+
+For the complete flow, the harness accepts the CSV through the returned local upload URL, makes those exact bytes/version metadata available to the worker, constructs the corresponding S3 event, and invokes the real handler. Preserve checksum/version semantics in fixtures and assertions. The baseline flow must not stub transaction retrieval, replace the comparator, or submit a precomputed report instead of running the worker. Separate API contract scenarios may submit prepared report JSON to test report validation, idempotency and publication directly.
+
+Use fault injection to exercise transient S3/API failures and explicit repeat invocation to simulate event retries. A local harness controls retries; it does not claim to reproduce AWS asynchronous scheduling. Fixed clocks, isolated data/ports and bounded polling make scenarios repeatable. Compare canonical business output independently of runtime IDs/timestamps; validate variable fields separately rather than ignoring the whole response. Expected JSON must not be regenerated using the production comparator during assertions.
+
+Acceptance tests require no AWS account, real AWS credentials, external MongoDB account, or paid emulator. Docker is required for MongoDB; unavailable Docker/dependencies must fail an acceptance-enabled build with an actionable error, not silently skip scenarios. Every implemented local acceptance criterion has executable coverage; concurrency and persistence criteria use the same real replica-set database. Features and fixtures evolve alongside behavior changes.
+
+Real S3 notification delivery, presigned authorization/expiry, IAM, private routing, account eligibility, runtime timings and teardown remain separate cloud/manual evidence under the existing criteria. A stubbed upload cannot establish actual AWS authorization or event delivery. Cloud smoke checks are explicitly invoked and never part of the default local Maven build.
+
+## Unit coverage, mutation testing and build modes
+
+**REQ-19 Logic quality gates.** Use JaCoCo to require zero missed lines and zero missed branches (100% line and branch coverage) in each included handwritten production logic class in the API, worker and generator. Collect unit-suite coverage separately; Cucumber execution must not compensate for missing unit tests.
+
+Include comparison, parsing, validation, canonicalization, state transitions, retry decisions, application limits, custom mappings/calculations, and generator generation/polling/result-check logic. Framework entry points, interfaces without executable logic, generated/Lombok accessors, plain data carriers, and pure wiring/delegation may be excluded. A DTO constructor with validation, controller with decisions, custom serializer or configuration method with actual logic remains in scope. Keep the inclusion/exclusion list reviewable and justified by code responsibility, not broad package exclusions that hide logic. New logic is covered by default. Classes without branches need full line coverage but no artificial branch tests.
+
+Use PIT with the JUnit-compatible test plugin to mutate the same included production logic using unit tests. A proposed initial mutation score floor is 80% in each production module with mutation targets; the threshold is a parent-managed Maven property. Record the tested mutation operator set and review surviving/no-coverage mutants. Nonviable mutants are reported separately, and a mutation execution that produces no mutants despite eligible logic fails verification. The acceptance harness, third-party libraries, boilerplate and generated code are outside the production mutation denominator.
+
+A lower module/class threshold is allowed only with a documented explanation identifying the relevant behavior and surviving/equivalent mutants, plus review alongside the spec/plan change. Do not lower thresholds simply to make a failing build pass. Threshold flexibility does not reduce the 100% unit coverage requirement. Keep test assertions about observable behavior; coverage and mutation scores do not replace meaningful assertions.
+
+**REQ-20 Maven execution modes.** The supported build entry point is `verify`, which includes compilation and packaging before the final checks. Surefire runs unit tests; Failsafe runs Cucumber/integration tests during `integration-test` and checks their results at `verify`. JaCoCo and PIT checks are bound into verification when selected. Acceptance, coverage or mutation failures make the selected verification build fail with a nonzero exit code.
+
+These commands define the intended interface; they become executable during implementation. Run them from the reactor root using `./mvnw` on Unix/WSL or `mvnw.cmd` on Windows:
+
+| Command | Selected execution |
+| --- | --- |
+| `./mvnw clean verify` | Default: unit tests, local acceptance/integration tests, unit coverage and mutation gates |
+| `./mvnw clean verify -Pall-tests` | Explicit equivalent of the default full verification |
+| `./mvnw clean verify -Punit-tests` | Unit tests and their coverage gate only; no containers or mutation execution |
+| `./mvnw clean verify -Pacceptance-tests` | Local acceptance/integration tests only; no unit execution, unit coverage gate or mutation execution |
+| `./mvnw clean verify -Pmutation-tests` | Unit tests, their coverage gate and mutation gate; no acceptance containers |
+| `./mvnw clean package -DskipTests` | Compile/package production and test sources; execute no tests or quality gates |
+| `./mvnw clean package -Dmaven.test.skip=true` | Compile/package production code; skip test compilation, tests and quality gates |
+
+The skip properties must suppress all applicable test/quality plugins, including when used with `verify`; document that these commands produce unchecked artifacts. Mode profiles are mutually exclusive and conflicting selections fail clearly. Unit tests use in-process fakes/mocks and must not start Docker. Tests that require MongoDB, Spring HTTP startup or other external processes belong to the acceptance/integration execution.
+
+A bare `compile` or `package` invocation does not satisfy full verification; do not describe compilation alone as running Cucumber or enforcing every gate. CI and the documented release/demo preparation command use the default full `clean verify`. Generate Surefire/Failsafe results, Cucumber reports, JaCoCo reports and PIT reports under module `target` directories; do not commit generated reports. Cleanup must run on success and failure. An enabled suite or coverage check must not succeed merely because no tests or coverage data were discovered. Aggregator/test-only modules legitimately have no production logic to cover or mutate.
 
 ## Acceptance criteria and traceability
 
@@ -240,19 +322,18 @@ The following criteria are required delivery evidence, not claims that tests cur
 | AC-21 | REQ-14 | A real S3 upload invokes Lambda directly; worker reaches private EC2 and S3 without NAT or direct Atlas access |
 | AC-22 | REQ-10 | MongoDB validation/indexes are installed, and business-date query evidence demonstrates the intended index |
 | AC-23 | REQ-15 | Deployment records Free-plan eligibility, Atlas M0, usage visibility and successful resource teardown |
-| AC-24 | REQ-16 | Seeded generator verifies expected results locally and against the cloud deployment |
+| AC-24 | REQ-16, REQ-17, REQ-18 | Acceptance runs the real generator through public API/upload contracts and verifies expected results; repeat the demonstration against the cloud deployment |
+| AC-25 | REQ-17 | Reactor builds separate API, worker and generator artifacts; generator has no dependency on application internals or direct database access |
+| AC-26 | REQ-18 | Canonical Cucumber feature loads committed fixtures, uploads CSV, executes the real local handler, and verifies exact API summary/results using real Spring and MongoDB |
+| AC-27 | REQ-18 | Local acceptance starts dependencies automatically, needs no AWS account, cleans up after failure, and fails clearly when Docker is unavailable |
+| AC-28 | REQ-18 | Prepared-report API scenarios reject malformed/conflicting reports; complete-flow scenarios exercise real parsing/comparison and retry/idempotency behavior |
+| AC-29 | REQ-19 | Each included logic class in API, worker and generator reaches 100% unit line/branch coverage; removing a necessary unit test causes the coverage gate to fail |
+| AC-30 | REQ-19 | PIT runs against included logic in all three production modules; a score below the configured threshold fails verification and exclusions/adjustments have documented reasons |
+| AC-31 | REQ-20 | Every documented Maven mode selects exactly its intended suites/gates; unit-only runs need no Docker and acceptance-only runs need no unit coverage data |
+| AC-32 | REQ-20 | Deliberately failing Cucumber scenario fails default/all/acceptance verification; deliberately violated coverage/mutation gates fail the applicable modes |
+| AC-33 | REQ-20 | Both skip properties disable tests/gates as documented; conflicting profiles fail clearly and enabled suites cannot silently discover zero tests |
 
-Core comparisons and CSV boundaries use automated unit tests. Date closure, uniqueness and atomic publication use integration tests with a replica-set MongoDB container. Worker contract tests inject HTTP failures and lost responses. Real AWS notification, presigned-upload and private-network behavior require a small cloud smoke test. No emulator alone proves those AWS behaviors.
-
-## Repository baseline and delivery workflow
-
-The inspected local checkout is /home/octavio/projects/payment-reconciliation-sim in the Ubuntu WSL distribution, based on commit cb2cfac2abb7663bd3b6cff848161ab516fa7a58. It contains Maven wrapper files, Java 21, Spring Boot 4.1.1, web MVC/MongoDB dependencies, the application entry point, and Testcontainers test scaffolding. Four staged, uncommitted empty classes also exist: PurchaseController, Purchase, PurchaseRepository, and PurchaseService. They are the owner's work and remain untouched by this documentation change. Reuse and implement these classes rather than creating competing purchase abstractions. No applicable AGENTS.md instructions, implemented endpoints, Terraform, Swagger integration, or existing specs were found.
-
-Reuse this starter. Verify dependency compatibility before adding libraries; do not silently change the Spring Boot version. During implementation, pin the MongoDB test image rather than retaining mongo:latest. The Lambda uses a separate deployable Java handler with a small comparison core; loading the complete Spring web application in the Lambda is unnecessary.
-
-Delivery order: core comparison/fixtures; transactional date/purchase API; run registration and atomic result contracts; generator/local demonstration; AWS upload and Lambda integration; acceptance evidence and documentation. This ordering guides the future implementation plan, rather than constituting that plan. Reserve the final two days of the one-week timebox for cloud fixes, verification, README examples, architecture explanation, and teardown.
-
-The next stage is review of this written draft, followed by a task-by-task implementation plan linked to REQ and AC IDs. Changes to behavior update the spec and its acceptance criteria before code. Completion requires evidence for the criteria, not merely a successful Spring startup.
+Core comparisons, CSV boundaries and generator logic use automated unit tests with the REQ-19 gates. Cucumber acceptance and supporting integration tests cover HTTP behavior, date closure, uniqueness, atomic publication and complete worker processing with a replica-set MongoDB container. Worker fault scenarios inject HTTP failures and lost responses. Execute local criteria in the default Maven verification build; record cloud/manual portions of AC-13, AC-20, AC-21, AC-23 and AC-24 separately. No emulator alone proves actual AWS notification, authorization or private-network behavior.
 
 ## Sources for platform behavior
 
@@ -265,3 +346,8 @@ These sources support AWS/MongoDB behavior, not claims that this project follows
 - [Lambda asynchronous retries](https://docs.aws.amazon.com/lambda/latest/dg/invocation-async-error-handling.html): finite retries and possible duplicate processing.
 - [AWS Free account plan](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier.html): temporary benefits and account-plan conditions.
 - [Atlas free clusters](https://www.mongodb.com/docs/atlas/tutorial/deploy-free-tier-cluster/): the managed free development tier.
+- [Java Lambda handlers](https://docs.aws.amazon.com/lambda/latest/dg/java-handler.html) and [Java deployment packages](https://docs.aws.amazon.com/lambda/latest/dg/java-package.html): locally maintained handler source and packaged code deployed to AWS.
+- [Cucumber-JVM](https://cucumber.io/docs/installation/java/): Java/JUnit Platform acceptance-test tooling.
+- [Maven Failsafe](https://maven.apache.org/surefire/maven-failsafe-plugin/): integration-test execution, teardown and verification phases.
+- [JaCoCo checks](https://www.jacoco.org/jacoco/trunk/doc/check-mojo.html): line/branch counters and build-failing coverage rules.
+- [PIT Maven configuration](https://pitest.org/quickstart/maven/): mutation execution, target selection and configurable score thresholds.
