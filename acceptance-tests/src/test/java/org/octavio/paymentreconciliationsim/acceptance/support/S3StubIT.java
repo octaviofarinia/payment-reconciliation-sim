@@ -16,6 +16,34 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class S3StubIT {
     @Test
+    void listsRetainedVersionsWithExactKeysAndRejectsWrongDeclaredChecksumAndOversizedUploads() throws Exception {
+        try (var stub = new S3Stub(); var http = HttpClient.newHttpClient()) {
+            stub.start();
+            String first = stub.store("bucket", "a+b/c &.csv", new byte[]{1});
+            String second = stub.store("bucket", "a+b/c &.csv", new byte[]{2});
+            stub.store("other", "a+b/c &.csv", new byte[]{3});
+            try (var client = S3Client.builder().endpointOverride(stub.endpoint()).region(Region.US_EAST_1)
+                    .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("acceptance", "acceptance")))
+                    .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build()).build()) {
+                var versions = client.listObjectVersions(b -> b.bucket("bucket").prefix("a+b/"));
+                assertEquals(2, versions.versions().size());
+                assertEquals(java.util.Set.of(first, second), versions.versions().stream().map(v -> v.versionId()).collect(java.util.stream.Collectors.toSet()));
+                assertEquals(java.util.Set.of("a+b/c &.csv"), versions.versions().stream().map(v -> v.key()).collect(java.util.stream.Collectors.toSet()));
+                assertFalse(versions.isTruncated());
+            }
+            var invalid = HttpRequest.newBuilder(stub.endpoint().resolve("/bucket/wrong.csv"))
+                    .header("x-amz-checksum-sha256", "ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=")
+                    .PUT(HttpRequest.BodyPublishers.ofByteArray(new byte[]{97, 98, 100})).build();
+            assertEquals(400, http.send(invalid, HttpResponse.BodyHandlers.discarding()).statusCode());
+            assertNull(stub.get("bucket", "wrong.csv", null));
+            var oversized = HttpRequest.newBuilder(stub.endpoint().resolve("/bucket/large.csv"))
+                    .PUT(HttpRequest.BodyPublishers.ofByteArray(new byte[2097153])).build();
+            assertEquals(413, http.send(oversized, HttpResponse.BodyHandlers.discarding()).statusCode());
+            assertNull(stub.get("bucket", "large.csv", null));
+        }
+    }
+
+    @Test
     void retainsBinaryVersionsAndReturnsSdkChecksumHeaders() throws Exception {
         try (var stub = new S3Stub()) {
             stub.start();

@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -23,7 +24,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 /** Path-style, version-aware S3 transport substitute. Does not validate SigV4 authorization. */
 public final class S3Stub implements AutoCloseable {
     private record ObjectKey(String bucket, String key) {}
-    private record StoredObject(String version, byte[] bytes, String sha256, String etag) {}
+    private record StoredObject(String version, byte[] bytes, String sha256, String etag, Instant storedAt) {}
     private final Map<ObjectKey, LinkedHashMap<String, StoredObject>> objects = new HashMap<>();
     private final WireMockServer server = new WireMockServer(options().dynamicPort().extensions(new ObjectResponses()));
 
@@ -41,7 +42,7 @@ public final class S3Stub implements AutoCloseable {
         String version = UUID.randomUUID().toString();
         byte[] copy = bytes.clone();
         var object = new StoredObject(version, copy, Base64.getEncoder().encodeToString(digest("SHA-256", copy)),
-                "\"" + HexFormat.of().formatHex(digest("MD5", copy)) + "\"");
+                "\"" + HexFormat.of().formatHex(digest("MD5", copy)) + "\"", Instant.now());
         objects.computeIfAbsent(new ObjectKey(bucket, key), ignored -> new LinkedHashMap<>()).put(version, object);
         return version;
     }
@@ -94,6 +95,31 @@ public final class S3Stub implements AutoCloseable {
         throw new IllegalArgumentException("Missing AWS terminal chunk");
     }
 
+    private static String xml(String value) {
+        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&apos;");
+    }
+
+    private ResponseDefinition listVersions(String bucket, String prefix) {
+        var body = new StringBuilder("<ListVersionsResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">")
+                .append("<Name>").append(xml(bucket)).append("</Name><Prefix>").append(xml(prefix))
+                .append("</Prefix><IsTruncated>false</IsTruncated>");
+        for (var entry : objects.entrySet()) {
+            if (entry.getKey().bucket().equals(bucket) && entry.getKey().key().startsWith(prefix)) {
+                for (var object : entry.getValue().values()) {
+                    body.append("<Version><Key>").append(xml(entry.getKey().key()))
+                            .append("</Key><VersionId>").append(xml(object.version()))
+                            .append("</VersionId><IsLatest>").append(object == entry.getValue().lastEntry().getValue())
+                            .append("</IsLatest><LastModified>").append(object.storedAt())
+                            .append("</LastModified><ETag>").append(xml(object.etag()))
+                            .append("</ETag><Size>").append(object.bytes().length).append("</Size></Version>");
+                }
+            }
+        }
+        body.append("</ListVersionsResult>");
+        return aResponse().withStatus(200).withHeader("Content-Type", "application/xml").withBody(body.toString()).build();
+    }
+
     private final class ObjectResponses implements ResponseDefinitionTransformerV2 {
         public String getName() { return "s3-objects"; }
         public boolean applyGlobally() { return false; }
@@ -101,6 +127,13 @@ public final class S3Stub implements AutoCloseable {
             var request = event.getRequest();
             URI uri = URI.create(request.getUrl());
             String[] path = uri.getRawPath().split("/", 3);
+            if (path.length == 2 && request.queryParameter("versions").isPresent()
+                    && "GET".equals(request.getMethod().getName())) {
+                synchronized (S3Stub.this) {
+                    String prefix = request.queryParameter("prefix").isPresent() ? request.queryParameter("prefix").firstValue() : "";
+                    return listVersions(decodePath(path[1]), prefix);
+                }
+            }
             if (path.length != 3) return aResponse().withStatus(400).build();
             String bucket = decodePath(path[1]);
             String key = decodePath(path[2]);
@@ -114,6 +147,13 @@ public final class S3Stub implements AutoCloseable {
                     if (decodedLength != null) {
                         try { bytes = decodeAwsChunks(bytes, Integer.parseInt(decodedLength)); }
                         catch (IllegalArgumentException invalid) { return aResponse().withStatus(400).build(); }
+                    }
+                    if (bytes.length > 2097152) return aResponse().withStatus(413).build();
+                    String suppliedChecksum = request.getHeader("x-amz-checksum-sha256");
+                    String actualChecksum = Base64.getEncoder().encodeToString(digest("SHA-256", bytes));
+                    if (suppliedChecksum != null && !suppliedChecksum.equals(actualChecksum)) {
+                        return aResponse().withStatus(400).withHeader("Content-Type", "application/xml")
+                                .withBody("<Error><Code>BadDigest</Code></Error>").build();
                     }
                     version = store(bucket, key, bytes);
                 } else if (!"HEAD".equals(method) && !"GET".equals(method)) {

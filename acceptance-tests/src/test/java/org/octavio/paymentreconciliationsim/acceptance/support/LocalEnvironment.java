@@ -90,6 +90,9 @@ public final class LocalEnvironment implements AutoCloseable {
     public S3Stub s3() { return s3; }
     public MongoClient mongoClient() { return mongoClient; }
     public MongoDatabase mongoDatabase() { return mongoClient.getDatabase(databaseName); }
+    public org.octavio.paymentreconciliationsim.storage.SettlementStorage settlementStorage() {
+        return context.getBean(org.octavio.paymentreconciliationsim.storage.SettlementStorage.class);
+    }
     public Clock clock() { return context.getBean(Clock.class); }
 
     /** Preserve startup-created indexes while removing every scenario's database and S3 data. */

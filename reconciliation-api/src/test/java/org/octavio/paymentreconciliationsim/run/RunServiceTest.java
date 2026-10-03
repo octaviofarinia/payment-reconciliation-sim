@@ -2,6 +2,8 @@ package org.octavio.paymentreconciliationsim.run;
 import java.time.*;
 import java.util.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.octavio.paymentreconciliationsim.storage.SettlementStorage;
 import org.octavio.paymentreconciliationsim.businessdate.BusinessDateService;
 import org.octavio.paymentreconciliationsim.model.Purchase;
 import org.springframework.dao.DuplicateKeyException;
@@ -16,14 +18,40 @@ class RunServiceTest {
  static final ObjectIdentity OBJECT=new ObjectIdentity("bucket",KEY,"version1",HASH);
  final RunRepository repository=mock(RunRepository.class);
  final BusinessDateService dates=mock(BusinessDateService.class);
- final RunService service=new RunService(repository,dates,Clock.fixed(Instant.parse("2026-10-02T15:00:00.123456Z"),ZoneOffset.UTC),new ReportValidator(),new ReportCanonicalizer());
+ final SettlementStorage storage=mock(SettlementStorage.class);
+ final RunService service=new RunService(repository,dates,Clock.fixed(Instant.parse("2026-10-02T15:00:00.123456Z"),ZoneOffset.UTC),new ReportValidator(),new ReportCanonicalizer(),storage);
+ @BeforeEach void signing(){
+  when(storage.upload(anyString(),anyString(),anyLong())).thenReturn(new SettlementStorage.UploadInstructions("http://local/upload",Map.of("x-amz-checksum-sha256","checksum"),NOW.plusSeconds(600)));
+ }
+ @Test void persistedKeyIsSignedAfterInsertionAndIncompleteReplaysGetInstructions(){
+  when(repository.insert(any())).thenAnswer(call->call.getArgument(0));
+  var created=service.register(new RegisterRun(DATE,HASH,100));
+  var order=inOrder(repository,storage);
+  order.verify(repository).insert(any());
+  order.verify(storage).upload(created.objectKey(),HASH,100);
+  assertEquals("http://local/upload",created.uploadInstructions().url());
+  doThrow(new DuplicateKeyException("existing")).when(repository).insert(any());
+  for(var state:List.of(Status.AWAITING_UPLOAD,Status.PROCESSING,Status.FAILED)){
+   when(repository.logical("2026-10-01",HASH)).thenReturn(run(state,OBJECT,null));
+   var replay=service.register(new RegisterRun(DATE,HASH,100));
+   assertFalse(replay.created());assertEquals(KEY,replay.objectKey());assertNotNull(replay.uploadInstructions());
+   assertEquals(state,replay.status());
+  }
+  verify(storage,times(3)).upload(KEY,HASH,100);
+ }
+ @Test void completedRegistrationDoesNotRequestANewPresignedUrl(){
+  doThrow(new DuplicateKeyException("existing")).when(repository).insert(any());
+  when(repository.logical("2026-10-01",HASH)).thenReturn(run(Status.COMPLETED,OBJECT,report(OBJECT)));
+  assertNull(service.register(new RegisterRun(DATE,HASH,100)).uploadInstructions());
+  verify(storage,never()).upload(anyString(),anyString(),anyLong());
+ }
  static final Summary EMPTY=new Summary(0,0,0,0,Map.of(Outcome.MATCHED,0,Outcome.MISSING_IN_SETTLEMENT,0,Outcome.MISSING_INTERNALLY,0,Outcome.AMOUNT_MISMATCH,0,Outcome.DUPLICATE,0));
  static ReportSubmission report(ObjectIdentity object){return new ReportSubmission(new InputIdentity("SIMULATED","2026-10-01",HASH,"v1",object),EMPTY,List.of());}
  static ReconciliationRun run(Status status,ObjectIdentity object,ReportSubmission report){return new ReconciliationRun(ID.toString(),"SIMULATED","2026-10-01",HASH,"v1",100,KEY,status,object,null,report,NOW,NOW);}
  static void status(int code,Runnable operation){assertEquals(code,assertThrows(ResponseStatusException.class,operation::run).getStatusCode().value());}
  @Test void persistsNewIdentityBeforeReturningAwaitingRegistrationAndReplaysDuplicate(){
   when(repository.insert(any())).thenAnswer(call->{ReconciliationRun registered=call.getArgument(0);assertEquals(Instant.parse("2026-10-02T15:00:00.123Z"),registered.createdAt());assertEquals(registered.createdAt(),registered.updatedAt());return registered;});
-  var created=service.register(new RegisterRun(DATE,HASH,100));assertTrue(created.created());assertEquals(Status.AWAITING_UPLOAD,created.status());assertNull(created.uploadInstructions());
+  var created=service.register(new RegisterRun(DATE,HASH,100));assertTrue(created.created());assertEquals(Status.AWAITING_UPLOAD,created.status());assertNotNull(created.uploadInstructions());
   assertEquals("settlements/2026-10-01/"+created.runId()+".csv",created.objectKey());
   doThrow(new DuplicateKeyException("existing")).when(repository).insert(any());when(repository.logical("2026-10-01",HASH)).thenReturn(run(Status.COMPLETED,OBJECT,report(OBJECT)));
   var replay=service.register(new RegisterRun(DATE,HASH,100));assertFalse(replay.created());assertEquals(ID,replay.runId());assertEquals(Status.COMPLETED,replay.status());assertNull(replay.uploadInstructions());
@@ -34,7 +62,7 @@ class RunServiceTest {
   status(400,()->service.register(null));
   status(409,()->service.register(new RegisterRun(LocalDate.of(2026,10,2),HASH,100)));
   status(409,()->service.register(new RegisterRun(LocalDate.of(2026,10,3),HASH,100)));
-  var argentine=new RunService(repository,dates,Clock.fixed(NOW,ZoneOffset.UTC),new ReportValidator(),new ReportCanonicalizer());
+  var argentine=new RunService(repository,dates,Clock.fixed(NOW,ZoneOffset.UTC),new ReportValidator(),new ReportCanonicalizer(),storage);
   status(409,()->argentine.register(new RegisterRun(DATE,HASH,100)));
   when(repository.insert(any())).thenAnswer(call->call.getArgument(0));
   assertTrue(service.register(new RegisterRun(DATE,HASH,2097152)).created());

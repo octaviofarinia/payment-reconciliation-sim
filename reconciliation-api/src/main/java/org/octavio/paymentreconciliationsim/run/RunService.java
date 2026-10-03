@@ -4,6 +4,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import org.octavio.paymentreconciliationsim.businessdate.BusinessDateService;
 import org.springframework.dao.DuplicateKeyException;
+import org.octavio.paymentreconciliationsim.storage.SettlementStorage;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -12,19 +13,48 @@ import static org.octavio.paymentreconciliationsim.run.RunContracts.*;
 public class RunService {
  private final RunRepository repository;private final BusinessDateService dates;private final Clock clock;
  private final ReportValidator validator;private final ReportCanonicalizer canonicalizer;
- public RunService(RunRepository repository,BusinessDateService dates,Clock clock,ReportValidator validator,ReportCanonicalizer canonicalizer){
-  this.repository=repository;this.dates=dates;this.clock=clock;this.validator=validator;this.canonicalizer=canonicalizer;
+ private final SettlementStorage storage;
+
+ public RunService(RunRepository repository, BusinessDateService dates, Clock clock,
+         ReportValidator validator, ReportCanonicalizer canonicalizer, SettlementStorage storage) {
+  this.repository = repository;
+  this.dates = dates;
+  this.clock = clock;
+  this.validator = validator;
+  this.canonicalizer = canonicalizer;
+  this.storage = storage;
  }
- public RegistrationResult register(RegisterRun request){
-  if(request==null || request.businessDate()==null || request.sha256()==null || !request.sha256().matches("[a-f0-9]{64}") || request.byteLength()<1 || request.byteLength()>2097152)throw invalid();
-  if(!request.businessDate().isBefore(LocalDate.now(clock.withZone(ZoneId.of("America/Buenos_Aires")))))throw conflict();
+
+ public RegistrationResult register(RegisterRun request) {
+  if (request == null || request.businessDate() == null || request.sha256() == null
+          || !request.sha256().matches("[a-f0-9]{64}") || request.byteLength() < 1
+          || request.byteLength() > 2097152) {
+   throw invalid();
+  }
+  if (!request.businessDate().isBefore(LocalDate.now(clock.withZone(ZoneId.of("America/Buenos_Aires"))))) {
+   throw conflict();
+  }
   dates.closedInputs(request.businessDate());
-  var id=UUID.randomUUID();var now=now();
-  var run=new ReconciliationRun(id.toString(),"SIMULATED",request.businessDate().toString(),request.sha256(),"v1",request.byteLength(),"settlements/"+request.businessDate()+"/"+id+".csv",Status.AWAITING_UPLOAD,null,null,null,now,now);
-  boolean created=true;
-  try {run=repository.insert(run);}catch(DuplicateKeyException duplicate){run=repository.logical(request.businessDate().toString(),request.sha256());created=false;}
-  if(run.byteLength()!=request.byteLength())throw conflict();
-  return new RegistrationResult(UUID.fromString(run.runId()),run.objectKey(),run.status(),null,created);
+  var id = UUID.randomUUID();
+  var now = now();
+  var run = new ReconciliationRun(id.toString(), "SIMULATED", request.businessDate().toString(),
+          request.sha256(), "v1", request.byteLength(),
+          "settlements/" + request.businessDate() + "/" + id + ".csv",
+          Status.AWAITING_UPLOAD, null, null, null, now, now);
+  boolean created = true;
+  try {
+   run = repository.insert(run);
+  } catch (DuplicateKeyException duplicate) {
+   run = repository.logical(request.businessDate().toString(), request.sha256());
+   created = false;
+  }
+  if (run.byteLength() != request.byteLength()) {
+   throw conflict();
+  }
+  var instructions = run.status() == Status.COMPLETED ? null
+          : storage.upload(run.objectKey(), run.sha256(), run.byteLength());
+  return new RegistrationResult(UUID.fromString(run.runId()), run.objectKey(), run.status(),
+          instructions, created);
  }
  public RunMetadata metadata(UUID id){return metadata(required(id));}
  public List<RunMetadata> list(LocalDate date){return repository.list(date.toString()).stream().map(this::metadata).toList();}
