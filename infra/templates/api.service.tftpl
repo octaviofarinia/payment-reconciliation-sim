@@ -1,0 +1,30 @@
+[Unit]
+Description=Payment reconciliation API
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/reconciliation/runtime.env
+ConditionPathExists=/opt/reconciliation/api.jar
+
+[Service]
+Type=simple
+User=reconciliation
+Group=reconciliation
+WorkingDirectory=/opt/reconciliation
+Environment="RECONCILIATION_AWS_REGION=${region}"
+Environment="RECONCILIATION_S3_BUCKET=${bucket}"
+Environment="RECONCILIATION_LAMBDA_FUNCTIONNAME=${function_name}"
+Environment="SERVER_PORT=8080"
+EnvironmentFile=/etc/reconciliation/runtime.env
+ExecStart=/usr/bin/java -Xms128m -Xmx384m -jar /opt/reconciliation/api.jar
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

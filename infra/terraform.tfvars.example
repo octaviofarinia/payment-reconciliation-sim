@@ -1,0 +1,9 @@
+# Copy to ignored terraform.tfvars only after preflight. NO runtime secrets.
+region                  = "us-east-1"
+account_id              = "REPLACE_WITH_VERIFIED_ACCOUNT"
+prerequisites_confirmed = false
+name                    = "reconciliation-demo"
+instance_type           = "REPLACE_WITH_VERIFIED_ELIGIBLE_X86_TYPE"
+developer_cidr          = "203.0.113.10/32"
+ssh_public_key          = "ssh-ed25519 REPLACE_WITH_PUBLIC_KEY"
+worker_artifact_path    = "../reconciliation-worker/target/reconciliation-worker-0.0.1-SNAPSHOT-lambda.jar"

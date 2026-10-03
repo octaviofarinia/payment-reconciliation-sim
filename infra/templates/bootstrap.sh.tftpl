@@ -1,0 +1,14 @@
+#!/bin/bash
+set -euo pipefail
+# No runtime credentials or application JARs in user-data.
+dnf install -y java-21-amazon-corretto-headless
+useradd --system --home-dir /opt/reconciliation --shell /sbin/nologin reconciliation
+install -d -o root -g root -m 755 /opt/reconciliation
+install -d -o root -g root -m 700 /etc/reconciliation
+cat > /etc/systemd/system/reconciliation-api.service <<'SERVICE'
+${service}
+SERVICE
+chmod 644 /etc/systemd/system/reconciliation-api.service
+systemctl daemon-reload
+systemctl enable reconciliation-api.service
+# Deployment supplies protected runtime.env and api.jar, then starts the service.
