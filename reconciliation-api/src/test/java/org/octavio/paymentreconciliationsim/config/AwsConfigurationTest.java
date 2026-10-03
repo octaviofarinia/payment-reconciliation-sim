@@ -1,6 +1,10 @@
 package org.octavio.paymentreconciliationsim.config;
 
 import java.net.URI;
+import java.util.concurrent.atomic.AtomicReference;
+import software.amazon.awssdk.http.*;
+import software.amazon.awssdk.services.s3.S3Client;
+import static org.mockito.Mockito.mockStatic;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
 import software.amazon.awssdk.auth.credentials.*;
@@ -33,10 +37,48 @@ class AwsConfigurationTest {
         assertInstanceOf(DefaultCredentialsProvider.class, credentials);
         try (var client = config.s3Client(environment, credentials); var presigner = config.s3Presigner(environment, credentials)) {
             assertTrue(client.serviceClientConfiguration().endpointOverride().isEmpty());
-            assertEquals("https://test-bucket.s3.amazonaws.com/test.csv",
-                    client.utilities().getUrl(b -> b.bucket("test-bucket").key("test.csv")).toString());
             assertNotNull(presigner);
         }
         ((DefaultCredentialsProvider) credentials).close();
+    }
+
+    @Test void clientsUseConfiguredTransportHostAndPathWithDummyCredentials() {
+        var request = new AtomicReference<SdkHttpRequest>();
+        SdkHttpClient offlineTransport = new SdkHttpClient() {
+            @Override public ExecutableHttpRequest prepareRequest(HttpExecuteRequest execution) {
+                request.set(execution.httpRequest());
+                return new ExecutableHttpRequest() {
+                    @Override public HttpExecuteResponse call() {
+                        return HttpExecuteResponse.builder()
+                                .response(SdkHttpResponse.builder().statusCode(200)
+                                        .putHeader("content-length", "0").build()).build();
+                    }
+                    @Override public void abort() {}
+                };
+            }
+            @Override public void close() {}
+        };
+        var dummyCredentials = StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "dummy"));
+        for (String endpoint : new String[] {null, "http://storage.example.test:9000"}) {
+            var environment = new MockEnvironment().withProperty("reconciliation.aws.region", "eu-west-1");
+            if (endpoint != null) environment.withProperty("reconciliation.s3.endpoint", endpoint);
+            request.set(null);
+            // Replace only the builder's HTTP transport. The production factory
+            // still applies its actual endpoint and path-style configuration.
+            var builder = S3Client.builder().httpClient(offlineTransport);
+            try (var factory = mockStatic(S3Client.class)) {
+                factory.when(S3Client::builder).thenReturn(builder);
+                try (var client = config.s3Client(environment, dummyCredentials)) {
+                    client.headObject(b -> b.bucket("test-bucket").key("nested/test.csv"));
+                }
+            }
+            assertNotNull(request.get());
+            assertEquals(SdkHttpMethod.HEAD, request.get().method());
+            assertEquals(endpoint == null ? "https" : "http", request.get().protocol());
+            assertEquals(endpoint == null ? "test-bucket.s3.eu-west-1.amazonaws.com" : "storage.example.test",
+                    request.get().host());
+            assertEquals(endpoint == null ? "/nested/test.csv" : "/test-bucket/nested/test.csv",
+                    request.get().encodedPath());
+        }
     }
 }

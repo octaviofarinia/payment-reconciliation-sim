@@ -35,12 +35,23 @@ def build(root, arguments, log, environment=None):
     for module in (*PRODUCTION, "acceptance-tests"):
         for relative in ("surefire-reports", "failsafe-reports", "site/jacoco", "pit-reports"):
             source = root / module / "target" / relative
+            destination = log.parent / log.stem / module / relative
+            # These report subtrees belong to this runner; absent reports must
+            # also remove the previous snapshot under the same run identity.
+            if destination.exists():
+                shutil.rmtree(destination)
             if source.exists():
-                shutil.copytree(source, log.parent / log.stem / module / relative, dirs_exist_ok=True)
+                shutil.copytree(source, destination)
     print(f"EXIT {result.returncode} ({time.monotonic() - start:.1f}s) log={log}", flush=True)
     return GateResult(result.returncode, log.read_text())
 
 def selectedGatesFailForDeliberateViolations(log_dir, groups=None):
+    log_dir = log_dir.resolve()
+    root = ROOT.resolve()
+    if log_dir == root or root.is_relative_to(log_dir):
+        raise ValueError("log directory must not be the repository or its ancestor")
+    if log_dir.is_relative_to(root) and not any(part in IGNORED for part in log_dir.relative_to(root).parts):
+        raise ValueError("in-repository log directory must be beneath an excluded directory such as .verification")
     groups = frozenset(groups or ('acceptance', 'coverage', 'mutation', 'discovery', 'docker'))
     log_dir.mkdir(parents=True, exist_ok=True)
     original = source_manifest(ROOT)

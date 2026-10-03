@@ -247,11 +247,18 @@ def complete_modes(log_dir):
         for module in MODULES:
             for relative in ("surefire-reports", "failsafe-reports", "site/jacoco", "pit-reports"):
                 source = ROOT / module / "target" / relative
+                destination = log_dir / name / module / relative
+                # Replace only runner-owned report subtrees, even when the new
+                # build no longer produces this kind of report.
+                if destination.exists():
+                    shutil.rmtree(destination)
                 if source.exists():
-                    shutil.copytree(source, log_dir / name / module / relative, dirs_exist_ok=True)
+                    shutil.copytree(source, destination)
             source = ROOT / module / "target/cucumber-report.json"
+            destination = log_dir / name / module / source.name
+            if destination.exists():
+                destination.unlink()
             if source.exists():
-                destination = log_dir / name / module / source.name
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, destination)
         (log_dir / "evidence.json").write_text(json.dumps(evidence, indent=2) + "\n")

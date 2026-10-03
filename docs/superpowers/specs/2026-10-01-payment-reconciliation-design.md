@@ -1,8 +1,8 @@
 # Payment Reconciliation Platform MVP Specification
 
-Status: Draft for review. Version: 0.2. Date: 2026-10-02.
+Status: Approved implementation baseline (historical). Version: 0.2. Date: 2026-10-02.
 
-This specification consolidates the agreed scope for a one-week personal project demonstrating AWS and MongoDB through simulated payment reconciliation. It defines behavior, component responsibilities, contracts, and acceptance criteria. It is the proposed implementation baseline; the application remains a Spring Initializr starter until the written specification is reviewed.
+This specification consolidates the agreed scope for a one-week personal project demonstrating AWS and MongoDB through simulated payment reconciliation. It defines behavior, component responsibilities, contracts, and acceptance criteria. It records the approved requirements baseline, retaining the design-time wording below as history. The application is implemented and locally verified; see the [current handoff status](../../../README.md#current-handoff-status) and [verification checkpoint](../../testing.md#retained-verified-application-checkpoint). Required [cloud acceptance evidence](../../demo-evidence.md#required-cloud-criterion-ledger) remains PENDING; these historical requirements are not proof of deployment or overall completion.
 
 ## Purpose and business context
 

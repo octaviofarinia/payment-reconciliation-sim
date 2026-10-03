@@ -11,7 +11,9 @@ claim is fabricated. Local evidence remains in [testing.md](testing.md).
 ## Required cloud criterion ledger
 
 [All 20 requirements and 33 criteria](testing.md#requirement-traceability) link to
-executable local proof at the unchanged Task 12 checkpoint. The following
+executable local proof at the historical Task 12 checkpoint;
+[testing.md](testing.md#retained-verified-application-checkpoint) distinguishes
+the later focused API transport-test verification. The following
 criteria additionally require real cloud/manual evidence; none is complete.
 
 | Criterion | Local evidence | Required pending real observation |

@@ -22,6 +22,21 @@ behind that passing checkpoint, not new cloud measurements.
 No Java, Maven/POM or acceptance source changed in Tasks 13–15. Source/documentation
 and Python-tooling changes reuse that application proof and run affected checks;
 the full Maven matrix is not claimed to have run again during this handoff.
+The subsequent final review fix adds one offline API AWS request-construction
+test. The focused API verification now runs 140 unit tests with zero missed
+included lines/branches and targeted AwsConfiguration PIT; the historical
+277-unit-test matrix above has not been rerun at this newer test revision.
+The transport test uses explicit dummy credentials and an offline HTTP transport
+to check the real cloud client's host/path; it does not establish real AWS
+authorization or delivery.
+
+The negative-gate runner rejects a custom in-repository log directory unless it
+is under an excluded subtree such as `.verification/`, before creating output
+or building. External log directories are supported. Both verification runners
+replace their owned report subtrees (including newly absent reports) when reusing
+a run label; distinct log directories/labels retain previous runs. Use a new log
+directory for each execution when retaining separate history.
+
 Actual Terraform validation/provider lockfile and [required cloud/manual evidence](demo-evidence.md#required-cloud-criterion-ledger)
 remain PENDING. Overall acceptance cannot pass until those observations exist.
 
@@ -75,7 +90,7 @@ Exact exclusions: the Spring application's delegating main, generator's pure Sys
 ## Requirement traceability
 
 Every REQ-01–REQ-20 and AC-01–AC-33 has a linked entry. **LOCAL PASS** means the
-retained unchanged application checkpoint established the local part.
+retained historical application checkpoint established the local part.
 **REQUIRED PENDING** means source/offline proof cannot satisfy the full requirement.
 AC-13, AC-18, AC-20, AC-21, AC-23 and AC-24 retain separate cloud/manual portions.
 

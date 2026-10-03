@@ -5,11 +5,15 @@ A Java 21 / Spring Boot 4.1.1 simulator for comparing immutable ARS purchases wi
 ## Current handoff status
 
 **Local application verification is established; required cloud evidence is PENDING.**
-The reviewed application checkpoint is commit `0ea3358`: 277 unit tests,
+The historical reviewed application checkpoint is commit `0ea3358`: 277 unit tests,
 89 acceptance/integration cases including 40 Cucumber scenarios, zero missed
 included unit lines/branches and all three 80% PIT gates. The nine actual build
 modes and isolated negative gate proofs are described in [testing.md](docs/testing.md).
-Java, POMs and acceptance sources have not changed since that checkpoint.
+A final review fix adds an offline AWS transport test: the current focused API
+run has 140 unit tests, zero missed included lines/branches and targeted
+AwsConfiguration PIT verification. The earlier matrix counts remain historical;
+the full nine-mode matrix has not been repeated after this test addition.
+Production Java, POMs and acceptance sources remain unchanged.
 
 Terraform source, deployment scripts and cloud evidence tooling are prepared.
 Actual Terraform validation/provider lockfile, AWS Free-account eligibility,
