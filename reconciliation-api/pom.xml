@@ -4,9 +4,6 @@
  <modelVersion>4.0.0</modelVersion>
  <parent><groupId>org.octavio</groupId><artifactId>payment-reconciliation-sim</artifactId><version>0.0.1-SNAPSHOT</version></parent>
  <artifactId>reconciliation-api</artifactId>
- <!-- Temporary bootstrap overrides: empty scaffolds have no unit tests or mutants.
-      Remove both overrides when handwritten logic lands in Task 4. -->
- <properties><tests.failIfNoTests>false</tests.failIfNoTests><mutation.failWhenNoMutations>false</mutation.failWhenNoMutations></properties>
  <dependencies>
   <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-mongodb</artifactId></dependency>
   <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc</artifactId></dependency>

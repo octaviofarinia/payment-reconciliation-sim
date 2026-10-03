@@ -75,9 +75,9 @@ The selected split is suitable for a small event-triggered batch and demonstrate
 
 ## Business date and transaction invariants
 
-**REQ-01 Purchase ingestion.** A purchase has transactionReference, merchantId, businessDate, amountCentavos, currency, and server-recorded receivedAt. businessDate is an explicit ISO date in this simulation. Currency must be ARS and amountCentavos a positive signed 64-bit integer; fractional JSON numbers and floating-point storage are rejected. No raw card identifiers are accepted.
+**REQ-01 Purchase ingestion.** A purchase has transactionReference, merchantId, businessDate, amountCentavos, currency, and server-recorded receivedAt. businessDate is an explicit ISO date in this simulation. Currency must be ARS and amountCentavos a positive signed 64-bit integer; fractional JSON numbers and floating-point storage are rejected. Duplicate JSON object keys are rejected with HTTP 400, including identical duplicate values. No raw card identifiers are accepted.
 
-References are case-sensitive strings of 1 to 64 ASCII letters, digits, underscores, or hyphens. merchantId is a nonempty string of at most 64 characters. A reference is globally unique across business dates. An exact repeat of a purchase creation request returns the existing purchase; a repeat with different business fields returns conflict.
+References are case-sensitive strings of 1 to 64 ASCII letters, digits, underscores, or hyphens. merchantId is a nonempty string of at most 64 Unicode codepoints, preserved without trimming or normalization (including nonempty whitespace). A reference is globally unique across business dates. An exact repeat of a purchase creation request returns the existing purchase; a repeat with different business fields returns conflict.
 
 **REQ-02 Date closure.** A business date moves from OPEN to CLOSED exactly once; closing it again is harmless. It cannot be reopened in this version. Purchases cannot be added to a closed date and purchase modification/deletion endpoints do not exist. The 1,000-purchase limit must hold under concurrent requests.
 
@@ -299,7 +299,7 @@ The following criteria are required delivery evidence, not claims that tests cur
 
 | ID | Requirement | Observable verification |
 | --- | --- | --- |
-| AC-01 | REQ-01 | Valid ARS purchase persists with exact integer amount; fractional, nonpositive, wrong-currency and malformed-reference inputs fail |
+| AC-01 | REQ-01 | Valid ARS purchase persists with exact integer amount; fractional, nonpositive, wrong-currency, malformed-reference and duplicate JSON key inputs fail with 400 (including identical duplicate values); merchantId preserves nonempty text without normalization, accepts 64 Unicode codepoints and rejects 65 |
 | AC-02 | REQ-01, REQ-11 | Identical purchase replay returns one record; conflicting fields for its reference return 409 |
 | AC-03 | REQ-02 | Closed dates reject additions; repeated close is harmless |
 | AC-04 | REQ-02 | Concurrent create/close cannot admit a late purchase or omit a successfully committed purchase from the closed dataset |
