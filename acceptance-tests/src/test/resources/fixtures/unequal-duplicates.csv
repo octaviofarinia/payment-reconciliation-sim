@@ -1,0 +1,3 @@
+business_date,transaction_reference,amount_centavos,currency
+2026-10-01,DUP-001,50000,ARS
+2026-10-01,DUP-001,50001,ARS

@@ -1,0 +1,5 @@
+business_date,transaction_reference,amount_centavos,currency
+2026-10-01,MATCH-001,10000,ARS
+2026-10-01,AMOUNT-001,40000,ARS
+2026-10-01,DUP-001,50000,ARS
+2026-10-01,MISS-001,20000,ARS

@@ -28,6 +28,9 @@ public final class S3Stub implements AutoCloseable {
     private final Map<ObjectKey, LinkedHashMap<String, StoredObject>> objects = new HashMap<>();
     private final WireMockServer server = new WireMockServer(options().dynamicPort().extensions(new ObjectResponses()));
 
+    public record UploadedObject(String bucket, String key, String versionId) {}
+    private volatile java.util.function.Consumer<UploadedObject> uploadListener = ignored -> {};
+    public void onUpload(java.util.function.Consumer<UploadedObject> listener) { uploadListener = listener; }
     private URI endpoint;
 
     public void start() {
@@ -156,6 +159,7 @@ public final class S3Stub implements AutoCloseable {
                                 .withBody("<Error><Code>BadDigest</Code></Error>").build();
                     }
                     version = store(bucket, key, bytes);
+                    uploadListener.accept(new UploadedObject(bucket, key, version));
                 } else if (!"HEAD".equals(method) && !"GET".equals(method)) {
                     return aResponse().withStatus(405).build();
                 }

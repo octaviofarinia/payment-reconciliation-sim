@@ -39,6 +39,11 @@ public final class LocalEnvironment implements AutoCloseable {
     private URI apiBaseUri;
     private Thread shutdownHook;
     private boolean closed;
+    private final java.util.concurrent.ExecutorService workerExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final java.util.concurrent.ConcurrentLinkedQueue<java.util.concurrent.Future<?>> workerInvocations = new java.util.concurrent.ConcurrentLinkedQueue<>();
+    private software.amazon.awssdk.services.s3.S3Client workerS3;
+    private java.net.http.HttpClient workerHttp;
+    private org.octavio.paymentreconciliationsim.worker.ReconciliationHandler workerHandler;
 
     public LocalEnvironment(String... extraArguments) {
         this(() -> DockerClientFactory.instance().isDockerAvailable(), extraArguments);
@@ -79,6 +84,24 @@ public final class LocalEnvironment implements AutoCloseable {
             context = application.run(arguments.toArray(String[]::new));
             int port = ((WebServerApplicationContext)context).getWebServer().getPort();
             apiBaseUri = URI.create("http://127.0.0.1:" + port);
+            // Explicit dummy credentials: never resolve the host's AWS configuration.
+            workerS3 = software.amazon.awssdk.services.s3.S3Client.builder()
+                    .region(software.amazon.awssdk.regions.Region.US_EAST_1).endpointOverride(s3Endpoint())
+                    .forcePathStyle(true).credentialsProvider(software.amazon.awssdk.auth.credentials.StaticCredentialsProvider.create(
+                            software.amazon.awssdk.auth.credentials.AwsBasicCredentials.create("acceptance", "acceptance"))).build();
+            workerHttp = java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(3)).build();
+            var configuration = new org.octavio.paymentreconciliationsim.worker.config.WorkerConfiguration(apiBaseUri, BUCKET, WORKER_TOKEN);
+            workerHandler = new org.octavio.paymentreconciliationsim.worker.ReconciliationHandler(
+                    new org.octavio.paymentreconciliationsim.worker.ProcessingService(configuration.bucket(),
+                            new org.octavio.paymentreconciliationsim.worker.http.WorkerApiClient(configuration.apiUri(), configuration.workerToken(), workerHttp),
+                            new org.octavio.paymentreconciliationsim.worker.storage.S3SettlementReader(workerS3),
+                            new org.octavio.paymentreconciliationsim.worker.csv.SettlementCsvParser(),
+                            new org.octavio.paymentreconciliationsim.worker.domain.ReconciliationComparator()));
+            s3.onUpload(upload -> workerInvocations.add(workerExecutor.submit(() -> invokeWorker(java.util.Map.of(
+                    "Records", java.util.List.of(java.util.Map.of("eventSource", "aws:s3", "eventName", "ObjectCreated:Put",
+                            "s3", java.util.Map.of("bucket", java.util.Map.of("name", upload.bucket()),
+                                    "object", java.util.Map.of("key", java.net.URLEncoder.encode(upload.key(), java.nio.charset.StandardCharsets.UTF_8),
+                                            "versionId", upload.versionId())))))))));
         } catch (RuntimeException | Error failure) {
             try { close(); } catch (RuntimeException cleanupFailure) { failure.addSuppressed(cleanupFailure); }
             throw failure;
@@ -95,8 +118,25 @@ public final class LocalEnvironment implements AutoCloseable {
     }
     public Clock clock() { return context.getBean(Clock.class); }
 
+    public void invokeWorker(java.util.Map<String,Object> event) { workerHandler.handleRequest(event, null); }
+
+    /** Upload callbacks are asynchronous; drain before reset/close to prohibit cross-scenario writes. */
+    public void awaitWorker() {
+        java.util.concurrent.Future<?> invocation;
+        while ((invocation = workerInvocations.poll()) != null) {
+            try { invocation.get(30, java.util.concurrent.TimeUnit.SECONDS); }
+            catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Local worker wait interrupted", interrupted);
+            } catch (java.util.concurrent.ExecutionException | java.util.concurrent.TimeoutException failure) {
+                throw new IllegalStateException("Local worker invocation failed", failure);
+            }
+        }
+    }
+
     /** Preserve startup-created indexes while removing every scenario's database and S3 data. */
     public void resetScenario() {
+        awaitWorker();
         for (String collection : mongoDatabase().listCollectionNames()) {
             mongoDatabase().getCollection(collection).deleteMany(new Document());
         }
@@ -111,8 +151,16 @@ public final class LocalEnvironment implements AutoCloseable {
         if (closed) return;
         closed = true;
         RuntimeException failure = null;
+        try { awaitWorker(); } catch (RuntimeException e) { failure = e; }
+        workerExecutor.shutdownNow();
+        if (workerHttp != null) {
+            try { workerHttp.close(); } catch (RuntimeException e) { failure = append(failure, e); }
+        }
+        if (workerS3 != null) {
+            try { workerS3.close(); } catch (RuntimeException e) { failure = append(failure, e); }
+        }
         if (context != null) {
-            try { context.close(); } catch (RuntimeException e) { failure = e; }
+            try { context.close(); } catch (RuntimeException e) { failure = append(failure, e); }
         }
         if (mongoClient != null) {
             try { mongoClient.close(); } catch (RuntimeException e) { failure = append(failure, e); }

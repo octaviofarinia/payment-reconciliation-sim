@@ -1,0 +1,16 @@
+{
+  "summary": {
+    "internalPurchaseCount": 0,
+    "settlementRowCount": 0,
+    "distinctSettlementReferenceCount": 0,
+    "totalResultCount": 0,
+    "outcomeCounts": {
+      "MATCHED": 0,
+      "MISSING_IN_SETTLEMENT": 0,
+      "MISSING_INTERNALLY": 0,
+      "AMOUNT_MISMATCH": 0,
+      "DUPLICATE": 0
+    }
+  },
+  "results": []
+}

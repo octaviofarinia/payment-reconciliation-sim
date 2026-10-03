@@ -1,0 +1,69 @@
+{
+  "summary": {
+    "internalPurchaseCount": 4,
+    "settlementRowCount": 4,
+    "distinctSettlementReferenceCount": 4,
+    "totalResultCount": 4,
+    "outcomeCounts": {
+      "MATCHED": 4,
+      "MISSING_IN_SETTLEMENT": 0,
+      "MISSING_INTERNALLY": 0,
+      "AMOUNT_MISMATCH": 0,
+      "DUPLICATE": 0
+    }
+  },
+  "results": [
+    {
+      "reference": "AMOUNT-001",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 40000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 2,
+          "reference": "AMOUNT-001",
+          "amountCentavos": 40000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-001",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 50000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 3,
+          "reference": "DUP-001",
+          "amountCentavos": 50000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-001",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 10000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 1,
+          "reference": "MATCH-001",
+          "amountCentavos": 10000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-001",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 20000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 4,
+          "reference": "MISS-001",
+          "amountCentavos": 20000
+        }
+      ]
+    }
+  ]
+}
