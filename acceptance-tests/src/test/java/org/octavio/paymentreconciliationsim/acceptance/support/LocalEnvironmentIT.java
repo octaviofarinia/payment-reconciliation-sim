@@ -29,17 +29,7 @@ class LocalEnvironmentIT {
             assertNotNull(mongoHelloResponse.getString("setName"));
             assertEquals(Instant.parse("2026-10-02T15:00:00Z"), environment.clock().instant());
             var collection = environment.mongoDatabase().getCollection("transactions");
-            collection.insertOne(new Document("_id", "baseline"));
-            try (var session = environment.mongoClient().startSession()) {
-                session.startTransaction();
-                collection.insertOne(session, new Document("_id", "committed"));
-                session.commitTransaction();
-                assertEquals(1, collection.countDocuments(new Document("_id", "committed")));
-                session.startTransaction();
-                collection.insertOne(session, new Document("_id", "aborted"));
-                session.abortTransaction();
-                assertEquals(0, collection.countDocuments(new Document("_id", "aborted")));
-            }
+            MongoTransactionProbe.assertCommitAndRollback(environment.mongoClient(), collection);
             environment.s3().store(LocalEnvironment.BUCKET, "fixture", new byte[]{1});
             environment.resetScenario();
             assertEquals(0, collection.countDocuments());

@@ -13,6 +13,7 @@ import io.cucumber.java.en.When;
 import io.cucumber.java.en.Then;
 import org.bson.Document;
 import org.octavio.paymentreconciliationsim.acceptance.support.LocalEnvironment;
+import org.octavio.paymentreconciliationsim.acceptance.support.MongoTransactionProbe;
 import org.octavio.paymentreconciliationsim.acceptance.support.ScenarioWorld;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -75,17 +76,6 @@ public final class EnvironmentSteps {
         var database = world.environment.mongoDatabase();
         assertNotNull(database.runCommand(new Document("hello", 1)).getString("setName"));
         var collection = database.getCollection("transaction_probe");
-        // Create collection outside transactions: no implicit DDL dependency in the probe.
-        collection.insertOne(new Document("_id", "baseline"));
-        try (var session = world.environment.mongoClient().startSession()) {
-            session.startTransaction();
-            collection.insertOne(session, new Document("_id", "committed"));
-            session.commitTransaction();
-            assertEquals(1, collection.countDocuments(new Document("_id", "committed")));
-            session.startTransaction();
-            collection.insertOne(session, new Document("_id", "aborted"));
-            session.abortTransaction();
-            assertEquals(0, collection.countDocuments(new Document("_id", "aborted")));
-        }
+        MongoTransactionProbe.assertCommitAndRollback(world.environment.mongoClient(), collection);
     }
 }
