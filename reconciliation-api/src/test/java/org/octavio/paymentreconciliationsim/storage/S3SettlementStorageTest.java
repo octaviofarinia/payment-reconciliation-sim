@@ -175,6 +175,6 @@ class S3SettlementStorageTest {
     }
     static RunMetadata run(ObjectIdentity object) {
         return new RunMetadata(UUID.fromString("aaaaaaaa-0000-0000-0000-000000000001"), "SIMULATED", "2026-10-01",
-                HASH, "v1", 3, KEY, Status.AWAITING_UPLOAD, object, null, null, NOW, NOW);
+                HASH, "v1", 3, KEY, Status.AWAITING_UPLOAD, object, null, null, NOW, NOW, false);
     }
 }

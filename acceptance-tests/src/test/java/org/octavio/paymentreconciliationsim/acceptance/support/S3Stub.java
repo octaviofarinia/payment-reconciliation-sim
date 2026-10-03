@@ -32,6 +32,9 @@ public final class S3Stub implements AutoCloseable {
     private volatile java.util.function.Consumer<UploadedObject> uploadListener = ignored -> {};
     public void onUpload(java.util.function.Consumer<UploadedObject> listener) { uploadListener = listener; }
     private URI endpoint;
+    private volatile boolean readsUnavailable;
+    public void failReads(boolean unavailable) { readsUnavailable=unavailable; }
+    public synchronized void remove(String bucket,String key,String version) { objects.get(new ObjectKey(bucket,key)).remove(version); }
 
     public void start() {
         server.start();
@@ -55,7 +58,7 @@ public final class S3Stub implements AutoCloseable {
         return object == null ? null : object.bytes().clone();
     }
 
-    public synchronized void reset() { objects.clear(); server.resetRequests(); }
+    public synchronized void reset() { objects.clear(); readsUnavailable=false; server.resetRequests(); }
     public void close() { server.stop(); }
 
     private StoredObject lookup(String bucket, String key, String version) {
@@ -128,6 +131,10 @@ public final class S3Stub implements AutoCloseable {
         public boolean applyGlobally() { return false; }
         public ResponseDefinition transform(ServeEvent event) {
             var request = event.getRequest();
+            if (readsUnavailable && ("GET".equals(request.getMethod().getName()) || "HEAD".equals(request.getMethod().getName()))) {
+                return aResponse().withStatus(503).withHeader("Content-Type","application/xml")
+                        .withBody("<Error><Code>ServiceUnavailable</Code></Error>").build();
+            }
             URI uri = URI.create(request.getUrl());
             String[] path = uri.getRawPath().split("/", 3);
             if (path.length == 2 && request.queryParameter("versions").isPresent()

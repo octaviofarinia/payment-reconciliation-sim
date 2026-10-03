@@ -99,7 +99,7 @@ public class RunService {
   if(object==null || object.bucket()==null || object.bucket().isEmpty() || !run.objectKey().equals(object.key()) || object.versionId()==null || object.versionId().isEmpty() || !run.sha256().equals(object.sha256()))throw conflict();
  }
  private RunMetadata metadata(ReconciliationRun run){
-  return new RunMetadata(UUID.fromString(run.runId()),run.source(),run.businessDate(),run.sha256(),run.rulesVersion(),run.byteLength(),run.objectKey(),run.status(),run.objectIdentity(),run.error(),run.report()==null?null:run.report().summary(),run.createdAt(),run.updatedAt());
+  return new RunMetadata(UUID.fromString(run.runId()),run.source(),run.businessDate(),run.sha256(),run.rulesVersion(),run.byteLength(),run.objectKey(),run.status(),run.objectIdentity(),run.error(),run.report()==null?null:run.report().summary(),run.createdAt(),run.updatedAt(),run.status()!=Status.COMPLETED && run.updatedAt().isBefore(clock.instant().minus(Duration.ofMinutes(20))));
  }
  private ReconciliationRun required(UUID id){
   var run=repository.find(id.toString());if(run==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Unknown reconciliation run");return run;

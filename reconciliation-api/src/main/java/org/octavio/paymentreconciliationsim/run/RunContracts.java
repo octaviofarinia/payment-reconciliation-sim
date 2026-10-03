@@ -16,9 +16,10 @@ public final class RunContracts {
  public record Summary(int internalPurchaseCount,int settlementRowCount,int distinctSettlementReferenceCount,int totalResultCount,Map<Outcome,Integer> outcomeCounts){}
  public record ReportSubmission(InputIdentity inputIdentity,Summary summary,List<Result> results){}
  public record FailureSubmission(String code,boolean retriable,String attemptId){}
- public record RunMetadata(UUID runId,String source,String businessDate,String sha256,String rulesVersion,long byteLength,String objectKey,Status status,ObjectIdentity objectIdentity,FailureSubmission error,Summary summary,Instant createdAt,Instant updatedAt){}
+ public record RunMetadata(UUID runId,String source,String businessDate,String sha256,String rulesVersion,long byteLength,String objectKey,Status status,ObjectIdentity objectIdentity,FailureSubmission error,Summary summary,Instant createdAt,Instant updatedAt,boolean recoveryNeeded){}
  public record RunInput(UUID runId,String source,String businessDate,String sha256,String rulesVersion,ObjectIdentity objectIdentity,List<PurchaseInput> purchases){}
  public record RegistrationResult(UUID runId,String objectKey,Status status,UploadInstructions uploadInstructions,boolean created){}
+ public record ReprocessResult(boolean accepted,RunMetadata run){}
  public record PublicationResult(boolean published,RunMetadata run){}
  public record ResultPage(int page,int size,long totalResults,List<Result> results){}
 }

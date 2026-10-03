@@ -168,4 +168,17 @@ class RunServiceTest {
   when(repository.find(ID.toString())).thenReturn(run(Status.PROCESSING,OBJECT,null),run(Status.COMPLETED,OBJECT,report(OBJECT)));
   status(409,()->service.markProcessing(ID,other));
  }
+
+ @Test void incompleteStatusIsStaleOnlyStrictlyBeyondTwentyMinutes() {
+  var json=tools.jackson.databind.json.JsonMapper.builder().build();
+  for(var status:Status.values()) {
+   var stored=run(status,OBJECT,status==Status.COMPLETED?report(OBJECT):null);
+   when(repository.find(ID.toString())).thenReturn(stored);
+   for(long elapsed:List.of(1199999L,1200000L,1200001L)) {
+    var timed=new RunService(repository,dates,Clock.fixed(NOW.plusMillis(elapsed),ZoneOffset.UTC),new ReportValidator(),new ReportCanonicalizer(),storage);
+    var view=json.valueToTree(timed.metadata(ID));
+    assertEquals(status!=Status.COMPLETED && elapsed>1200000L,view.path("recoveryNeeded").asBoolean());
+   }
+  }
+ }
 }

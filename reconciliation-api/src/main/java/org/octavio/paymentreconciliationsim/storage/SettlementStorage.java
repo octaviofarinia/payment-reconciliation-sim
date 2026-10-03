@@ -10,7 +10,7 @@ import org.octavio.paymentreconciliationsim.run.RunContracts.RunMetadata;
 public interface SettlementStorage {
     UploadInstructions upload(String objectKey, String sha256, long byteLength);
 
-    /** Empty means the registered input must be uploaded again; never replaces an existing binding. */
+    /** Empty means no verified original is available; never replaces an existing binding. */
     Optional<ObjectIdentity> recoverUploadedVersion(RunMetadata run);
 
     record UploadInstructions(String url, Map<String, String> requiredHeaders, Instant expiresAt) {}

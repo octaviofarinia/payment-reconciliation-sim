@@ -29,30 +29,68 @@ public final class ProcessingService {
           new S3SettlementReader(s3),new SettlementCsvParser(),new ReconciliationComparator());
  }
  public void process(ObjectReference reference,AttemptContext attempt) {
-  Metadata metadata;
-  try { metadata = api.metadata(reference.runId()); }
-  catch (ApiFailure failure) {
-   if (failure.status() == 404) throw new InputRejected("UNREGISTERED_OBJECT");
-   throw failure;
-  }
-  var identity = new ObjectIdentity(reference.bucket(),reference.key(),reference.versionId(),metadata.sha256());
-  if (!metadata.runId().equals(reference.runId()) || !bucket.equals(reference.bucket())
-          || !metadata.objectKey().equals(reference.key())
-          || (metadata.objectIdentity() != null && !identity.equals(metadata.objectIdentity()))) throw new InputRejected("INPUT_IDENTITY_MISMATCH");
+  Metadata metadata=null;
+  String errorCode=null;
   try {
-   byte[] bytes = storage.read(reference,metadata.byteLength(),metadata.sha256());
-   api.processing(reference.runId(),identity);
-   var input = api.input(reference.runId());
-   var expected = new InputIdentity(metadata.source(),metadata.businessDate(),metadata.sha256(),metadata.rulesVersion(),identity);
-   var actual = new InputIdentity(input.source(),input.businessDate(),input.sha256(),input.rulesVersion(),input.objectIdentity());
-   if (!reference.runId().equals(input.runId()) || !expected.equals(actual)) throw new IllegalStateException("Worker API input identity changed");
-   var rows = parser.parse(new ByteArrayInputStream(bytes),LocalDate.parse(metadata.businessDate()));
-   var report = comparator.compare(input.purchases(),rows);
-   api.publish(reference.runId(),new ReportSubmission(expected,report.summary(),report.results()));
-  } catch (SettlementValidationException invalid) {
-   api.failure(reference.runId(),new FailureSubmission(invalid.code(),false,attempt.attemptId()));
-  } catch (InputRejected invalid) {
-   api.failure(reference.runId(),new FailureSubmission(invalid.code(),false,attempt.attemptId()));
-  } catch (IOException failure) { throw new IllegalStateException("Worker object transport failure"); }
+   try {
+    metadata=api.metadata(reference.runId());
+   } catch(ApiFailure failure) {
+    if(failure.status()==404) throw new InputRejected("UNREGISTERED_OBJECT");
+    throw failure;
+   }
+   var identity=new ObjectIdentity(reference.bucket(),reference.key(),reference.versionId(),metadata.sha256());
+   if(!metadata.runId().equals(reference.runId()) || !bucket.equals(reference.bucket())
+       || !metadata.objectKey().equals(reference.key())
+       || (metadata.objectIdentity()!=null && !identity.equals(metadata.objectIdentity()))) {
+    throw new InputRejected("INPUT_IDENTITY_MISMATCH");
+   }
+   try {
+    byte[] bytes=storage.read(reference,metadata.byteLength(),metadata.sha256());
+    api.processing(reference.runId(),identity);
+    var input=api.input(reference.runId());
+    var expected=new InputIdentity(metadata.source(),metadata.businessDate(),metadata.sha256(),metadata.rulesVersion(),identity);
+    var actual=new InputIdentity(input.source(),input.businessDate(),input.sha256(),input.rulesVersion(),input.objectIdentity());
+    if(!reference.runId().equals(input.runId()) || !expected.equals(actual)) {
+     throw new IllegalStateException("Worker API input identity changed");
+    }
+    var rows=parser.parse(new ByteArrayInputStream(bytes),LocalDate.parse(metadata.businessDate()));
+    var report=comparator.compare(input.purchases(),rows);
+    api.publish(reference.runId(),new ReportSubmission(expected,report.summary(),report.results()));
+   } catch(SettlementValidationException invalid) {
+    errorCode=invalid.code();
+    api.failure(reference.runId(),new FailureSubmission(errorCode,false,attempt.attemptId()));
+   } catch(InputRejected invalid) {
+    errorCode=invalid.code();
+    api.failure(reference.runId(),new FailureSubmission(errorCode,false,attempt.attemptId()));
+   } catch(IOException failure) {
+    errorCode="OBJECT_TRANSPORT_FAILURE";
+    transientFailure(reference,attempt,errorCode);
+    throw new IllegalStateException("Worker object transport failure");
+   } catch(ApiFailure | WorkerTransportFailure failure) {
+    errorCode="API_FAILURE";
+    transientFailure(reference,attempt,errorCode);
+    throw failure;
+   } catch(software.amazon.awssdk.core.exception.SdkException failure) {
+    errorCode="S3_FAILURE";
+    transientFailure(reference,attempt,errorCode);
+    throw new IllegalStateException("Worker object transport failure");
+   }
+  } catch(InputRejected invalid) {
+   errorCode=invalid.code();
+   throw invalid;
+  } catch(RuntimeException failure) {
+   if(errorCode==null) errorCode="RETRY_REQUIRED";
+   throw failure;
+  } finally {
+   System.out.println(WorkerDiagnostics.message(reference,metadata,attempt,errorCode));
+  }
+ }
+
+ private void transientFailure(ObjectReference reference,AttemptContext attempt,String code) {
+  try {
+   api.failure(reference.runId(),new FailureSubmission(code,true,attempt.attemptId()));
+  } catch(RuntimeException unavailable) {
+   // Preserve the failed invocation when its diagnostic callback cannot be recorded.
+  }
  }
 }

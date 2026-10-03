@@ -70,7 +70,13 @@ public final class LocalEnvironment implements AutoCloseable {
             mongoClient = MongoClients.create(mongo.getReplicaSetUrl(databaseName));
             s3.start();
             var application = new SpringApplication(PaymentReconciliationSimApplication.class, FixedClockConfiguration.class);
-            application.addInitializers(initialized -> context = initialized);
+            application.addInitializers(initialized -> {
+                context = initialized;
+                initialized.getBeanFactory().registerSingleton("localLambdaInvoker",
+                    (org.octavio.paymentreconciliationsim.worker.LambdaInvoker) invocation -> enqueueWorker(java.util.Map.of(
+                        "runId",invocation.runId().toString(),"bucket",invocation.bucket(),
+                        "key",invocation.key(),"versionId",invocation.versionId())));
+            });
             application.addListeners((ApplicationListener<WebServerInitializedEvent>) event ->
                     apiBaseUri = URI.create("http://127.0.0.1:" + event.getWebServer().getPort()));
             var arguments = new java.util.ArrayList<String>();
@@ -100,11 +106,11 @@ public final class LocalEnvironment implements AutoCloseable {
                             new org.octavio.paymentreconciliationsim.worker.storage.S3SettlementReader(workerS3),
                             new org.octavio.paymentreconciliationsim.worker.csv.SettlementCsvParser(),
                             new org.octavio.paymentreconciliationsim.worker.domain.ReconciliationComparator()));
-            s3.onUpload(upload -> workerInvocations.add(workerExecutor.submit(() -> invokeWorker(java.util.Map.of(
+            s3.onUpload(upload -> enqueueWorker(java.util.Map.of(
                     "Records", java.util.List.of(java.util.Map.of("eventSource", "aws:s3", "eventName", "ObjectCreated:Put",
                             "s3", java.util.Map.of("bucket", java.util.Map.of("name", upload.bucket()),
                                     "object", java.util.Map.of("key", java.net.URLEncoder.encode(upload.key(), java.nio.charset.StandardCharsets.UTF_8),
-                                            "versionId", upload.versionId())))))))));
+                                            "versionId", upload.versionId())))))));
         } catch (RuntimeException | Error failure) {
             try { close(); } catch (RuntimeException cleanupFailure) { failure.addSuppressed(cleanupFailure); }
             throw failure;
@@ -120,6 +126,11 @@ public final class LocalEnvironment implements AutoCloseable {
         return context.getBean(org.octavio.paymentreconciliationsim.storage.SettlementStorage.class);
     }
     public Clock clock() { return context.getBean(Clock.class); }
+
+    private void enqueueWorker(java.util.Map<String,Object> event) {
+        if (closed) throw new IllegalStateException("The local environment is already closed");
+        workerInvocations.add(workerExecutor.submit(() -> invokeWorker(event)));
+    }
 
     public void invokeWorker(java.util.Map<String,Object> event) { workerHandler.handleRequest(event, null); }
 

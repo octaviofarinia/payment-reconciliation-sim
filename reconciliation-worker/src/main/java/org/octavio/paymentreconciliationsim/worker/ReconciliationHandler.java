@@ -13,21 +13,19 @@ public final class ReconciliationHandler implements RequestHandler<Map<String,Ob
   String requestId = context == null ? null : context.getAwsRequestId();
   var attempt = new AttemptContext(requestId == null ? UUID.randomUUID().toString() : requestId,Instant.now());
   boolean retry = false;
-  int index = 0;
   for (var invocation : parser.parse(event)) {
-   if (invocation.error() != null) log(context,attempt,index,invocation.error());
+   if (invocation.error() != null) log(context,attempt,invocation.reference(),invocation.error());
    else {
     try { processing.process(invocation.reference(),attempt); }
-    catch (InputRejected rejected) { log(context,attempt,index,rejected.code()); }
-    catch (RuntimeException failure) { retry = true; log(context,attempt,index,"RETRY_REQUIRED"); }
+    catch (InputRejected rejected) { log(context,attempt,invocation.reference(),rejected.code()); }
+    catch (RuntimeException failure) { retry = true; log(context,attempt,invocation.reference(),"RETRY_REQUIRED"); }
    }
-   index++;
   }
   if (retry) throw new IllegalStateException("Worker invocation failed; retry required");
   return null;
  }
- private static void log(Context context,AttemptContext attempt,int record,String code) {
-  String message = "attemptId=" + attempt.attemptId() + " record=" + record + " code=" + code + "\n";
+ private static void log(Context context,AttemptContext attempt,org.octavio.paymentreconciliationsim.worker.event.ObjectReference reference,String code) {
+  String message = WorkerDiagnostics.message(reference,null,attempt,code) + "\n";
   if (context == null) System.out.print(message);
   else context.getLogger().log(message);
  }

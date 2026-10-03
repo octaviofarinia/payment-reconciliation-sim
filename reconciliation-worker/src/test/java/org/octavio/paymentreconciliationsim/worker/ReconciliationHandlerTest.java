@@ -14,7 +14,7 @@ class ReconciliationHandlerTest {
   var context=mock(Context.class);var logger=mock(LambdaLogger.class);
   when(context.getAwsRequestId()).thenReturn("attempt-1");when(context.getLogger()).thenReturn(logger);
   handler.handleRequest(Map.of("unexpected",true),context);
-  verify(logger).log("attemptId=attempt-1 record=0 code=INVALID_INVOCATION\n");verifyNoInteractions(processing);
+  assertDiagnostic(logger,"attempt-1","INVALID_INVOCATION",null);verifyNoInteractions(processing);
  }
  @Test void invocationWithoutLambdaContextStillRejectsSafely(){assertNull(handler.handleRequest(Map.of(),null));verifyNoInteractions(processing);}
  @Test void deployableNoArgEntrypointBuildsCloudServiceAndProcessesManualInvocation(){
@@ -28,7 +28,7 @@ class ReconciliationHandlerTest {
  @Test void deterministicRejectionEndsNormallyWithCorrelatedCode(){
   var context=mock(Context.class);var logger=mock(LambdaLogger.class);when(context.getAwsRequestId()).thenReturn("attempt");when(context.getLogger()).thenReturn(logger);
   doThrow(new InputRejected("UNREGISTERED_OBJECT")).when(processing).process(any(),any());
-  assertNull(handler.handleRequest(event(),context));verify(logger).log("attemptId=attempt record=0 code=UNREGISTERED_OBJECT\n");
+  assertNull(handler.handleRequest(event(),context));assertDiagnostic(logger,"attempt","UNREGISTERED_OBJECT",ID);
  }
  @Test void batchContinuesAllRecordsThenFailsForRetryWithoutLeakingTransportDetails(){
   String other="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
@@ -37,5 +37,13 @@ class ReconciliationHandlerTest {
   var failure=assertThrows(IllegalStateException.class,()->handler.handleRequest(Map.of("Records",List.of(record(ID),Map.of(),record(other))),context));
   assertEquals("Worker invocation failed; retry required",failure.getMessage());assertNull(failure.getCause());
   verify(processing).process(argThat(ref->ref.runId().equals(other)),any());verify(processing,times(2)).process(any(),any());
+ }
+
+ static void assertDiagnostic(LambdaLogger logger,String attempt,String code,String run) {
+  var capture=org.mockito.ArgumentCaptor.forClass(String.class);verify(logger).log(capture.capture());
+  var log=tools.jackson.databind.json.JsonMapper.builder().build().readTree(capture.getValue());
+  assertEquals(attempt,log.get("attemptId").stringValue());assertEquals(code,log.get("errorCode").stringValue());
+  if(run==null) assertTrue(log.get("runId").isNull());else assertEquals(run,log.get("runId").stringValue());
+  assertTrue(log.get("durationMillis").longValue()>=0);
  }
 }

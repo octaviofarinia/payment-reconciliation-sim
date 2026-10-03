@@ -10,10 +10,19 @@ import static org.octavio.paymentreconciliationsim.run.RunContracts.*;
 @RequestMapping("/api/v1/reconciliation-runs")
 public class RunController {
  private final RunService service;
- public RunController(RunService service){this.service=service;}
+ private final RecoveryService recovery;
+ public RunController(RunService service,RecoveryService recovery){this.service=service;this.recovery=recovery;}
  @PostMapping(consumes="application/json")
  public ResponseEntity<RegistrationResult> register(@RequestBody JsonNode body){
   var registered=service.register(RunRequestDecoder.registration(body));return ResponseEntity.status(registered.created()?201:200).body(registered);
+ }
+ @ExceptionHandler(RecoveryService.RecoveryConflict.class)
+ public ResponseEntity<org.springframework.http.ProblemDetail> recoveryConflict(RecoveryService.RecoveryConflict conflict){
+  return ResponseEntity.status(conflict.getStatusCode()).body(conflict.getBody());
+ }
+ @PostMapping("/{runId}/reprocess")
+ public ResponseEntity<RunMetadata> reprocess(@PathVariable UUID runId){
+  var result=recovery.reprocess(runId);return ResponseEntity.status(result.accepted()?202:200).body(result.run());
  }
  @GetMapping public List<RunMetadata> list(@RequestParam String businessDate){return service.list(PurchaseRequestDecoder.parseDate(businessDate));}
  @GetMapping("/{runId}") public RunMetadata metadata(@PathVariable UUID runId){return service.metadata(runId);}

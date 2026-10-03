@@ -50,8 +50,8 @@ class ProcessingServiceTest {
   verify(api).failure(ID,new FailureSubmission("OBJECT_CHECKSUM_MISMATCH",false,"attempt"));verify(api,never()).processing(anyString(),any());verify(api,never()).publish(anyString(),any());
  }
  @Test void callbackAndTransportFailuresRemainInvocationFailures()throws Exception{
-  setup();when(storage.read(ref,csv.length(),HASH)).thenThrow(new IOException("transport"));assertEquals("Worker object transport failure",assertThrows(IllegalStateException.class,()->service.process(ref,attempt)).getMessage());verify(api,never()).failure(anyString(),any());
-  reset(api,storage);setup();doThrow(new ApiFailure(503)).when(api).publish(eq(ID),any());assertThrows(ApiFailure.class,()->service.process(ref,attempt));verify(api,never()).failure(anyString(),any());
+  setup();when(storage.read(ref,csv.length(),HASH)).thenThrow(new IOException("transport"));assertEquals("Worker object transport failure",assertThrows(IllegalStateException.class,()->service.process(ref,attempt)).getMessage());verify(api).failure(ID,new FailureSubmission("OBJECT_TRANSPORT_FAILURE",true,"attempt"));
+  reset(api,storage);setup();doThrow(new ApiFailure(503)).when(api).publish(eq(ID),any());assertThrows(ApiFailure.class,()->service.process(ref,attempt));verify(api).failure(ID,new FailureSubmission("API_FAILURE",true,"attempt"));
   reset(api,storage);setup();when(storage.read(ref,csv.length(),HASH)).thenReturn("invalid\n".getBytes());doThrow(new ApiFailure(503)).when(api).failure(eq(ID),any());assertThrows(ApiFailure.class,()->service.process(ref,attempt));
  }
  @Test void changedCompleteInputIsNeverPublished()throws Exception{
@@ -69,5 +69,48 @@ class ProcessingServiceTest {
    factory.when(S3Client::builder).thenReturn(builder);assertNotNull(ProcessingService.cloud(env));verify(builder).region(software.amazon.awssdk.regions.Region.US_EAST_1);
   }
   assertThrows(IllegalArgumentException.class,()->ProcessingService.cloud(Map.of()));
+ }
+
+ @Test void diagnosticsCorrelateSuccessfulAndFailedAttemptsWithoutRawTransportOrSecrets() throws Exception {
+  setup();
+  var bytes=new ByteArrayOutputStream();
+  var previous=System.out;
+  try(var output=new PrintStream(bytes)) {
+   System.setOut(output);
+   service.process(ref,attempt);
+   doThrow(new ApiFailure(503)).when(api).publish(eq(ID),any());
+   assertThrows(ApiFailure.class,()->service.process(ref,attempt));
+  } finally { System.setOut(previous); }
+  var lines=bytes.toString().lines().toList();
+  assertEquals(2,lines.size());
+  var json=tools.jackson.databind.json.JsonMapper.builder().build();
+  for(var line:lines) {
+   var log=json.readTree(line);
+   assertEquals(ID,log.get("runId").stringValue());
+   assertEquals("2026-10-01",log.get("businessDate").stringValue());
+   assertEquals("version",log.get("versionId").stringValue());
+   assertEquals("v1",log.get("rulesVersion").stringValue());
+   assertEquals("attempt",log.get("attemptId").stringValue());
+   assertTrue(log.get("durationMillis").longValue()>=0);
+  }
+  assertTrue(json.readTree(lines.getFirst()).get("errorCode").isNull());
+  assertEquals("API_FAILURE",json.readTree(lines.getLast()).get("errorCode").stringValue());
+ }
+
+ @Test void transientSdkAndApiTransportFailuresRecordStableRetryableCodesEvenWhenCallbackIsLost() throws Exception {
+  setup();when(storage.read(ref,csv.length(),HASH)).thenThrow(software.amazon.awssdk.core.exception.SdkClientException.create("raw secret"));
+  assertEquals("Worker object transport failure",assertThrows(IllegalStateException.class,()->service.process(ref,attempt)).getMessage());
+  verify(api).failure(ID,new FailureSubmission("S3_FAILURE",true,"attempt"));
+  reset(api,storage);setup();
+  doThrow(new WorkerTransportFailure("Worker API transport failure")).when(api).input(ID);
+  doThrow(new ApiFailure(503)).when(api).failure(eq(ID),any());
+  assertInstanceOf(WorkerTransportFailure.class,assertThrows(IllegalStateException.class,()->service.process(ref,attempt)));
+  verify(api).failure(ID,new FailureSubmission("API_FAILURE",true,"attempt"));
+ }
+ @Test void diagnosticNamespaceIsNoninstantiableAndEscapesCorrelationFields() throws Exception {
+  var constructor=WorkerDiagnostics.class.getDeclaredConstructor();constructor.setAccessible(true);assertNotNull(constructor.newInstance());
+  var value=WorkerDiagnostics.message(null,null,new AttemptContext("attempt\\\"escaped",Instant.now().plusSeconds(10)),"INVALID_INVOCATION");
+  var json=tools.jackson.databind.json.JsonMapper.builder().build().readTree(value);
+  assertEquals("attempt\\\"escaped",json.get("attemptId").stringValue());assertEquals(0,json.get("durationMillis").longValue());
  }
 }

@@ -56,36 +56,68 @@ class WorkerRetryIT {
    assertEquals(JSON.readTree(completed),JSON.readTree(request("GET","/api/v1/reconciliation-runs/"+id,null).body()));
    var results=JSON.readTree(request("GET","/api/v1/reconciliation-runs/"+id+"/results?size=100",null).body()).get("results");
    assertEquals(JSON.readTree(fixture("canonical-expected.json")).get("results"),results);
-   assertEquals(2,proxy.publications);assertEquals(0,proxy.failureCallbacks);
+   assertEquals(2,proxy.publications);assertEquals(1,proxy.failureCallbacks);
    assertEquals(version,JSON.readTree(completed).get("objectIdentity").get("versionId").stringValue());
    assertEquals(1,env.mongoDatabase().getCollection("reconciliation_runs").countDocuments());
   }
  }
  static final class FaultProxy implements AutoCloseable {
-  final com.sun.net.httpserver.HttpServer server;final HttpClient http=HttpClient.newHttpClient();
-  volatile boolean unavailable=true,losePublication=true;volatile int publications,failureCallbacks;
-  FaultProxy(URI target)throws Exception{
+  final com.sun.net.httpserver.HttpServer server;
+  final HttpClient http=HttpClient.newHttpClient();
+  volatile boolean unavailable=true;
+  volatile boolean losePublication=true;
+  volatile boolean failureUnavailable;
+  volatile boolean inputUnavailable;
+  volatile int publications;
+  volatile int failureCallbacks;
+
+  FaultProxy(URI target) throws Exception {
    server=com.sun.net.httpserver.HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
-   server.createContext("/",exchange->{
-    try{
+   server.createContext("/",exchange -> {
+    try {
      String path=exchange.getRequestURI().getPath();
-     if(path.endsWith("/failure"))failureCallbacks++;
-     if(unavailable){exchange.sendResponseHeaders(503,-1);return;}
+     if(path.endsWith("/failure")) {
+      failureCallbacks++;
+     }
+     if(unavailable || (failureUnavailable && path.endsWith("/failure"))
+         || (inputUnavailable && path.endsWith("/input"))) {
+      exchange.sendResponseHeaders(503,-1);
+      return;
+     }
      byte[] body=exchange.getRequestBody().readAllBytes();
-     var forwarded=HttpRequest.newBuilder(target.resolve(path)).header("Content-Type","application/json").header("Authorization","Bearer "+LocalEnvironment.WORKER_TOKEN)
-      .method(exchange.getRequestMethod(),HttpRequest.BodyPublishers.ofByteArray(body)).build();
+     var forwarded=HttpRequest.newBuilder(target.resolve(path))
+       .header("Content-Type","application/json")
+       .header("Authorization","Bearer "+LocalEnvironment.WORKER_TOKEN)
+       .method(exchange.getRequestMethod(),HttpRequest.BodyPublishers.ofByteArray(body)).build();
      var result=http.send(forwarded,HttpResponse.BodyHandlers.ofByteArray());
-     if(path.endsWith("/results")&&exchange.getRequestMethod().equals("PUT")){
+     if(path.endsWith("/results") && exchange.getRequestMethod().equals("PUT")) {
       publications++;
-      if(losePublication){losePublication=false;assertEquals(200,result.statusCode());exchange.sendResponseHeaders(503,-1);return;}
+      if(losePublication) {
+       losePublication=false;
+       assertEquals(200,result.statusCode());
+       exchange.sendResponseHeaders(503,-1);
+       return;
+      }
      }
      exchange.sendResponseHeaders(result.statusCode(),result.body().length==0?-1:result.body().length);
      exchange.getResponseBody().write(result.body());
-    }catch(InterruptedException failure){Thread.currentThread().interrupt();throw new java.io.IOException(failure);}
-    finally{exchange.close();}
-   });server.start();
+    } catch(InterruptedException failure) {
+     Thread.currentThread().interrupt();
+     throw new java.io.IOException(failure);
+    } finally {
+     exchange.close();
+    }
+   });
+   server.start();
   }
-  URI uri(){return URI.create("http://127.0.0.1:"+server.getAddress().getPort());}
-  public void close(){server.stop(0);http.close();}
+
+  URI uri() {
+   return URI.create("http://127.0.0.1:"+server.getAddress().getPort());
+  }
+
+  @Override public void close() {
+   server.stop(0);
+   http.close();
+  }
  }
 }

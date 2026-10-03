@@ -22,6 +22,9 @@ public final class WorkerApiClient {
   public ApiFailure(int status) { super("Worker API returned HTTP " + status); this.status = status; }
   public int status() { return status; }
  }
+ public static final class WorkerTransportFailure extends IllegalStateException {
+  public WorkerTransportFailure(String message) { super(message); }
+ }
  private final URI baseUri;
  private final String token;
  private final HttpClient http;
@@ -48,10 +51,10 @@ public final class WorkerApiClient {
           .method(method,body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body))).build();
   HttpResponse<String> response;
   try { response = http.send(request,HttpResponse.BodyHandlers.ofString()); }
-  catch (IOException failure) { throw new IllegalStateException("Worker API transport failure"); }
+  catch (IOException failure) { throw new WorkerTransportFailure("Worker API transport failure"); }
   catch (InterruptedException interrupted) {
    Thread.currentThread().interrupt();
-   throw new IllegalStateException("Worker API interrupted");
+   throw new WorkerTransportFailure("Worker API interrupted");
   }
   if (response.statusCode() < 200 || response.statusCode() >= 300) throw new ApiFailure(response.statusCode());
   return response.body();
