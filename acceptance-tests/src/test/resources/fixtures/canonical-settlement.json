@@ -1,0 +1,37 @@
+[
+  {
+    "rowNumber": 1,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-001",
+    "amountCentavos": 10000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 2,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-001",
+    "amountCentavos": 30000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 3,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-001",
+    "amountCentavos": 45000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 4,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-001",
+    "amountCentavos": 50000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 5,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-001",
+    "amountCentavos": 50000,
+    "currency": "ARS"
+  }
+]
