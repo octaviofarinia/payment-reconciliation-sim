@@ -48,14 +48,4 @@ class RunControllerTest {
   var second=controller.reprocess(RunServiceTest.ID);assertEquals(200,second.getStatusCode().value());assertEquals(metadata,second.getBody());
  }
 
- @Test void recoveryConflictsExposeOnlyStableProblemDetailsAndCodes() {
-  var controller=new RunController(mock(RunService.class),mock(RecoveryService.class));
-  var conflict=new RecoveryService.RecoveryConflict("UPLOAD_NEEDED","Upload needed: no verified retained settlement input");
-  var response=controller.recoveryConflict(conflict);
-  assertEquals(409,response.getStatusCode().value());assertSame(conflict.getBody(),response.getBody());
-  assertEquals(409,response.getBody().getStatus());assertEquals("Conflict",response.getBody().getTitle());
-  assertEquals(java.net.URI.create("about:blank"),response.getBody().getType());
-  assertEquals("Upload needed: no verified retained settlement input",response.getBody().getDetail());
-  assertEquals(Map.of("code","UPLOAD_NEEDED"),response.getBody().getProperties());
- }
 }

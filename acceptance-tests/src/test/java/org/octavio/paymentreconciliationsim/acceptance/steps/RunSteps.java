@@ -10,7 +10,7 @@ public final class RunSteps {
  private final ScenarioWorld world;private final JsonMapper json=JsonMapper.builder().build();
  public RunSteps(ScenarioWorld world){this.world=world;}
  private void request(String method,String path,String body)throws Exception{
-  try(var client=HttpClient.newHttpClient()){world.response=client.send(HttpRequest.newBuilder(world.environment.apiBaseUri().resolve(path)).timeout(Duration.ofSeconds(20)).header("Content-Type","application/json").header("Authorization","Bearer "+LocalEnvironment.WORKER_TOKEN).method(method,body==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofByteArray());}
+  try(var client=HttpClient.newHttpClient()){world.response=client.send(HttpRequest.newBuilder(world.environment.apiBaseUri().resolve(path)).timeout(Duration.ofSeconds(20)).header("Content-Type","application/json").header("Authorization","Bearer "+(path.startsWith("/internal/")?LocalEnvironment.WORKER_TOKEN:LocalEnvironment.DEMO_TOKEN)).method(method,body==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofByteArray());}
  }
  private String fixture(String name)throws Exception{try(var input=getClass().getResourceAsStream("/fixtures/"+name)){assertNotNull(input);return new String(input.readAllBytes(),StandardCharsets.UTF_8);}}
  @When("I register the prepared canonical settlement")

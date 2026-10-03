@@ -80,9 +80,9 @@ class RecoveryIT extends WorkerRetryIT {
   env.s3().store(LocalEnvironment.BUCKET,run.key(),fixture("header-only.csv").getBytes(StandardCharsets.UTF_8));
   var conflict=request("POST",run.path()+"/reprocess","{}");
   assertEquals(409,conflict.statusCode());
-  assertEquals("Original bound settlement version is unavailable; replacement is forbidden",JSON.readTree(conflict.body()).path("detail").asText());
+  assertEquals("Original bound settlement version is unavailable; replacement is forbidden",JSON.readTree(conflict.body()).path("message").asText());
   assertEquals("ORIGINAL_UNAVAILABLE",JSON.readTree(conflict.body()).path("code").asText());
-  assertEquals(run.path()+"/reprocess",JSON.readTree(conflict.body()).path("instance").asText());
+  ApiBoundaryIT.error(conflict,409,"ORIGINAL_UNAVAILABLE","Original bound settlement version is unavailable; replacement is forbidden");
   assertEquals(run.version(),JSON.readTree(request("GET",run.path(),null).body()).get("objectIdentity").get("versionId").stringValue());
   var completed=prepare(true);env.invokeWorker(completed.event());
   String before=request("GET",completed.path(),null).body();
@@ -94,10 +94,9 @@ class RecoveryIT extends WorkerRetryIT {
   var run=prepare(false);
   var conflict=request("POST",run.path()+"/reprocess","{}");
   assertEquals(409,conflict.statusCode());
-  assertEquals("Upload needed: no verified retained settlement input",JSON.readTree(conflict.body()).path("detail").asText());
+  assertEquals("Upload needed: no verified retained settlement input",JSON.readTree(conflict.body()).path("message").asText());
   assertEquals("UPLOAD_NEEDED",JSON.readTree(conflict.body()).path("code").asText());
-  assertEquals("about:blank",JSON.readTree(conflict.body()).path("type").asText());
-  assertTrue(conflict.headers().firstValue("Content-Type").orElseThrow().startsWith("application/problem+json"));
+  ApiBoundaryIT.error(conflict,409,"UPLOAD_NEEDED","Upload needed: no verified retained settlement input");
   var collection=env.mongoDatabase().getCollection("reconciliation_runs");
   for(long elapsed:List.of(1200000L,1200001L)) {
    collection.updateOne(new org.bson.Document("_id",run.id()),new org.bson.Document("$set",

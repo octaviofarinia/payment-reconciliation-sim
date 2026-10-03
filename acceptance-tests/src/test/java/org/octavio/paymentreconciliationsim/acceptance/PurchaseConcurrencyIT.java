@@ -64,7 +64,7 @@ class PurchaseConcurrencyIT {
   assertEquals(201,post("/api/v1/transactions",valid).statusCode());
   assertEquals(201,post("/api/v1/transactions",purchase("valid","2026-10-01","1")).statusCode());
   for(String method:List.of("PUT","DELETE"))
-   assertEquals(405,client.send(HttpRequest.newBuilder(env.apiBaseUri().resolve("/api/v1/transactions")).method(method,HttpRequest.BodyPublishers.noBody()).build(),HttpResponse.BodyHandlers.discarding()).statusCode());
+   assertEquals(405,client.send(HttpRequest.newBuilder(env.apiBaseUri().resolve("/api/v1/transactions")).header("Authorization","Bearer "+LocalEnvironment.DEMO_TOKEN).method(method,HttpRequest.BodyPublishers.noBody()).build(),HttpResponse.BodyHandlers.discarding()).statusCode());
  }
  @org.junit.jupiter.params.ParameterizedTest
  @org.junit.jupiter.params.provider.ValueSource(strings={"1.5","1"})

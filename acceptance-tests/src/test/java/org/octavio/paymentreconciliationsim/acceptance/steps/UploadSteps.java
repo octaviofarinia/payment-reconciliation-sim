@@ -27,7 +27,7 @@ public class UploadSteps {
         try (var http = HttpClient.newHttpClient()) {
             return http.send(HttpRequest.newBuilder(world.environment.apiBaseUri().resolve(path))
                     .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + LocalEnvironment.WORKER_TOKEN)
+                    .header("Authorization", "Bearer " + (path.startsWith("/internal/")?LocalEnvironment.WORKER_TOKEN:LocalEnvironment.DEMO_TOKEN))
                     .method(method, body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(body))
                     .build(), HttpResponse.BodyHandlers.ofString());
         }

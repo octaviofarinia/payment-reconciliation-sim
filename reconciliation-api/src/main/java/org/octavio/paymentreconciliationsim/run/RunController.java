@@ -12,14 +12,12 @@ public class RunController {
  private final RunService service;
  private final RecoveryService recovery;
  public RunController(RunService service,RecoveryService recovery){this.service=service;this.recovery=recovery;}
+ @io.swagger.v3.oas.annotations.responses.ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Unchanged replay"),@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="201",description="Created")})
  @PostMapping(consumes="application/json")
- public ResponseEntity<RegistrationResult> register(@RequestBody JsonNode body){
+ public ResponseEntity<RegistrationResult> register(@io.swagger.v3.oas.annotations.parameters.RequestBody(required=true, content=@io.swagger.v3.oas.annotations.media.Content(schema=@io.swagger.v3.oas.annotations.media.Schema(ref="#/components/schemas/RegisterRun"))) @RequestBody JsonNode body){
   var registered=service.register(RunRequestDecoder.registration(body));return ResponseEntity.status(registered.created()?201:200).body(registered);
  }
- @ExceptionHandler(RecoveryService.RecoveryConflict.class)
- public ResponseEntity<org.springframework.http.ProblemDetail> recoveryConflict(RecoveryService.RecoveryConflict conflict){
-  return ResponseEntity.status(conflict.getStatusCode()).body(conflict.getBody());
- }
+ @io.swagger.v3.oas.annotations.responses.ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Completed run unchanged"),@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="202",description="Worker invocation accepted")})
  @PostMapping("/{runId}/reprocess")
  public ResponseEntity<RunMetadata> reprocess(@PathVariable UUID runId){
   var result=recovery.reprocess(runId);return ResponseEntity.status(result.accepted()?202:200).body(result.run());
@@ -27,5 +25,5 @@ public class RunController {
  @GetMapping public List<RunMetadata> list(@RequestParam String businessDate){return service.list(PurchaseRequestDecoder.parseDate(businessDate));}
  @GetMapping("/{runId}") public RunMetadata metadata(@PathVariable UUID runId){return service.metadata(runId);}
  @GetMapping("/{runId}/results")
- public ResultPage results(@PathVariable UUID runId,@RequestParam(required=false) Outcome outcome,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="50") int size){return service.results(runId,outcome,page,size);}
+ public ResultPage results(@PathVariable UUID runId,@RequestParam(required=false) Outcome outcome,@io.swagger.v3.oas.annotations.Parameter(description="Zero-based page index",schema=@io.swagger.v3.oas.annotations.media.Schema(minimum="0",defaultValue="0")) @RequestParam(defaultValue="0") int page,@io.swagger.v3.oas.annotations.Parameter(description="Requested page size; capped at 100",schema=@io.swagger.v3.oas.annotations.media.Schema(minimum="1",defaultValue="50")) @RequestParam(defaultValue="50") int size){return service.results(runId,outcome,page,size);}
 }

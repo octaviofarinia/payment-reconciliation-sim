@@ -154,7 +154,7 @@ Swagger/OpenAPI documents request and response schemas, integer units, statuses,
 
 **REQ-09 Worker API.** Private authenticated operations allow Lambda to obtain registered run metadata, bind the exact object version, mark an attempt as processing, fetch all closed-date purchases, submit the complete report, and record a failure when Spring is reachable. Proposed paths use /internal/v1/reconciliation-runs/{runId} with /input, /processing, /results, and /failure operations. Input includes date, rule version, expected checksum, and purchases. Processing receives bucket, key, versionId and verified checksum; results reference that same identity.
 
-These are task-specific contracts, not arbitrary MongoDB query forwarding. Treat the result submission as a full idempotent PUT. Spring validates result schema, bounds, registered identity, duplicate result references, required evidence, and summary consistency before publication. The comparator remains responsible for calculating classifications.
+These are task-specific contracts, not arbitrary MongoDB query forwarding. Treat the result submission as a full idempotent PUT. Full report submissions are limited to 8,388,608 received request bytes, independently of the serialized run-document limit; larger bodies return 413 without partial persistence. The limit applies to the actual stream, including requests without a Content-Length header or using chunked transfer encoding. Spring validates result schema, bounds, registered identity, duplicate result references, required evidence, and summary consistency before publication. The comparator remains responsible for calculating classifications.
 
 ## MongoDB model and consistency
 

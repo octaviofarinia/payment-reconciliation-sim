@@ -11,7 +11,7 @@ class RunPublicationIT {
  @BeforeEach void reset(){env.resetScenario();}
  static HttpResponse<String> request(String method,String path,String body)throws Exception{
   try(var client=HttpClient.newHttpClient()){
-   var builder=HttpRequest.newBuilder(env.apiBaseUri().resolve(path)).header("Content-Type","application/json");
+   var builder=HttpRequest.newBuilder(env.apiBaseUri().resolve(path)).header("Content-Type","application/json").header("Authorization","Bearer "+(path.startsWith("/internal/")?LocalEnvironment.WORKER_TOKEN:LocalEnvironment.DEMO_TOKEN));
    builder.method(method,body==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(body));
    return client.send(builder.build(),HttpResponse.BodyHandlers.ofString());
   }
@@ -116,7 +116,7 @@ class RunPublicationIT {
   for(var query:java.util.List.of("page=-1","size=0","size=-1","outcome=UNKNOWN"))assertEquals(400,request("GET","/api/v1/reconciliation-runs/"+id+"/results?"+query,null).statusCode());
  }
  static HttpResponse<String> unsupportedBody(String path)throws Exception{
-  try(var client=HttpClient.newHttpClient()){return client.send(HttpRequest.newBuilder(env.apiBaseUri().resolve(path)).header("Content-Type","text/plain").PUT(HttpRequest.BodyPublishers.ofString("invalid")).build(),HttpResponse.BodyHandlers.ofString());}
+  try(var client=HttpClient.newHttpClient()){return client.send(HttpRequest.newBuilder(env.apiBaseUri().resolve(path)).header("Authorization","Bearer "+LocalEnvironment.WORKER_TOKEN).header("Content-Type","text/plain").PUT(HttpRequest.BodyPublishers.ofString("invalid")).build(),HttpResponse.BodyHandlers.ofString());}
  }
  @Test void bsonApplicationLimitRejectsOversizedIdentityBeforeAnyBinding()throws Exception{
   var id=prepare();var base="/internal/v1/reconciliation-runs/"+id;
