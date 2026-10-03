@@ -228,26 +228,70 @@ the application started; a failed process needs EC2 service diagnostics inspecte
 locally with secret-aware handling. Merely requesting a systemd restart is not
 proof of Atlas schema initialization.
 
-With explicit cloud smoke authorization, choose an unused business date strictly
-before today in America/Buenos_Aires; the script intentionally requires a newly
-created date, then writes one synthetic purchase and CSV:
+With explicit cloud smoke authorization, prepare a fresh disposable demo database:
+the canonical generator uses fixed globally unique references. Choose two unused
+business dates strictly before today in America/Buenos_Aires. The benchmark date
+defaults to the canonical date minus one day; --benchmark-date can choose another
+distinct past date. The script checks ISO/distinct dates, while the API owns the
+authoritative timezone rule. No host timezone package is installed by the script.
+
+Before any other worker invocation, run from the repository root with the verified
+generator executable present and Java 21 on PATH:
 
 ~~~sh
 python3 scripts/cloud-smoke.py smoke --outputs .runtime/outputs.json \
-  --runtime .runtime/runtime.json --business-date YYYY-MM-DD
+  --runtime .runtime/runtime.json --business-date YYYY-MM-DD \
+  --benchmark --benchmark-date EARLIER-YYYY-MM-DD \
+  --output .runtime/demo-evidence.json
 ~~~
 
-It checks deployed configuration, worker IAM, bucket-scoped S3 invoke permission,
-private routes/SGs, encryption/versioning and log retention; tests missing and
-wrong-role HTTP tokens, public API reachability and anonymous S3 denial; registers
-and uploads through the real presigned URL and waits for **direct S3 delivery**
-to produce one MATCHED result. It verifies the original S3 version/checksum using
-HEAD and the bound metadata, requires correlated CloudWatch diagnostics, then
-asynchronously replays the original-version S3 event and checks a second successful
-attempt leaves metadata/report and logical run count unchanged. Replay uses the
-same version; an upload of a new version is not an equivalent duplicate event.
-This is a bounded deployment smoke, not Task 14 cold/warm measurement or upload
-expiry proof. Offline tests do not establish cloud behavior.
+The --output path must be new and its parent must exist. The script reserves it
+with mode 0600 before cloud mutation and retains sanitized partial evidence on
+failure. It never overwrites an earlier report. Keep generated reports ignored
+until reviewed for sanitization. No measured cloud result exists from this source
+preparation; [demo-evidence.md](demo-evidence.md) records every pending criterion.
+
+The benchmark executes first: 1,000 purchases, 2,000 distinct settlement references
+disjoint from purchases, exactly 2,097,152 CSV bytes and 3,000 expected results.
+Padding after a quoted currency field follows the already verified local CSV
+boundary fixture. All pages and complete row evidence are checked against
+independent expected outcomes. The report document's 8 MiB bound remains enforced
+by the API; this workload does not attempt to fill that separate storage cap.
+
+After direct S3 completion, the script synchronously invokes the original-version
+event. Its returned Tail must contain both a successful diagnostic and REPORT for
+the same request ID; a delayed initial duplicate cannot satisfy this replay check.
+CloudWatch supplies the same request's duration, init, billed duration, configured
+and used memory, and stream. Cold requires Init Duration. Warm requires the later
+successful replay in that exact stream without Init Duration. Missing or ambiguous
+proof fails the benchmark, leaving the observations for investigation. Prepare a
+fresh worker through the reviewed replacement procedure only with deployment
+authorization if needed; invocation order alone never establishes cold/warm.
+
+The target is strictly less than 120 seconds for Lambda Duration plus Init Duration
+when present. The configured limit is strictly less than 300 seconds for Lambda
+Duration, which is separate from initialization. The report also records wall time
+from immediately before upload to observed completion, including network/polling
+latency. It captures observed correlated attempts; it does not infer retry scheduling
+or prove the controlled outage scenario from their count. A miss exits nonzero.
+
+The canonical phase invokes the unchanged executable
+scenario-generator/target/scenario-generator-0.0.1-SNAPSHOT-exec.jar with public
+--base-url, --business-date, --seed 0 and --scenario canonical arguments. Only
+RECONCILIATION_DEMO_TOKEN is passed as a secret; it receives no worker/Atlas/AWS
+credentials. Captured generator output is never echoed. The wrapper verifies
+COMPLETED, totalResultCount=5, all five outcomes and complete independent expected
+results, original checksum/version, direct delivery and its own correlated replay.
+The named realS3UploadPublishesReportWithinRuntimeBudget check passes only when
+canonical and the requested maximum cold/warm benchmark both pass.
+
+Deployed topology/worker IAM (including the SourceFunctionArn ENI deny), log
+retention, private networking, public/worker HTTP restrictions, Swagger availability
+and anonymous S3 denial are checked. Run without --benchmark for canonical smoke
+only; maximum-workload and the named combined check stay PENDING. Output status
+AUTOMATED_CHECKS_PASSED is limited to these automated checks: account eligibility,
+real signature/expiry abuse, controlled outage/manual recovery, usage visibility
+and teardown still require the evidence procedure below.
 
 If a run stops progressing, query its public metadata. After strictly more than
 20 minutes incomplete metadata can flag recoveryNeeded. POST

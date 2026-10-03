@@ -183,75 +183,148 @@ class SmokeTests(unittest.TestCase):
             self.assertEqual(set(), cloud.correlated_attempts({"events": [{"message": json.dumps(bad)}]}, "r", "2026-01-01", "v"))
 
 class SmokeWorkflowTests(unittest.TestCase):
-    def test_offline_orchestration_requires_direct_completion_before_exact_version_replay(self):
+    def test_offline_maximum_then_canonical_direct_delivery_and_correlated_replay(self):
         import argparse
+        import base64
+        import hashlib
         import io
         from contextlib import redirect_stdout
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
+            fixture = work / "acceptance-tests/src/test/resources/fixtures"
+            fixture.mkdir(parents=True)
+            real_fixture = ROOT / "acceptance-tests/src/test/resources/fixtures"
+            for name in ("canonical.csv", "canonical-expected.json"):
+                (fixture / name).write_bytes((real_fixture / name).read_bytes())
+            jar = work / "scenario-generator/target/scenario-generator-0.0.1-SNAPSHOT-exec.jar"
+            jar.parent.mkdir(parents=True); jar.write_bytes(b"offline fixture")
             runtime = work / "runtime.json"
             runtime.write_text(json.dumps({"demoToken": "demo", "workerToken": "worker",
                                           "mongoUri": "mongodb+srv://u:p@cluster.example/db"}))
             runtime.chmod(0o600)
             out = {"account_id": "123456789012", "region": "us-east-1", "bucket": "b",
-                   "function_name": "f", "log_group": "g"}
+                   "function_name": "f", "log_group": "g", "ssh_host": "host",
+                   "api_security_group_id": "api-sg", "worker_security_group_id": "worker-sg",
+                   "worker_subnet_id": "worker-subnet"}
             state = work / "outputs.json"
             state.write_text(json.dumps({k: {"value": v} for k, v in out.items()}))
-            args = argparse.Namespace(outputs=str(state), runtime=str(runtime), business_date="2020-01-01",
-                                      base_url="http://127.0.0.1:8080")
-            captured = {"invoked": False, "completed": False}
+            args = argparse.Namespace(outputs=str(state), runtime=str(runtime), business_date="2020-01-02",
+                benchmark=True, benchmark_date=None, output=str(work / "evidence.json"),
+                base_url="http://127.0.0.1:8080")
+            maximum = "12345678-1234-1234-1234-123456789001"
+            canonical = "12345678-1234-1234-1234-123456789002"
+            captured = {"purchases": [], "runs": {}, "replayed": set(), "current": maximum}
+            fault = {"mode": None}
+            def install(run_id, date, raw, expected):
+                digest = hashlib.sha256(raw).hexdigest()
+                captured["runs"][run_id] = {"raw": raw, "expected": expected, "metadata": {
+                    "runId": run_id, "status": "COMPLETED", "sha256": digest, "summary": expected["summary"],
+                    "objectIdentity": {"bucket": "b", "key": "settlements/" + date + "/" + run_id + ".csv",
+                                       "versionId": "original", "sha256": digest}}, "date": date}
+                captured["current"] = run_id
             def fake_api(base, path, bearer, method="GET", body=None, expected=(200,)):
                 if path.endswith("/transactions"):
-                    captured["reference"] = body["transactionReference"]
+                    captured["purchases"].append(body)
                 if path == "/api/v1/reconciliation-runs" and method == "POST":
-                    captured["sha"] = body["sha256"]
-                    captured["length"] = body["byteLength"]
-                    return {"runId": "r", "objectKey": "settlements/2020-01-01/r.csv",
+                    return {"runId": maximum, "objectKey": "settlements/2020-01-01/" + maximum + ".csv",
                             "uploadInstructions": {"url": "https://b.example/upload",
                                 "requiredHeaders": {"x-amz-checksum-sha256":
-                                    cloud.base64.b64encode(bytes.fromhex(body["sha256"])).decode()}}}
-                if path.endswith("/r"):
-                    captured["completed"] = True
-                    return {"runId": "r", "status": "COMPLETED", "sha256": captured["sha"], "updatedAt": "stable",
-                            "objectIdentity": {"bucket": "b", "key": "settlements/2020-01-01/r.csv",
-                                               "versionId": "original", "sha256": captured["sha"]}}
-                if "/results?" in path:
-                    return {"totalResults": 1, "results": [{"reference": captured["reference"], "outcome": "MATCHED"}]}
+                                    base64.b64encode(bytes.fromhex(body["sha256"])).decode()}}}
                 if "?businessDate=" in path:
-                    return [{"runId": "r"}]
+                    date = path.split("=")[1]
+                    return [{"runId": rid} for rid, r in captured["runs"].items() if r["date"] == date]
+                for rid, r in captured["runs"].items():
+                    if path.endswith("/" + rid):
+                        return r["metadata"]
+                    if "/" + rid + "/results?" in path:
+                        page = int(path.split("page=")[1].split("&")[0])
+                        results = r["expected"]["results"]
+                        return {"totalResults": len(results), "results": results[page*100:(page+1)*100]}
                 return {}
             def fake_http(method, url, bearer=None, body=None, headers=None):
                 if method == "PUT":
-                    captured["uploaded"] = True
+                    ns = captured["purchases"][0]["transactionReference"].rsplit("_I", 1)[0]
+                    purchases, raw, expected = cloud.benchmark.maximum_workload("2020-01-01", ns)
+                    self.assertEqual(raw, body)
+                    self.assertEqual(purchases, captured["purchases"])
+                    install(maximum, "2020-01-01", body, expected)
                     return 200, b"", {"x-amz-version-id": "original"}
                 if "amazonaws.com" in url:
                     return 403, b"", {}
+                if "/swagger-ui/" in url:
+                    return 200, b"", {}
                 return (401 if bearer is None else 403), b"", {}
-            def fake_aws(*call):
+            def log_events(rid, replay=False):
+                r = captured["runs"][rid]
+                request = rid + ("-replay" if replay else "-direct")
+                diagnostic = json.dumps({"runId": rid, "businessDate": r["date"], "versionId": "original",
+                    "rulesVersion": "v1", "attemptId": request, "durationMillis": 1, "errorCode": None})
+                report = ("REPORT RequestId: " + request + "\tDuration: 10 ms\tBilled Duration: 11 ms"
+                          "\tMemory Size: 512 MB\tMax Memory Used: 200 MB"
+                          + ("\tInit Duration: 20 ms" if rid == maximum and not replay else ""))
+                if rid == maximum and not replay:
+                    if fault["mode"] == "missing-cold":
+                        report = report.replace("\tInit Duration: 20 ms", "")
+                    if fault["mode"] == "slow-cold":
+                        report = report.replace("Duration: 10 ms", "Duration: 120000 ms")
+                return [{"message": line, "logStreamName": "same-environment", "timestamp": 1}
+                        for line in (diagnostic, report)]
+            def fake_aws(*call, **kwargs):
                 if call[:2] == ("sts", "get-caller-identity"):
                     return {"Account": out["account_id"]}
                 if call[:2] == ("s3api", "head-object"):
-                    self.assertIn("original", call)
-                    return {"VersionId": "original", "ContentLength": captured["length"],
-                            "ChecksumSHA256": cloud.base64.b64encode(bytes.fromhex(captured["sha"])).decode()}
+                    r = captured["runs"][captured["current"]]
+                    return {"VersionId": "original", "ContentLength": len(r["raw"]),
+                            "ChecksumSHA256": base64.b64encode(hashlib.sha256(r["raw"]).digest()).decode()}
                 if call[:2] == ("lambda", "invoke"):
-                    self.assertTrue(captured["completed"])
-                    self.assertTrue(captured["uploaded"])
+                    rid = captured["current"]
                     payload = json.loads(Path(call[call.index("--payload") + 1][8:]).read_text())
                     self.assertEqual("original", payload["Records"][0]["s3"]["object"]["versionId"])
-                    captured["invoked"] = True
-                    return {"StatusCode": 202}
+                    captured["replayed"].add(rid)
+                    return {"StatusCode": 200, "LogResult": base64.b64encode(
+                        "\n".join(e["message"] for e in log_events(rid, True)).encode()).decode()}
                 if call[:2] == ("logs", "filter-log-events"):
-                    attempts = ["first", "replay"] if captured["invoked"] else ["first"]
-                    return {"events": [{"message": json.dumps({"runId": "r", "businessDate": "2020-01-01",
-                        "versionId": "original", "rulesVersion": "v1", "attemptId": a,
-                        "durationMillis": 1, "errorCode": None})} for a in attempts]}
+                    pattern = call[-1].strip('"')
+                    rid = next(rid for rid in captured["runs"] if pattern.startswith(rid))
+                    return {"events": log_events(rid, pattern.endswith("-replay"))}
                 raise AssertionError(call)
-            with patch.object(cloud, "cloud_topology"), patch.object(cloud, "api", side_effect=fake_api), \
-                 patch.object(cloud, "http", side_effect=fake_http), patch.object(cloud, "aws", side_effect=fake_aws), \
-                 redirect_stdout(io.StringIO()):
-                cloud.smoke(args)
-            self.assertTrue(captured["invoked"])
+            def generator(jar, base, date, demo):
+                self.assertIn(maximum, captured["replayed"])  # max really precedes generator
+                expected = json.loads((fixture / "canonical-expected.json").read_text())
+                raw = (fixture / "canonical.csv").read_bytes().replace(b"2026-10-01", date.encode())
+                install(canonical, date, raw, expected)
+                return canonical
+            with patch.object(cloud, "ROOT", work), patch.object(cloud, "cloud_topology"), \
+                 patch.object(cloud, "api", side_effect=fake_api), patch.object(cloud, "http", side_effect=fake_http), \
+                 patch.object(cloud, "aws", side_effect=fake_aws), \
+                 patch.object(cloud.benchmark, "run_generator", side_effect=generator), redirect_stdout(io.StringIO()):
+                cloud.smoke_evidence(args)
+            report = json.loads(Path(args.output).read_text())
+            self.assertEqual("AUTOMATED_CHECKS_PASSED", report["status"])
+            self.assertEqual("warm", report["runs"]["maximum"]["replay"]["environment"])
+            self.assertEqual(3000, report["runs"]["maximum"]["summary"]["totalResultCount"])
+            self.assertEqual(5, report["runs"]["canonical"]["summary"]["totalResultCount"])
+            self.assertEqual("PENDING", report["checks"]["signatureAndExpiry"])
+            self.assertEqual({maximum, canonical}, captured["replayed"])
+            self.assertNotIn("mongoUri", Path(args.output).read_text())
+            self.assertNotIn("https://b.example/upload", Path(args.output).read_text())
+            for mode in ("missing-cold", "slow-cold"):
+                fault["mode"] = mode
+                captured.update(purchases=[], runs={}, replayed=set(), current=maximum)
+                args.output = str(work / (mode + ".json"))
+                with patch.object(cloud, "ROOT", work), patch.object(cloud, "cloud_topology"), \
+                     patch.object(cloud, "api", side_effect=fake_api), patch.object(cloud, "http", side_effect=fake_http), \
+                     patch.object(cloud, "aws", side_effect=fake_aws), \
+                     patch.object(cloud.benchmark, "run_generator") as generator_call:
+                    with self.assertRaises(cloud.CheckFailure):
+                        cloud.smoke_evidence(args)
+                    generator_call.assert_not_called()
+                failed = json.loads(Path(args.output).read_text())
+                self.assertEqual("FAILED", failed["status"])
+                self.assertNotIn("canonical", failed["runs"])
+                self.assertEqual("PENDING", failed["checks"]["maximumColdWarmBudget"])
+                self.assertEqual(120020 if mode == "slow-cold" else 10,
+                                 failed["runs"]["maximum"]["direct"]["processingMillis"])
 
     def test_polling_fails_closed_at_deadline(self):
         with patch.object(cloud.time, "monotonic", side_effect=[0, 2]), patch.object(cloud.time, "sleep"):
@@ -270,6 +343,23 @@ class RoleRestrictionTests(unittest.TestCase):
                     {"Effect": "Allow", "Action": "lambda:InvokeFunction", "Resource": "*"}]:
             with self.assertRaises(cloud.CheckFailure):
                 cloud.check_worker_permissions([read, config, bad], "arn:aws:s3:::bucket", "arn:aws:logs:r:a:log-group:g")
+
+class WorkerEniDenyTests(unittest.TestCase):
+    def test_wildcard_eni_permissions_require_exact_function_deny(self):
+        arn = "arn:aws:lambda:us-east-1:123456789012:function:demo-worker"
+        actions = ["ec2:CreateNetworkInterface", "ec2:DescribeNetworkInterfaces", "ec2:DescribeSubnets",
+                   "ec2:DeleteNetworkInterface", "ec2:AssignPrivateIpAddresses", "ec2:UnassignPrivateIpAddresses"]
+        allow = {"Effect": "Allow", "Action": actions, "Resource": "*"}
+        # Regression: the previous guard accepted unrestricted code-level ENI access.
+        with self.assertRaises(cloud.CheckFailure):
+            cloud.check_worker_permissions([allow], "b", "l")
+        deny = {"Effect": "Deny", "Action": actions, "Resource": "*",
+                "Condition": {"ArnEquals": {"lambda:SourceFunctionArn": arn}}}
+        cloud.check_worker_permissions([allow, deny], "b", "l", arn)
+        for change in [{"Action": actions[:-1]}, {"Resource": "different"},
+                       {"Condition": {"ArnEquals": {"lambda:SourceFunctionArn": arn + "-other"}}}]:
+            with self.assertRaises(cloud.CheckFailure):
+                cloud.check_worker_permissions([allow, dict(deny, **change)], "b", "l", arn)
 
 class TeardownTests(unittest.TestCase):
     def test_all_version_types_deleted_and_s3_errors_fail(self):

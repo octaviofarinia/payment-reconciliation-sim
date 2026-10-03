@@ -3,19 +3,20 @@
 Offline tests exercise decision logic. Only a real smoke run is cloud evidence.
 """
 import argparse
-import base64
 from datetime import datetime, timezone, timedelta
 import hashlib
 import json
 import math
 import os
+import cloud_benchmark as benchmark
+from cloud_benchmark import (CheckFailure, require, lambda_measurement,
+                             check_identity, check_replay, correlated_attempts)
 from pathlib import Path
 import socket
 import stat
 import subprocess
 import sys
 import time
-import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -24,20 +25,11 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 
 
-class CheckFailure(Exception):
-    pass
-
-
-def require(condition, message):
-    if not condition:
-        raise CheckFailure(message)
-
-
-def aws(*args):
+def aws(*args, timeout=90):
     # Never print raw CLI errors, invocation payloads or object bodies.
     try:
         result = subprocess.run(["aws", *args, "--output", "json", "--no-cli-pager"],
-                                capture_output=True, text=True, timeout=90)
+                                capture_output=True, text=True, timeout=timeout)
         require(result.returncode == 0, "AWS operation failed: " + "/".join(args[:2]))
         return json.loads(result.stdout or "{}")
     except (OSError, subprocess.TimeoutExpired, ValueError):
@@ -207,34 +199,6 @@ def empty_bucket(bucket, call=aws):
     raise CheckFailure("Bucket is still changing; stop producers before teardown")
 
 
-def check_identity(metadata, expected):
-    require(metadata.get("objectIdentity") == expected and metadata.get("sha256") == expected["sha256"],
-            "Bound object identity/version/checksum changed")
-
-
-def check_replay(before, after, before_results, after_results, runs, run_id):
-    require(before.get("status") == "COMPLETED" and after == before, "Replay changed completed metadata")
-    require(before_results == after_results, "Replay changed published report")
-    require(sum(r.get("runId") == run_id for r in runs) == 1, "Expected exactly one logical run")
-
-
-def correlated_attempts(logs, run_id, date, version):
-    attempts = set()
-    for event in logs.get("events", []):
-        message = event.get("message", "")
-        try:
-            # Lambda may prefix Java logger output; select the structured JSON object.
-            data = json.loads(message[message.index("{"):].strip())
-        except (ValueError, TypeError):
-            continue
-        if (data.get("runId") == run_id and data.get("businessDate") == date
-                and data.get("versionId") == version and data.get("rulesVersion") == "v1"
-                and data.get("attemptId") and isinstance(data.get("durationMillis"), int)
-                and "errorCode" in data and data["errorCode"] is None):
-            attempts.add(data["attemptId"])
-    return attempts
-
-
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
@@ -277,9 +241,18 @@ def outputs(path):
     return {k: v["value"] for k, v in json.loads(Path(path).read_text()).items()}
 
 
-def check_worker_permissions(statements, bucket_arn, log_arn):
+def check_worker_permissions(statements, bucket_arn, log_arn, function_arn=None):
     eni = {"ec2:CreateNetworkInterface", "ec2:DescribeNetworkInterfaces", "ec2:DescribeSubnets",
            "ec2:DeleteNetworkInterface", "ec2:AssignPrivateIpAddresses", "ec2:UnassignPrivateIpAddresses"}
+    if any(entry.get("Effect") == "Allow" and
+           eni.intersection([entry["Action"]] if isinstance(entry.get("Action"), str)
+                            else entry.get("Action", [])) for entry in statements):
+        require(function_arn and any(
+            entry.get("Effect") == "Deny" and set(entry.get("Action", [])) == eni
+            and entry.get("Resource") == "*"
+            and entry.get("Condition") == {"ArnEquals": {"lambda:SourceFunctionArn": function_arn}}
+            and "NotAction" not in entry and "NotResource" not in entry
+            for entry in statements), "Worker ENI permissions lack the exact SourceFunctionArn deny")
     for entry in statements:
         if entry.get("Effect") != "Allow":
             continue
@@ -318,7 +291,7 @@ def cloud_topology(out):
         "RECONCILIATION_CONFIG_BUCKET": out["bucket"],
         "RECONCILIATION_CONFIG_KEY": "runtime-config/worker.json"}, "Unexpected deployed Lambda environment")
     check_worker_permissions(role_statements(config["Role"].rsplit("/", 1)[1]),
-                             out["bucket_arn"], out["log_group_arn"])
+                             out["bucket_arn"], out["log_group_arn"], out["function_arn"])
     permission = json.loads(aws("lambda", "get-policy", "--function-name", out["function_name"])["Policy"])
     statements = permission["Statement"]
     require(len(statements) == 1 and statements[0].get("Effect") == "Allow"
@@ -399,10 +372,16 @@ def cloud_topology(out):
         pass
 
 
-def smoke(args):
+def smoke(args, evidence):
     date = datetime.strptime(args.business_date, "%Y-%m-%d").date()
     require(date.isoformat() == args.business_date, "Smoke date must use ISO format")
-    # The API owns the authoritative America/Buenos_Aires past-date rule.
+    # The API enforces the authoritative Buenos Aires past-date rule.
+    benchmark_date = args.benchmark_date or (date - timedelta(days=1)).isoformat()
+    maximum_date = datetime.strptime(benchmark_date, "%Y-%m-%d").date()
+    require(maximum_date.isoformat() == benchmark_date and maximum_date != date,
+            "Benchmark date must be a distinct ISO date; choose a past date")
+    jar = ROOT / "scenario-generator/target/scenario-generator-0.0.1-SNAPSHOT-exec.jar"
+    require(jar.is_file(), "Verified generator executable is missing")
     out = outputs(args.outputs)
     os.environ["AWS_DEFAULT_REGION"] = out["region"]
     require(aws("sts", "get-caller-identity").get("Account") == out["account_id"], "Wrong AWS account")
@@ -413,7 +392,11 @@ def smoke(args):
     require(parsed.scheme == "http" and parsed.hostname in ("127.0.0.1", "localhost", "::1")
             and not parsed.username and not parsed.password and not parsed.query and not parsed.fragment
             and not parsed.path, "Smoke API URL must be the local SSH tunnel")
+    # Allowlist resource identifiers only; never serialize runtime/URLs/raw CLI responses.
+    evidence["teardownInventory"] = {k: out[k] for k in ("bucket", "function_name", "log_group",
+        "ssh_host", "api_security_group_id", "worker_security_group_id", "worker_subnet_id")}
     cloud_topology(out)
+    evidence["checks"]["deployedTopologyAndRoles"] = "PASS"
     demo, worker = values["demoToken"], values["workerToken"]
     route = "/api/v1/reconciliation-runs"
     internal = "/internal/v1/reconciliation-runs/" + str(uuid.uuid4())
@@ -421,68 +404,60 @@ def smoke(args):
                                    (route + "?businessDate=" + args.business_date, worker, 403),
                                    (internal, demo, 403), (internal, None, 401)]:
         require(http("GET", base + path, bearer)[0] == expected, "Public/worker authorization restriction failed")
+    require(http("GET", base + "/swagger-ui/index.html")[0] == 200, "Swagger UI unavailable")
+    api(base, "/v3/api-docs", None)
+    evidence["checks"]["apiAccessAndSwagger"] = "PASS"
+    check = benchmark.CloudRun(api, http, aws, wait_for)
+    if args.benchmark:
+        evidence["runs"]["maximum"] = {}
+        check.maximum(out, base, demo, benchmark_date, evidence["runs"]["maximum"])
+        evidence["checks"]["maximumColdWarmBudget"] = "PASS"
+    # Canonical fixed references are globally unique: a fresh demo database is required.
     api(base, "/api/v1/business-dates", demo, "POST", {"businessDate": args.business_date}, (201,))
-    ref = "SMOKE_" + uuid.uuid4().hex
-    api(base, "/api/v1/transactions", demo, "POST",
-        {"transactionReference": ref, "merchantId": "CLOUD-SMOKE", "businessDate": args.business_date,
-         "amountCentavos": 100, "currency": "ARS"}, (201,))
-    api(base, "/api/v1/business-dates/" + args.business_date + "/close", demo, "POST")
-    csv = ("business_date,transaction_reference,amount_centavos,currency\n"
-           + args.business_date + "," + ref + ",100,ARS\n").encode()
-    digest = hashlib.sha256(csv).hexdigest()
-    registration = api(base, route, demo, "POST",
-                       {"businessDate": args.business_date, "sha256": digest, "byteLength": len(csv)}, (201,))
-    run_id = registration["runId"]
-    print("Cloud smoke runId=" + run_id, flush=True)
-    instructions = registration["uploadInstructions"]
-    upload_url = instructions["url"]
-    require(urllib.parse.urlsplit(upload_url).scheme == "https", "Presigned upload must use TLS")
-    checksum = base64.b64encode(hashlib.sha256(csv).digest()).decode()
-    require(instructions["requiredHeaders"].get("x-amz-checksum-sha256") == checksum,
-            "Presigned checksum header differs from CSV")
+    entry = evidence["runs"]["canonical"] = {}
     start = int(time.time() * 1000) - 1000
-    status, _, headers = http("PUT", upload_url, body=csv, headers=instructions["requiredHeaders"])
-    require(status == 200 and headers.get("x-amz-version-id"), "Versioned presigned upload failed")
-    identity = {"bucket": out["bucket"], "key": registration["objectKey"],
-                "versionId": headers["x-amz-version-id"], "sha256": digest}
-    run_path = route + "/" + run_id
-    before = wait_for(lambda: api(base, run_path, demo), lambda r: r.get("status") == "COMPLETED")
-    check_identity(before, identity)
-    before_results = api(base, run_path + "/results?size=100", demo)
-    require(before_results["totalResults"] == 1 and len(before_results["results"]) == 1
-            and before_results["results"][0]["reference"] == ref
-            and before_results["results"][0]["outcome"] == "MATCHED", "Unexpected smoke report")
-    head = aws("s3api", "head-object", "--bucket", out["bucket"], "--key", identity["key"],
-               "--version-id", identity["versionId"], "--checksum-mode", "ENABLED")
-    require(head.get("VersionId") == identity["versionId"] and head.get("ChecksumSHA256") == checksum
-            and head.get("ContentLength") == len(csv), "Stored exact-version checksum differs")
-    anonymous = "https://" + out["bucket"] + ".s3." + out["region"] + ".amazonaws.com/" + identity["key"]
-    require(http("GET", anonymous)[0] == 403, "Settlement is anonymously readable")
-    config_url = "https://" + out["bucket"] + ".s3." + out["region"] + ".amazonaws.com/runtime-config/worker.json"
-    require(http("GET", config_url)[0] == 403, "Runtime config is anonymously readable")
-    def attempts():
-        logs = aws("logs", "filter-log-events", "--log-group-name", out["log_group"],
-                   "--start-time", str(start), "--filter-pattern", '"' + run_id + '"')
-        return correlated_attempts(logs, run_id, args.business_date, identity["versionId"])
-    first = wait_for(attempts, lambda a: bool(a))
-    # Replay the original exact-version S3 event after direct delivery succeeded.
-    event = {"Records": [{"eventSource": "aws:s3", "eventName": "ObjectCreated:Put",
-                          "s3": {"bucket": {"name": out["bucket"]},
-                                 "object": {"key": urllib.parse.quote_plus(identity["key"]),
-                                            "versionId": identity["versionId"]}}}]}
-    with tempfile.TemporaryDirectory() as directory:
-        payload = Path(directory) / "replay.json"
-        payload.write_text(json.dumps(event))
-        replay = aws("lambda", "invoke", "--function-name", out["function_name"],
-                     "--invocation-type", "Event", "--payload", "fileb://" + str(payload),
-                     str(Path(directory) / "response.json"))
-        require(replay.get("StatusCode") == 202, "Exact-version replay was not accepted")
-    wait_for(attempts, lambda a: bool(a - first))
-    after = api(base, run_path, demo)
-    check_identity(after, identity)
-    check_replay(before, after, before_results, api(base, run_path + "/results?size=100", demo),
-                 api(base, route + "?businessDate=" + args.business_date, demo), run_id)
-    print("PASS direct S3 notification, original version/checksum, private worker API/S3, replay, logs and access checks")
+    began = time.monotonic()
+    run_id = benchmark.run_generator(jar, base, args.business_date, demo)
+    entry.update(runId=run_id, generatorElapsedSeconds=time.monotonic() - began)
+    print("Cloud canonical runId=" + run_id, flush=True)
+    fixture = ROOT / "acceptance-tests/src/test/resources/fixtures"
+    expected = json.loads((fixture / "canonical-expected.json").read_text())
+    raw = (fixture / "canonical.csv").read_bytes().replace(b"2026-10-01", args.business_date.encode())
+    check.inspect(out, base, demo, args.business_date, run_id, raw, expected, start, entry)
+    require(entry["status"] == "COMPLETED" and entry["summary"]["totalResultCount"] == 5,
+            "realS3UploadPublishesReportWithinRuntimeBudget canonical assertion failed")
+    for key in (entry["objectIdentity"]["key"], "runtime-config/worker.json"):
+        url = "https://" + out["bucket"] + ".s3." + out["region"] + ".amazonaws.com/" + key
+        require(http("GET", url)[0] == 403, "Private S3 object is anonymously readable")
+    evidence["checks"]["canonicalGeneratorAndDirectS3"] = "PASS"
+    evidence["checks"]["privateObjects"] = "PASS"
+    if args.benchmark:
+        benchmark.realS3UploadPublishesReportWithinRuntimeBudget(entry, evidence["runs"]["maximum"])
+        evidence["checks"]["realS3UploadPublishesReportWithinRuntimeBudget"] = "PASS"
+
+
+def smoke_evidence(args):
+    # Reserve a private output before cloud mutation; refuse overwrite/symlinks.
+    report = {"schemaVersion": 1, "evidenceKind": "cloud-execution",
+              "validationId": str(uuid.uuid4()), "startedAt": datetime.now(timezone.utc).isoformat(),
+              "status": "IN_PROGRESS", "businessDate": args.business_date,
+              "benchmarkRequested": args.benchmark, "runs": {}, "teardownInventory": {},
+              "checks": dict.fromkeys(("accountEligibility", "deployedTopologyAndRoles",
+                  "apiAccessAndSwagger", "canonicalGeneratorAndDirectS3", "privateObjects",
+                  "maximumColdWarmBudget", "realS3UploadPublishesReportWithinRuntimeBudget", "signatureAndExpiry", "retriableOutageAndRecovery",
+                  "usageVisibility", "teardown", "localAfterTeardown"), "PENDING")}
+    with os.fdopen(os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w") as file:
+        try:
+            smoke(args, report)
+            report["status"] = "AUTOMATED_CHECKS_PASSED"
+        except BaseException:
+            report["status"] = "FAILED"
+            raise
+        finally:
+            report["finishedAt"] = datetime.now(timezone.utc).isoformat()
+            json.dump(report, file, indent=2)
+            file.write("\n")
+    print("PASS automated cloud checks; remaining demonstration criteria are pending in " + args.output)
 
 
 def main():
@@ -505,6 +480,9 @@ def main():
     for name in ("outputs", "runtime", "business-date"):
         check.add_argument("--" + name, required=True)
     check.add_argument("--base-url", default="http://127.0.0.1:8080")
+    check.add_argument("--benchmark", action="store_true", help="Measure maximum workload before canonical")
+    check.add_argument("--benchmark-date", help="Unused past date; defaults to business-date minus one day")
+    check.add_argument("--output", default=".runtime/demo-evidence.json", help="New sanitized JSON evidence file; never overwritten")
     args = parser.parse_args()
     try:
         if args.command == "preflight":
@@ -527,7 +505,7 @@ def main():
             require(aws("sts", "get-caller-identity").get("Account") == out["account_id"], "Wrong AWS account")
             empty_bucket(out["bucket"])
         else:
-            smoke(args)
+            smoke_evidence(args)
         return 0
     except (CheckFailure, OSError, ValueError, KeyError, TypeError) as failure:
         # Unknown parsing/system failures could include file contents or URLs.
