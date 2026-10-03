@@ -38,7 +38,10 @@ public final class LocalEnvironment implements AutoCloseable {
     private ConfigurableApplicationContext context;
     private URI apiBaseUri;
     private Thread shutdownHook;
-    private boolean closed;
+    private volatile boolean closed;
+    private boolean resourcesClosed;
+    // Allow the complete five-minute invocation plus local scheduling/cleanup margin.
+    private static final long WORKER_WAIT_SECONDS = 330;
     private final java.util.concurrent.ExecutorService workerExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
     private final java.util.concurrent.ConcurrentLinkedQueue<java.util.concurrent.Future<?>> workerInvocations = new java.util.concurrent.ConcurrentLinkedQueue<>();
     private software.amazon.awssdk.services.s3.S3Client workerS3;
@@ -123,19 +126,31 @@ public final class LocalEnvironment implements AutoCloseable {
     /** Upload callbacks are asynchronous; drain before reset/close to prohibit cross-scenario writes. */
     public void awaitWorker() {
         java.util.concurrent.Future<?> invocation;
-        while ((invocation = workerInvocations.poll()) != null) {
-            try { invocation.get(30, java.util.concurrent.TimeUnit.SECONDS); }
+        while ((invocation = workerInvocations.peek()) != null) {
+            try {
+                invocation.get(WORKER_WAIT_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
+                workerInvocations.remove(invocation);
+            }
             catch (InterruptedException interrupted) {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Local worker wait interrupted", interrupted);
-            } catch (java.util.concurrent.ExecutionException | java.util.concurrent.TimeoutException failure) {
+            } catch (java.util.concurrent.ExecutionException failure) {
+                // Exceptional completion also proves the callable has exited.
+                workerInvocations.remove(invocation);
                 throw new IllegalStateException("Local worker invocation failed", failure);
+            } catch (java.util.concurrent.TimeoutException failure) {
+                // Retain the unfinished future: a later reset must wait for it again.
+                throw new IllegalStateException("Local worker invocation timed out", failure);
+            } catch (java.util.concurrent.CancellationException cancelled) {
+                // A cancelled Future can be done while its executing callable still runs.
+                throw new IllegalStateException("Local worker cancellation has unconfirmed termination", cancelled);
             }
         }
     }
 
     /** Preserve startup-created indexes while removing every scenario's database and S3 data. */
     public void resetScenario() {
+        if (closed) throw new IllegalStateException("The local environment is already closed");
         awaitWorker();
         for (String collection : mongoDatabase().listCollectionNames()) {
             mongoDatabase().getCollection(collection).deleteMany(new Document());
@@ -148,11 +163,29 @@ public final class LocalEnvironment implements AutoCloseable {
 
     @Override
     public synchronized void close() {
-        if (closed) return;
+        if (resourcesClosed) return;
         closed = true;
         RuntimeException failure = null;
         try { awaitWorker(); } catch (RuntimeException e) { failure = e; }
         workerExecutor.shutdownNow();
+        // Never release shared resources on Future cancellation alone. If this wait fails,
+        // the environment stays unusable, and a later close can finish actual cleanup.
+        boolean restoreInterrupt = Thread.interrupted();
+        try {
+            if (!workerExecutor.awaitTermination(WORKER_WAIT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)) {
+                var notStopped = new IllegalStateException("Local worker did not terminate; environment remains closed");
+                if (failure != null) notStopped.addSuppressed(failure);
+                throw notStopped;
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            var notStopped = new IllegalStateException("Local worker termination wait interrupted; environment remains closed", interrupted);
+            if (failure != null) notStopped.addSuppressed(failure);
+            throw notStopped;
+        } finally {
+            if (restoreInterrupt) Thread.currentThread().interrupt();
+        }
+        resourcesClosed = true;
         if (workerHttp != null) {
             try { workerHttp.close(); } catch (RuntimeException e) { failure = append(failure, e); }
         }
