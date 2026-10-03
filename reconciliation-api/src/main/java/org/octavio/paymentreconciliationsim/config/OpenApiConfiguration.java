@@ -46,7 +46,7 @@ public class OpenApiConfiguration {
             ModelConverters.getInstance().read(ApiError.class).forEach(api.getComponents()::addSchemas);
             api.getPaths().values().forEach(path -> path.readOperations().forEach(operation -> {
                 operation.setSecurity(List.of(new SecurityRequirement().addList("demoBearer")));
-                for (int status : new int[]{400, 401, 403, 404, 409, 413, 415, 500, 503}) {
+                for (int status : new int[]{400, 401, 403, 404, 405, 406, 409, 413, 415, 500, 503}) {
                     operation.getResponses().addApiResponse(Integer.toString(status), new ApiResponse()
                             .description("Sanitized error with a server-generated correlationId")
                             .content(new Content().addMediaType("application/json", new MediaType()

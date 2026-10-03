@@ -64,7 +64,7 @@ class ApiBoundaryIT {
   assertEquals("bearer",docs.path("components").path("securitySchemes").path("demoBearer").path("scheme").asText());
   for(var path:docs.path("paths"))for(var operation:path){
    assertEquals("demoBearer",operation.path("security").get(0).propertyNames().iterator().next());
-   for(String status:List.of("400","401","403","404","409","413","415"))assertTrue(operation.path("responses").has(status),status);
+   for(String status:List.of("400","401","403","404","405","406","409","413","415","500","503"))assertTrue(operation.path("responses").has(status),status);
   }
   assertTrue(docs.path("paths").path("/api/v1/transactions").path("post").path("responses").has("201"));
   assertTrue(docs.path("paths").path("/api/v1/reconciliation-runs/{runId}/reprocess").path("post").path("responses").has("202"));

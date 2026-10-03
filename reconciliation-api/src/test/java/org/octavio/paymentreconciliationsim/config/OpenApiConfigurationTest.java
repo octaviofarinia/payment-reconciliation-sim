@@ -19,6 +19,6 @@ class OpenApiConfigurationTest {
   api.getComponents().getSchemas().remove("ApiError");
   config.publicContracts().customise(api);
   assertTrue(api.getComponents().getSchemas().containsKey("ApiError"));
-  for(var op:java.util.List.of(get,post)){assertTrue(op.getSecurity().getFirst().containsKey("demoBearer"));for(int status:new int[]{400,401,403,404,409,413,415,500,503}){var response=op.getResponses().get(Integer.toString(status));assertNotNull(response);assertEquals("#/components/schemas/ApiError",response.getContent().get("application/json").getSchema().get$ref());assertNotNull(response.getContent().get("application/json").getExample());}}
+  for(var op:java.util.List.of(get,post)){assertTrue(op.getSecurity().getFirst().containsKey("demoBearer"));for(int status:new int[]{400,401,403,404,405,406,409,413,415,500,503}){var response=op.getResponses().get(Integer.toString(status));assertNotNull(response);assertEquals("#/components/schemas/ApiError",response.getContent().get("application/json").getSchema().get$ref());assertNotNull(response.getContent().get("application/json").getExample());}}
  }
 }
