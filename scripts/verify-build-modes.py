@@ -2,10 +2,12 @@
 """Assert Maven execution modes from effective plugin settings.
 
 bootstrap checks configuration while production modules have no unit suites yet.
-complete additionally requires actual unit, acceptance, coverage and PIT reports
-from a preceding clean verify, once the MVP modules contain handwritten logic.
+complete executes documented builds sequentially and inspects fresh reports.
 """
 import argparse
+import json
+import shutil
+import time
 from dataclasses import dataclass
 from pathlib import Path
 import subprocess
@@ -132,32 +134,135 @@ def selectedProfilesHaveExactExecutionFlags():
         assert 'Select at most one test mode profile' in result.stdout + result.stderr, result.stdout + result.stderr
     print('PASS standard/custom skips and all six conflicting profile pairs', flush=True)
 
-def completed_reports():
-    projects = effective_projects()
-    for name in MODULES[:3]:
-        properties = projects[name].find('m:properties', NS)
-        for key in ('tests.failIfNoTests', 'mutation.failWhenNoMutations'):
-            assert properties.findtext('m:' + key, namespaces=NS) == 'true', f'{name}: bootstrap override still active: {key}'
-        target = ROOT / name / 'target'
-        reports = list((target / 'surefire-reports').glob('TEST-*.xml'))
-        assert reports and sum(int(ET.parse(r).getroot().get('tests', '0')) - int(ET.parse(r).getroot().get('skipped', '0')) for r in reports) > 0, f'{name}: no discovered unit tests'
-        coverage = ET.parse(target / 'site/jacoco/jacoco.xml').getroot()
-        assert all(int(c.get('missed')) == 0 for c in coverage.findall('counter') if c.get('type') in ('LINE', 'BRANCH')), f'{name}: coverage misses'
-        mutations = ET.parse(target / 'pit-reports/mutations.xml').getroot().findall('mutation')
-        assert mutations, f'{name}: no mutations executed'
-        detected = sum(m.get('detected') == 'true' for m in mutations)
-        assert detected / len(mutations) >= 0.8, f'{name}: mutation score below 80%'
-    reports = list((ROOT / 'acceptance-tests/target/failsafe-reports').glob('TEST-*.xml'))
-    assert reports and sum(int(ET.parse(r).getroot().get('tests', '0')) - int(ET.parse(r).getroot().get('skipped', '0')) for r in reports) > 0, 'no discovered acceptance tests'
-    for report in [*reports, *(ROOT.glob('*/target/surefire-reports/TEST-*.xml'))]:
-        suite = ET.parse(report).getroot()
-        assert suite.get('failures', '0') == '0' and suite.get('errors', '0') == '0', str(report)
-    print('PASS complete test/coverage/mutation discovery', flush=True)
+def executed_cases(path):
+    """Count executed testcase elements, including nested suites, never stale roots."""
+    root = ET.parse(path).getroot()
+    assert not root.findall(".//failure") and not root.findall(".//error"), str(path)
+    return sum(case.find("skipped") is None for case in root.findall(".//testcase"))
 
-if __name__ == '__main__':
+
+def inspect_build(root, mode, test_compile):
+    evidence = {}
+    for name in MODULES:
+        target = root / name / "target"
+        unit_reports = list((target / "surefire-reports").glob("TEST-*.xml"))
+        acceptance_reports = list((target / "failsafe-reports").glob("TEST-*.xml"))
+        units = sum(executed_cases(path) for path in unit_reports)
+        acceptance = sum(executed_cases(path) for path in acceptance_reports)
+        unit_exec = target / "jacoco-unit.exec"
+        acceptance_exec = target / "jacoco-acceptance.exec"
+        coverage_path = target / "site/jacoco/jacoco.xml"
+        mutation_path = target / "pit-reports/mutations.xml"
+        if name in MODULES[:3]:
+            assert (units > 0) if mode.unit else (not unit_reports), name + ": no discovered unit tests or forbidden unit execution"
+            assert not acceptance_reports and not acceptance_exec.exists(), name + ": acceptance leaked into production module"
+            evidence[name] = {"units": units}
+            if mode.coverage:
+                assert unit_exec.is_file() and unit_exec.stat().st_size > 0, name + ": no unit coverage data"
+                coverage = ET.parse(coverage_path).getroot()
+                classes = []
+                for klass in coverage.findall(".//class"):
+                    counts = {counter.get("type"): {"missed": int(counter.get("missed")), "covered": int(counter.get("covered"))}
+                              for counter in klass.findall("counter") if counter.get("type") in ("LINE", "BRANCH")}
+                    assert all(count["missed"] == 0 for count in counts.values()), name + ": coverage misses " + klass.get("name")
+                    if counts:
+                        classes.append({"class": klass.get("name"), "counters": counts})
+                assert classes, name + ": no covered logic"
+                evidence[name]["classes"] = classes
+            else:
+                assert not unit_exec.exists() and not coverage_path.exists(), name + ": forbidden unit coverage execution"
+            if mode.mutation:
+                mutations = ET.parse(mutation_path).getroot().findall("mutation")
+                assert mutations, name + ": no mutations"
+                statuses = {}
+                survivors = []
+                for mutation in mutations:
+                    status = mutation.get("status")
+                    statuses[status] = statuses.get(status, 0) + 1
+                    killer = mutation.findtext("killingTest") or ""
+                    assert "acceptance" not in killer and "IT(" not in killer, name + ": PIT used acceptance tests"
+                    if status == "SURVIVED":
+                        survivors.append({field: mutation.findtext(field) for field in
+                                          ("mutatedClass", "mutatedMethod", "lineNumber", "mutator", "description")})
+                assert not any(statuses.get(status, 0) for status in ("NO_COVERAGE", "RUN_ERROR", "MEMORY_ERROR", "NON_VIABLE")), statuses
+                detected = sum(mutation.get("detected") == "true" for mutation in mutations)
+                assert detected * 100 // len(mutations) >= 80, name + ": mutation floor"
+                evidence[name].update(mutations=len(mutations), detected=detected, statuses=statuses, survivors=survivors)
+            else:
+                assert not mutation_path.exists(), name + ": forbidden mutation execution"
+        else:
+            assert not unit_reports and not unit_exec.exists() and not coverage_path.exists() and not mutation_path.exists(), "test-only module has unit gates"
+            if mode.acceptance:
+                assert acceptance > 0, "no discovered acceptance checks"
+                assert acceptance_exec.is_file() and acceptance_exec.stat().st_size > 0, "missing separate acceptance coverage"
+                cucumber = json.loads((target / "cucumber-report.json").read_text())
+                scenarios = [scenario for feature in cucumber for scenario in feature.get("elements", []) if scenario.get("type") == "scenario"]
+                assert scenarios and all(step["result"]["status"] == "passed" for scenario in scenarios for step in scenario["steps"]), "no passed Cucumber scenarios"
+                summary = ET.parse(target / "failsafe-reports/failsafe-summary.xml").getroot()
+                completed = int(summary.findtext("completed"))
+                assert int(summary.findtext("errors")) == 0 and int(summary.findtext("failures")) == 0
+                assert completed == acceptance, f"Failsafe completed {completed} differs from executed testcase count {acceptance}"
+                cucumber_cases = sum(executed_cases(path) for path in acceptance_reports if path.name.endswith("AcceptanceIT.xml"))
+                assert cucumber_cases == len(scenarios), "Cucumber events/cases disagree"
+                evidence[name] = {"acceptance": acceptance, "cucumber": len(scenarios), "failsafe_completed": completed}
+            else:
+                assert not acceptance_reports and not acceptance_exec.exists() and not (target / "cucumber-report.json").exists(), "forbidden acceptance execution"
+        classes = list((target / "test-classes").rglob("*.class"))
+        assert bool(classes) == test_compile, name + ": unexpected test compilation"
+        if name in MODULES[:3]:
+            assert list((target / "classes").rglob("*.class")), name + ": no production compilation"
+            assert list(target.glob("*.jar")), name + ": missing packaged artifact"
+    return evidence
+
+
+def run_build(root, arguments, log):
+    command = ["bash", str(root / "mvnw"), *arguments, "-B", "-ntp", "-Dstyle.color=never"]
+    print("RUN " + " ".join(command), flush=True)
+    started = time.monotonic()
+    with log.open("w") as output:
+        result = subprocess.run(command, cwd=root, stdout=output, stderr=subprocess.STDOUT, timeout=1800)
+    print(f"EXIT {result.returncode} ({time.monotonic() - started:.1f}s) log={log}", flush=True)
+    return result
+
+
+def complete_modes(log_dir):
+    log_dir.mkdir(parents=True, exist_ok=True)
+    none = Mode(False, False, False, False)
+    cases = [
+        ("default", ["clean", "verify"], Mode(True, True, True, True), True),
+        ("all-tests", ["clean", "verify", "-Pall-tests"], Mode(True, True, True, True), True),
+        ("unit-tests", ["clean", "verify", "-Punit-tests"], Mode(True, False, True, False), True),
+        ("acceptance-tests", ["clean", "verify", "-Pacceptance-tests"], Mode(False, True, False, False), True),
+        ("mutation-tests", ["clean", "verify", "-Pmutation-tests"], Mode(True, False, True, True), True),
+        ("skip-package", ["clean", "package", "-DskipTests"], none, True),
+        ("skip-compile-package", ["clean", "package", "-Dmaven.test.skip=true"], none, False),
+        ("skip-verify", ["clean", "verify", "-DskipTests"], none, True),
+        ("skip-compile-verify", ["clean", "verify", "-Dmaven.test.skip=true"], none, False),
+    ]
+    evidence = {}
+    for name, arguments, mode, test_compile in cases:
+        result = run_build(ROOT, arguments, log_dir / (name + ".log"))
+        assert result.returncode == 0, f"{name} failed; see {log_dir / (name + '.log')}"
+        evidence[name] = inspect_build(ROOT, mode, test_compile)
+        for module in MODULES:
+            for relative in ("surefire-reports", "failsafe-reports", "site/jacoco", "pit-reports"):
+                source = ROOT / module / "target" / relative
+                if source.exists():
+                    shutil.copytree(source, log_dir / name / module / relative, dirs_exist_ok=True)
+            source = ROOT / module / "target/cucumber-report.json"
+            if source.exists():
+                destination = log_dir / name / module / source.name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, destination)
+        (log_dir / "evidence.json").write_text(json.dumps(evidence, indent=2) + "\n")
+        print("PASS actual " + name + ": " + json.dumps({module: {key: value for key, value in values.items() if key in ("units", "acceptance", "cucumber", "mutations", "detected")} for module, values in evidence[name].items()}), flush=True)
+
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--phase', choices=('bootstrap', 'complete'), required=True)
+    parser.add_argument("--phase", choices=("bootstrap", "complete"), required=True)
+    parser.add_argument("--log-dir", type=Path, default=ROOT / ".verification/build-modes")
     args = parser.parse_args()
     selectedProfilesHaveExactExecutionFlags()
-    if args.phase == 'complete':
-        completed_reports()
+    if args.phase == "complete":
+        complete_modes(args.log_dir.resolve())

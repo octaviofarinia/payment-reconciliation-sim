@@ -9,15 +9,23 @@
   <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
  </dependencies>
  <build><plugins>
+  <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId>
+    <executions><execution><id>require-unit-coverage-data</id><phase>verify</phase><goals><goal>enforce</goal></goals>
+      <configuration><skip>${quality.skip}</skip><rules><requireFilesExist>
+        <files><file>${project.build.directory}/jacoco-unit.exec</file></files>
+        <message>Enabled unit coverage requires execution data; no unit coverage data was generated.</message>
+      </requireFilesExist></rules></configuration>
+    </execution></executions>
+  </plugin>
   <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId></plugin>
   <plugin><groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId></plugin>
   <plugin><groupId>org.pitest</groupId><artifactId>pitest-maven</artifactId></plugin>
   <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-shade-plugin</artifactId>
     <configuration><shadedClassifierName>exec</shadedClassifierName>
-      <filters><filter><artifact>*:*</artifact><excludes><exclude>META-INF/*.SF</exclude><exclude>META-INF/*.RSA</exclude><exclude>META-INF/*.DSA</exclude></excludes></filter></filters>
-      <transformers>
+      <filters><filter><artifact>*:*</artifact><excludes><exclude>META-INF/*.SF</exclude><exclude>META-INF/*.RSA</exclude><exclude>META-INF/*.DSA</exclude><exclude>META-INF/MANIFEST.MF</exclude><exclude>module-info.class</exclude><exclude>META-INF/versions/*/module-info.class</exclude></excludes></filter></filters>
+      <transformers><transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer"><resource>META-INF/LICENSE</resource></transformer><transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer"><resource>META-INF/LICENSE.txt</resource></transformer><transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer"><resource>META-INF/NOTICE</resource></transformer><transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer"><resource>META-INF/NOTICE.txt</resource></transformer><transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer"><resource>META-INF/DEPENDENCIES</resource></transformer><transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer"><resource>META-INF/io.netty.versions.properties</resource></transformer><transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer"><resource>META-INF/FastDoubleParser-LICENSE</resource></transformer><transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer"><resource>META-INF/FastDoubleParser-ThirdParty-LICENSE</resource></transformer><transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer"><resource>META-INF/Schubfach-LICENSE</resource></transformer>
         <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"><mainClass>org.octavio.paymentreconciliationsim.generator.ScenarioGeneratorMain</mainClass></transformer>
+        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"><mainClass>org.octavio.paymentreconciliationsim.generator.ScenarioGeneratorMain</mainClass><manifestEntries><Multi-Release>true</Multi-Release></manifestEntries></transformer>
       </transformers>
     </configuration>
   </plugin>

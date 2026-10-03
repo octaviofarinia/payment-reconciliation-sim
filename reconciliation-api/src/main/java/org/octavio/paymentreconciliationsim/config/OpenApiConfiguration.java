@@ -23,7 +23,7 @@ public class OpenApiConfiguration {
         ModelConverters.getInstance().read(ApiError.class).forEach(components::addSchemas);
         components.addSchemas("CreateBusinessDate", new ObjectSchema().addProperty("businessDate", new DateSchema())
                 .required(List.of("businessDate")));
-        components.addSchemas("CreatePurchase", new ObjectSchema()
+        components.addSchemas("CreatePurchase", new ObjectSchema().additionalProperties(false)
                 .addProperty("transactionReference", new StringSchema().pattern("^[A-Za-z0-9_-]{1,64}$"))
                 .addProperty("merchantId", new StringSchema().minLength(1).maxLength(64).description("1 to 64 Unicode codepoints; preserved without normalization"))
                 .addProperty("businessDate", new DateSchema())

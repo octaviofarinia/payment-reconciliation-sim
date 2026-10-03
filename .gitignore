@@ -38,3 +38,6 @@ build/
 ### Python verification ###
 __pycache__/
 *.pyc
+
+### Build verification evidence ###
+.verification/

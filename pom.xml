@@ -36,6 +36,8 @@
     <build.mode.signature>${mode.all},${mode.unit},${mode.acceptance},${mode.mutation}</build.mode.signature>
     <argLine/>
     <unitTestArgLine/>
+    <acceptanceTestArgLine/>
+    <mockitoTestAgent>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar -Xshare:off</mockitoTestAgent>
     <cucumber.version>8.0.4</cucumber.version>
     <wiremock.version>3.13.2</wiremock.version>
     <jacoco.version>0.8.15</jacoco.version>
@@ -81,7 +83,7 @@
           <configuration>
             <skipTests>${tests.unit.skip}</skipTests>
             <failIfNoTests>${tests.failIfNoTests}</failIfNoTests>
-            <argLine>@{argLine} @{unitTestArgLine}</argLine>
+            <argLine>@{argLine} @{unitTestArgLine} ${mockitoTestAgent}</argLine>
           </configuration>
         </plugin>
         <plugin>
@@ -90,6 +92,7 @@
             <skipTests>${tests.acceptance.skip}</skipTests>
             <failIfNoTests>true</failIfNoTests>
             <includes><include>**/*IT.java</include></includes>
+            <argLine>@{argLine} @{acceptanceTestArgLine} ${mockitoTestAgent}</argLine>
           </configuration>
           <executions><execution><id>default</id><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions>
         </plugin>

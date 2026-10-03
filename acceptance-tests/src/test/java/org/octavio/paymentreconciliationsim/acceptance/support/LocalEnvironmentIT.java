@@ -52,7 +52,7 @@ class LocalEnvironmentIT {
 
     @Test
     void startupFailureStopsAlreadyStartedSpringMongoAndStub() throws Exception {
-        try (var environment = new LocalEnvironment("--acceptance.fail-startup=true")) {
+        try (var environment = new LocalEnvironment("--acceptance.fail-startup=true", "--logging.level.org.springframework.boot.SpringApplication=OFF")) {
             assertThrows(RuntimeException.class, environment::start);
             assertNotNull(environment.apiBaseUri(), "Startup probe must fail after the HTTP server opened its port");
             assertStopped(environment, environment.apiBaseUri(), environment.s3Endpoint());

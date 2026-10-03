@@ -81,6 +81,8 @@ public final class LocalEnvironment implements AutoCloseable {
                     apiBaseUri = URI.create("http://127.0.0.1:" + event.getWebServer().getPort()));
             var arguments = new java.util.ArrayList<String>();
             arguments.add("--server.port=0");
+            // These enabled public docs are intentional in this test harness.
+            arguments.add("--logging.level.org.springdoc.core.events.SpringDocAppInitializer=ERROR");
             arguments.add("--spring.mongodb.uri=" + mongo.getReplicaSetUrl(databaseName));
             arguments.add("--reconciliation.security.demo-token=" + DEMO_TOKEN);
             arguments.add("--reconciliation.security.worker-token=" + WORKER_TOKEN);

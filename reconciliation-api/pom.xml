@@ -16,6 +16,14 @@
   <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc-test</artifactId><scope>test</scope></dependency>
  </dependencies>
  <build><plugins>
+  <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId>
+    <executions><execution><id>require-unit-coverage-data</id><phase>verify</phase><goals><goal>enforce</goal></goals>
+      <configuration><skip>${quality.skip}</skip><rules><requireFilesExist>
+        <files><file>${project.build.directory}/jacoco-unit.exec</file></files>
+        <message>Enabled unit coverage requires execution data; no unit coverage data was generated.</message>
+      </requireFilesExist></rules></configuration>
+    </execution></executions>
+  </plugin>
   <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId></plugin>
   <plugin><groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId></plugin>
   <plugin><groupId>org.pitest</groupId><artifactId>pitest-maven</artifactId></plugin>

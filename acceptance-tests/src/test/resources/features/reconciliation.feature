@@ -19,3 +19,4 @@ Feature: Real uploaded settlements produce complete reconciliation
       | empty     | header-only          | empty                |
       | canonical | duplicate-unknown    | duplicate-unknown    |
       | canonical | unequal-duplicates   | unequal-duplicates   |
+      | canonical | quoted-crlf         | canonical            |

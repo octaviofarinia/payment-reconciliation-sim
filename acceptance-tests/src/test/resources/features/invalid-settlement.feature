@@ -9,3 +9,7 @@ Feature: Deterministic input errors never publish partial results
       | fixture        | code           |
       | invalid-header | INVALID_HEADER |
       | invalid-utf8   | INVALID_UTF8   |
+      | wrong-date     | INVALID_DATE     |
+      | wrong-currency | INVALID_CURRENCY |
+      | invalid-amount | INVALID_AMOUNT   |
+      | no-header      | INVALID_HEADER   |

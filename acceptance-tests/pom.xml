@@ -25,5 +25,17 @@
 
   <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><configuration><skipTests>true</skipTests></configuration></plugin>
   <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId></plugin>
+  <plugin><groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId>
+    <configuration><skip>${tests.acceptance.skip}</skip><propertyName>acceptanceTestArgLine</propertyName>
+      <destFile>${project.build.directory}/jacoco-acceptance.exec</destFile>
+    </configuration>
+    <executions><execution><id>unit-coverage</id><phase>none</phase></execution>
+      <execution><id>coverage-gate</id><phase>none</phase></execution>
+      <execution><id>acceptance-coverage</id><goals><goal>prepare-agent</goal></goals></execution>
+    </executions>
+  </plugin>
+  <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId>
+    <configuration><skipIfEmpty>true</skipIfEmpty></configuration>
+  </plugin>
  </plugins></build>
 </project>

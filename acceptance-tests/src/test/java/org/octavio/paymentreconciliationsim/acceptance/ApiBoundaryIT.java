@@ -61,6 +61,7 @@ class ApiBoundaryIT {
   assertFalse(response.body().contains("/internal/v1/"));var docs=JSON.readTree(response.body());
   for(String path:List.of("/api/v1/business-dates","/api/v1/business-dates/{date}/close","/api/v1/transactions","/api/v1/reconciliation-runs","/api/v1/reconciliation-runs/{runId}","/api/v1/reconciliation-runs/{runId}/results","/api/v1/reconciliation-runs/{runId}/reprocess"))assertTrue(docs.path("paths").has(path),path);
   for(String schema:List.of("CreatePurchase","RegisterRun","BusinessDay","Purchase","RunMetadata","RegistrationResult","ResultPage","Result","Summary","ApiError"))assertTrue(docs.path("components").path("schemas").has(schema),schema);
+  assertFalse(docs.path("components").path("schemas").path("CreatePurchase").path("additionalProperties").asBoolean(true), "Purchase schema must reject undeclared fields");
   assertEquals("bearer",docs.path("components").path("securitySchemes").path("demoBearer").path("scheme").asText());
   for(var path:docs.path("paths"))for(var operation:path){
    assertEquals("demoBearer",operation.path("security").get(0).propertyNames().iterator().next());
