@@ -417,7 +417,13 @@ def smoke(args, evidence):
     entry = evidence["runs"]["canonical"] = {}
     start = int(time.time() * 1000) - 1000
     began = time.monotonic()
-    run_id = benchmark.run_generator(jar, base, args.business_date, demo)
+    try:
+        run_id = benchmark.run_generator(jar, base, args.business_date, demo)
+    except CheckFailure as failure:
+        if failure.run_id:
+            entry["runId"] = failure.run_id
+        entry["generatorElapsedSeconds"] = time.monotonic() - began
+        raise
     entry.update(runId=run_id, generatorElapsedSeconds=time.monotonic() - began)
     print("Cloud canonical runId=" + run_id, flush=True)
     fixture = ROOT / "acceptance-tests/src/test/resources/fixtures"

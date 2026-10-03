@@ -1,12 +1,33 @@
 # Cloud demonstration evidence
 
-Status: **PENDING — source preparation and offline tests only**.
+Status: **REQUIRED PENDING — cloud demonstration and overall acceptance incomplete**.
 
 No AWS/Atlas deployment, real S3 signature/expiry check, measured cold/warm run,
 controlled cloud outage, account benefit verification or teardown has been
 executed for Task 14. Terraform and AWS CLI were absent; the user owns preparation
 of the tools and account. No provider lockfile, plan, cloud measurement or cleanup
 claim is fabricated. Local evidence remains in [testing.md](testing.md).
+
+## Required cloud criterion ledger
+
+[All 20 requirements and 33 criteria](testing.md#requirement-traceability) link to
+executable local proof at the unchanged Task 12 checkpoint. The following
+criteria additionally require real cloud/manual evidence; none is complete.
+
+| Criterion | Local evidence | Required pending real observation |
+| --- | --- | --- |
+| <a id="cloud-ac-13"></a>AC-13 / REQ-07 | [Registration/stub/version proof](testing.md#ac-13) | External AWS PUT, signed checksum/signature/expiry rejection and immutable original-version reuse |
+| <a id="cloud-ac-18"></a>AC-18 / REQ-12 | [Fault/retry/manual recovery proof](testing.md#ac-18) | Controlled cloud outage, real attempt diagnostics and retained-input recovery |
+| <a id="cloud-ac-20"></a>AC-20 / REQ-13 | [Supported-bound parser/workload proof](testing.md#ac-20) | Maximum supported real cold/warm workload, memory and less-than-120-second processing target |
+| <a id="cloud-ac-21"></a>AC-21 / REQ-14 | [Real local handler/auth proof](testing.md#ac-21) | Direct S3 notification, actual private API/S3 routing and deployed least privilege/no worker Atlas access |
+| <a id="cloud-ac-23"></a>AC-23 / REQ-15 | [Evidence boundary](testing.md#ac-23) | Account benefits/resources/quota, Atlas M0 startup, usage visibility, full teardown |
+| <a id="cloud-ac-24"></a>AC-24 / REQ-16–REQ-18 | [Actual local generator proof](testing.md#ac-24) | Cloud executable generator and five outcomes through tunneled Swagger/public API |
+
+Terraform fmt/init/validate/plan/provider lockfile and post-teardown local
+verification remain required pending prerequisites/final checks as well.
+`finalEvidenceCoversEveryCriterion` cannot pass its all-required-evidence assertion.
+Record observations with reviewed commit/artifact hashes, commands, times and
+sanitized source locations before replacing any PENDING status.
 
 ## Readiness and pending observations
 
@@ -153,6 +174,20 @@ Observe Billing/Free Tier after deletion, record remaining credits/expiry and
 visibility lag, then run the established local verification after teardown.
 Only actual evidence may replace PENDING entries above. Task 14 and overall
 cloud acceptance remain incomplete until every required observation exists.
+
+## Architecture observations
+
+The implementation has the following design consequences. They are not measured
+performance or cost findings; record actual observations after authorized cloud
+execution.
+
+| Decision | Consequence to assess | Current measurement status |
+| --- | --- | --- |
+| Java 21 Lambda, 512 MiB, concurrency one | Initialization and memory headroom at 1,000 purchases/2,000 rows/2 MiB; throughput is serialized | REQUIRED PENDING: correlated cold/warm REPORTs and upload-to-completion wall time |
+| Worker obtains immutable purchases through private EC2 HTTP | Fewer snapshots, but API outages can leave stale status and need retained-input recovery | REQUIRED PENDING: controlled outage/retry/manual recovery |
+| Embedded report, maximum 8 MiB | One atomic publication; larger datasets need another storage design | Local boundary/publication proof only; cloud maximum workload pending |
+| Public EC2 outbound TLS plus S3 gateway endpoint/private Lambda | No NAT/load balancer/interface endpoints; Atlas access follows changing EC2 public /32 | REQUIRED PENDING: actual routing/permissions/Atlas startup |
+| Free account benefits and Atlas M0 | Eligibility and credits constrain availability; source cannot establish zero spend | REQUIRED PENDING: current account/service evidence and usage before/after teardown |
 
 ## Sources and evidence boundaries
 

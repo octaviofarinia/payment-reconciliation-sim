@@ -1,6 +1,8 @@
 # AWS deployment
 
-This is a source-only deployment definition. Terraform and AWS CLI were absent in
+This is a source-only deployment definition. Start with the current
+[handoff and prerequisites](../README.md), [verified application checkpoint](testing.md#retained-verified-application-checkpoint)
+and [full requirement ledger](testing.md#requirement-traceability). Terraform and AWS CLI were absent in
 the implementation WSL environment. Terraform fmt/init/validate/plan, account
 preflight, EC2 bootstrap, Atlas startup, actual notification delivery, cloud smoke
 and teardown are **pending**, not established by the offline tests. Nothing here
@@ -279,7 +281,11 @@ The canonical phase invokes the unchanged executable
 scenario-generator/target/scenario-generator-0.0.1-SNAPSHOT-exec.jar with public
 --base-url, --business-date, --seed 0 and --scenario canonical arguments. Only
 RECONCILIATION_DEMO_TOKEN is passed as a secret; it receives no worker/Atlas/AWS
-credentials. Captured generator output is never echoed. The wrapper verifies
+credentials. Captured generator output is never echoed. If Java exits nonzero after registration,
+the wrapper retains only one unambiguous UUID from the CLI's complete recovery
+marker in the sanitized error and partial canonical evidence. Missing/ambiguous
+markers, launch failures or wrapper timeouts may leave no known run ID; inspect
+public runs for the requested date and do not infer that registration never occurred. The wrapper verifies
 COMPLETED, totalResultCount=5, all five outcomes and complete independent expected
 results, original checksum/version, direct delivery and its own correlated replay.
 The named realS3UploadPublishesReportWithinRuntimeBudget check passes only when

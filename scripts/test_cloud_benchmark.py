@@ -108,6 +108,29 @@ class CanonicalGeneratorTests(unittest.TestCase):
                     cloud.benchmark.run_generator(jar, "http://127.0.0.1:8080", "2020-01-01", "demo")
                 self.assertNotIn("private", str(failure.exception))
 
+    def test_failed_generator_retains_only_unambiguous_recovery_uuid(self):
+        import subprocess
+        run_id = "12345678-1234-1234-1234-123456789012"
+        recovery = ("Upload failed; runId=" + run_id
+                    + "; inspect public run status and POST /api/v1/reconciliation-runs/"
+                    + run_id + "/reprocess to recover")
+        with tempfile.TemporaryDirectory() as directory:
+            jar = Path(directory) / "generator.jar"
+            jar.write_bytes(b"offline fixture")
+            with patch.object(cloud.subprocess, "run", return_value=subprocess.CompletedProcess(
+                    [], 1, "secret-presigned-url", recovery + "\nprivate-token")):
+                with self.assertRaises(cloud.CheckFailure) as failure:
+                    cloud.benchmark.run_generator(jar, "http://127.0.0.1:8080", "2020-01-01", "demo")
+                self.assertIn(run_id, str(failure.exception))
+                self.assertEqual(run_id, failure.exception.run_id)
+                self.assertNotIn("private-token", str(failure.exception))
+                self.assertNotIn("secret-presigned-url", str(failure.exception))
+            for output in ["runId=" + run_id, recovery + "\n" + recovery.replace(run_id, "87654321-1234-1234-1234-123456789012")]:
+                with patch.object(cloud.subprocess, "run", return_value=subprocess.CompletedProcess([], 1, "", output)):
+                    with self.assertRaises(cloud.CheckFailure) as failure:
+                        cloud.benchmark.run_generator(jar, "http://127.0.0.1:8080", "2020-01-01", "demo")
+                    self.assertIsNone(failure.exception.run_id)
+
 
 class EvidenceWorkflowTests(unittest.TestCase):
     def test_report_paging_rejects_count_drift_and_duplicate_references(self):

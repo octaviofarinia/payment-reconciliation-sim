@@ -12,7 +12,9 @@ import urllib.parse
 import uuid
 
 class CheckFailure(Exception):
-    pass
+    def __init__(self, message, run_id=None):
+        super().__init__(message)
+        self.run_id = run_id
 
 
 def require(condition, message):
@@ -94,7 +96,17 @@ def run_generator(jar, base, date, demo):
             env=env, capture_output=True, text=True, timeout=420)
     except (OSError, subprocess.TimeoutExpired):
         raise CheckFailure("Generator unavailable or deadline exceeded; inspect public run metadata") from None
-    require(result.returncode == 0, "Canonical generator failed; inspect public run metadata")
+    if result.returncode != 0:
+        # Extract only the CLI's complete recovery marker; captured output stays private.
+        ids = set(re.findall(
+            r"; runId=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"
+            r"; inspect public run status and POST /api/v1/reconciliation-runs/\1/reprocess to recover(?=\s|$)",
+            result.stderr))
+        run_id = str(uuid.UUID(ids.pop())) if len(ids) == 1 else None
+        message = "Canonical generator failed; inspect public run metadata"
+        if run_id:
+            message += "; runId=" + run_id + "; POST /api/v1/reconciliation-runs/" + run_id + "/reprocess to recover"
+        raise CheckFailure(message, run_id)
     match = re.fullmatch(r"Verified runId=([0-9a-f-]{36}) results=5\s*", result.stdout)
     require(match is not None, "Generator did not report a verified five-result run")
     return str(uuid.UUID(match[1]))

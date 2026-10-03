@@ -308,6 +308,28 @@ class SmokeWorkflowTests(unittest.TestCase):
             self.assertEqual({maximum, canonical}, captured["replayed"])
             self.assertNotIn("mongoUri", Path(args.output).read_text())
             self.assertNotIn("https://b.example/upload", Path(args.output).read_text())
+
+            # The real wrapper must retain the registered UUID when Java exits nonzero.
+            import subprocess
+            captured.update(purchases=[], runs={}, replayed=set(), current=maximum)
+            args.output = str(work / "generator-failed.json")
+            recovery = ("Upload failed; runId=" + canonical
+                        + "; inspect public run status and POST /api/v1/reconciliation-runs/"
+                        + canonical + "/reprocess to recover")
+            with patch.object(cloud, "ROOT", work), patch.object(cloud, "cloud_topology"), \
+                 patch.object(cloud, "api", side_effect=fake_api), patch.object(cloud, "http", side_effect=fake_http), \
+                 patch.object(cloud, "aws", side_effect=fake_aws), \
+                 patch.object(cloud.subprocess, "run", return_value=subprocess.CompletedProcess(
+                     [], 1, "secret-presigned-url", recovery + "\nprivate-token")):
+                with self.assertRaises(cloud.CheckFailure):
+                    cloud.smoke_evidence(args)
+            failed = json.loads(Path(args.output).read_text())
+            self.assertEqual("FAILED", failed["status"])
+            self.assertEqual(canonical, failed["runs"]["canonical"].get("runId"))
+            self.assertEqual("PENDING", failed["checks"]["canonicalGeneratorAndDirectS3"])
+            self.assertNotIn("private-token", Path(args.output).read_text())
+            self.assertNotIn("secret-presigned-url", Path(args.output).read_text())
+
             for mode in ("missing-cold", "slow-cold"):
                 fault["mode"] = mode
                 captured.update(purchases=[], runs={}, replayed=set(), current=maximum)
