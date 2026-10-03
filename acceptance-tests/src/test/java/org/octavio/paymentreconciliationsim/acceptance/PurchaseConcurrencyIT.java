@@ -74,6 +74,38 @@ class PurchaseConcurrencyIT {
   assertEquals(400,post("/api/v1/transactions",body).statusCode());
   assertEquals(0,env.mongoDatabase().getCollection("purchases").countDocuments());
  }
+ @Test void legal24HexReferencesKeepStringIdentityAndCaseSensitiveReplay()throws Exception {
+  createDate("2026-10-01");
+  String lower="0123456789abcdef01234567";
+  String upper="0123456789ABCDEF01234567";
+  var lowerCreated=post("/api/v1/transactions",purchase(lower,"2026-10-01","10000"));
+  assertEquals(201,lowerCreated.statusCode(),"Legal hex references must not become BSON ObjectId");
+  assertEquals(lower,Document.parse(lowerCreated.body()).getString("transactionReference"));
+  var lowerReplay=post("/api/v1/transactions",purchase(lower,"2026-10-01","10000"));
+  assertEquals(200,lowerReplay.statusCode());assertEquals(lowerCreated.body(),lowerReplay.body());
+  assertEquals(409,post("/api/v1/transactions",purchase(lower,"2026-10-01","20000")).statusCode());
+
+  var upperCreated=post("/api/v1/transactions",purchase(upper,"2026-10-01","30000"));
+  assertEquals(201,upperCreated.statusCode(),"Upper/lower hex references are distinct identifiers");
+  assertEquals(upper,Document.parse(upperCreated.body()).getString("transactionReference"));
+  var upperReplay=post("/api/v1/transactions",purchase(upper,"2026-10-01","30000"));
+  assertEquals(200,upperReplay.statusCode());assertEquals(upperCreated.body(),upperReplay.body());
+  assertEquals(409,post("/api/v1/transactions",purchase(upper,"2026-10-01","40000")).statusCode());
+
+  var stored=env.mongoDatabase().getCollection("purchases",org.bson.BsonDocument.class).find().into(new ArrayList<>());
+  assertEquals(2,stored.size());
+  assertTrue(stored.stream().allMatch(p->p.get("_id").getBsonType()==BsonType.STRING));
+  assertEquals(Set.of(lower,upper),stored.stream().map(p->p.getString("_id").getValue()).collect(java.util.stream.Collectors.toSet()));
+  assertEquals(Set.of(10000L,30000L),stored.stream().map(p->p.getInt64("amountCentavos").getValue()).collect(java.util.stream.Collectors.toSet()));
+  var guard=env.mongoDatabase().getCollection("business_days").find(new Document("_id","2026-10-01")).first();
+  assertNotNull(guard);assertEquals(2L,guard.getLong("purchaseCount"));assertEquals(2L,guard.getLong("revision"));
+
+  var close=post("/api/v1/business-dates/2026-10-01/close","{}");
+  assertEquals(200,close.statusCode());assertEquals(2,((Number)Document.parse(close.body()).get("purchaseCount")).intValue());
+  var closedReplay=post("/api/v1/transactions",purchase(lower,"2026-10-01","10000"));
+  assertEquals(200,closedReplay.statusCode());assertEquals(lowerCreated.body(),closedReplay.body());
+  assertEquals(2,env.mongoDatabase().getCollection("purchases").countDocuments());
+ }
  @Test void emptyDateCanBeClosedAndNeverReopened()throws Exception{
   createDate("2026-10-01");var closed=post("/api/v1/business-dates/2026-10-01/close","{}");
   assertEquals(200,closed.statusCode());assertEquals(0,((Number)Document.parse(closed.body()).get("purchaseCount")).intValue());
