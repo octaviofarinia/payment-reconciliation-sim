@@ -66,7 +66,7 @@ placeholder with actual evidence before using it:
 ~~~json
 {
   "accountId": "123456789012",
-  "region": "us-east-1",
+  "region": "sa-east-1",
   "instanceType": "YOUR_VERIFIED_X86_TYPE",
   "confirmedAt": "CURRENT_UTC_ISO_TIMESTAMP",
   "atlasTier": "M0",
@@ -90,7 +90,7 @@ account checks:
 umask 077
 mkdir -p .runtime
 python3 scripts/cloud-smoke.py preflight \
-  --account-id YOUR_ACCOUNT_ID --region us-east-1 \
+  --account-id YOUR_ACCOUNT_ID --region sa-east-1 \
   --instance-type YOUR_VERIFIED_X86_TYPE \
   --eligibility .runtime/eligibility.json > .runtime/preflight.json
 ~~~
