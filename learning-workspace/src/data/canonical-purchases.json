@@ -1,0 +1,6 @@
+[
+ {"transactionReference":"MATCH-001","merchantId":"MERCHANT-001","businessDate":"2026-10-01","amountCentavos":10000,"currency":"ARS"},
+ {"transactionReference":"MISS-001","merchantId":"MERCHANT-001","businessDate":"2026-10-01","amountCentavos":20000,"currency":"ARS"},
+ {"transactionReference":"AMOUNT-001","merchantId":"MERCHANT-001","businessDate":"2026-10-01","amountCentavos":40000,"currency":"ARS"},
+ {"transactionReference":"DUP-001","merchantId":"MERCHANT-001","businessDate":"2026-10-01","amountCentavos":50000,"currency":"ARS"}
+]

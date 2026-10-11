@@ -2,6 +2,29 @@
 
 A Java 21 / Spring Boot 4.1.1 simulator for comparing immutable ARS purchases with a daily settlement CSV. The API stores purchases and reports in MongoDB. The separately packaged Java Lambda parses the CSV and classifies MATCHED, MISSING_IN_SETTLEMENT, MISSING_INTERNALLY, AMOUNT_MISMATCH and DUPLICATE results.
 
+## Learn the project interactively
+
+[Reconciliation Lab](learning-workspace/README.md) is a browser-first course with
+eight modules, a shared Data/System/Code Explorer and eight interactive missions.
+It builds from pure reconciliation rules to the Java backend, cloud boundaries
+and recovery. Optional local coding labs connect each module to this repository.
+
+After cloning the repository, install Node.js 22.12 or newer (with npm), then run
+from the repository root:
+
+```sh
+cd learning-workspace
+npm ci
+npm run build
+npm run preview
+```
+
+Open the URL printed by Vite, normally http://localhost:4173/. The core course
+needs no Java, Docker, backend server or cloud account. Source and the dependency
+lockfile are committed; `dist/` is generated locally. See the
+[site README](learning-workspace/README.md#run-the-course-from-a-fresh-clone) for
+development, testing, Windows/WSL and progress backup instructions.
+
 ## Current handoff status
 
 **Local application verification is established; required cloud evidence is PENDING.**
