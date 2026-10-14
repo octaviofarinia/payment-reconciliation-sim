@@ -4,6 +4,10 @@ A complete React/Vite learning site for developers who know basic Java and Sprin
 
 The site contains **8 modules, 24 lessons and 8 assessed browser missions**, with an optional local coding lab for every module. Explorer offers **Data, System and Code** lenses. The library includes **25 source entries with exact project snapshots** and **49 glossary entries**; some project files and concepts appear in more than one teaching context.
 
+## Use the course online
+
+Open [Reconciliation Lab on GitHub Pages](https://octaviofarinia.github.io/payment-reconciliation-sim/). The entire core course, all Explorer lenses, missions and source snapshots are available without cloning the repository or installing anything. Progress is saved in your browser; use **Library → Progress** to export a backup.
+
 ## Learning path
 
 | Module | Focus | Browser practice |
@@ -85,6 +89,31 @@ popd
 ```
 
 The polling setting helps Vite observe changes over the UNC share. Build and test commands can run from the same mapped directory.
+
+## GitHub Pages deployment
+
+[Publish learning site](../.github/workflows/learning-site-pages.yml) builds and tests the course on pushes to `master`, then deploys `dist/client/` using GitHub's Pages actions. The workflow can also be run manually from the repository's Actions tab. In **Settings → Pages**, the publishing source must be **GitHub Actions**.
+
+The workflow reads the site's base path from GitHub Pages and passes it through `VITE_BASE_PATH`, so JavaScript, CSS, fonts and the favicon load under `/payment-reconciliation-sim/`. Local development and ordinary builds default to `/`. To reproduce the public build from `learning-workspace/`, set the variable for your shell:
+
+```sh
+# Linux, macOS or WSL
+VITE_BASE_PATH=/payment-reconciliation-sim/ npm run build
+npm test
+npm run preview
+```
+
+```powershell
+# PowerShell
+$env:VITE_BASE_PATH = '/payment-reconciliation-sim/'
+npm run build
+npm test
+npm run preview
+```
+
+Open the preview at `/payment-reconciliation-sim/`. Existing hash links, such as `/payment-reconciliation-sim/#/course/recovery/2`, work when shared or refreshed. Generated files remain excluded from Git. GitHub Pages serves the static client; the Sites server package remains available for a separate Sites handoff.
+
+Deployment requires every test to pass, including snapshot parity with the Java and Terraform sources. When those project files change, update the teaching snapshots deliberately before deploying the updated course. Workflow failures are visible in **Actions → Publish learning site**; the previous successful deployment stays available.
 
 ## Evidence and limits
 

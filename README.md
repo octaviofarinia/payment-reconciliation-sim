@@ -9,6 +9,9 @@ eight modules, a shared Data/System/Code Explorer and eight interactive missions
 It builds from pure reconciliation rules to the Java backend, cloud boundaries
 and recovery. Optional local coding labs connect each module to this repository.
 
+[Open the course online](https://octaviofarinia.github.io/payment-reconciliation-sim/)
+to learn without installing or running anything. Progress stays in your browser.
+
 After cloning the repository, install Node.js 22.12 or newer (with npm), then run
 from the repository root:
 
