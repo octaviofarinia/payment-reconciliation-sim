@@ -32,7 +32,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "settlements" {
 resource "aws_s3_bucket_policy" "tls" {
   bucket = aws_s3_bucket.settlements.id
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [{
       Sid       = "DenyInsecureTransport"
       Effect    = "Deny"

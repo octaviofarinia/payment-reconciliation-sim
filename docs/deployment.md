@@ -125,7 +125,8 @@ terraform -chdir=infra show -json reviewed.tfplan > infra/plan.json
 python3 scripts/cloud-smoke.py plan infra/plan.json
 ~~~
 
-Provider hashicorp/aws is pinned to 6.16.0. Initial init must generate and verify
+Provider hashicorp/aws is pinned to 6.69.1; 6.23.0 and later read `aws login`
+sessions from the AWS profile directly. Initial init must generate and verify
 .terraform.lock.hcl; review and commit that lockfile when tooling is prepared.
 No lockfile/checksums were fabricated. Keep local state/plan files private and
 ignored. No remote backend or extra service is provisioned.

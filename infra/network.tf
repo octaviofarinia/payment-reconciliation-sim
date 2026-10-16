@@ -43,8 +43,8 @@ resource "aws_vpc_endpoint" "s3" {
   vpc_endpoint_type = "Gateway"
   # Only worker uses this endpoint. EC2 must also fetch public AL2023 packages.
   route_table_ids = [aws_route_table.worker.id]
-  policy          = jsonencode({
-    Version   = "2012-10-17"
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
       Principal = "*"
