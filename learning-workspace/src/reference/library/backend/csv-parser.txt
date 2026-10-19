@@ -1,5 +1,10 @@
 package org.octavio.paymentreconciliationsim.worker.csv;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.octavio.paymentreconciliationsim.worker.domain.ReconciliationModel.SettlementRow;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -13,12 +18,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
-import org.octavio.paymentreconciliationsim.worker.domain.ReconciliationModel.SettlementRow;
 
-/** Bounded, strict ingestion of externally owned settlement bytes. */
+/**
+ * Bounded, strict ingestion of externally owned settlement bytes.
+ */
 public final class SettlementCsvParser {
     private static final int MAX_BYTES = 2_097_152;
     private static final int MAX_ROWS = 2_000;
@@ -27,7 +30,9 @@ public final class SettlementCsvParser {
     private static final Pattern REFERENCE = Pattern.compile("[A-Za-z0-9_-]{1,64}");
     private static final Pattern AMOUNT = Pattern.compile("[0-9]+");
 
-    /** IO failures propagate unchanged; no success value escapes unless the entire file is valid. */
+    /**
+     * IO failures propagate unchanged; no success value escapes unless the entire file is valid.
+     */
     public List<SettlementRow> parse(InputStream bytes, LocalDate expectedDate) throws IOException {
         // Buffer at most the allowed bytes plus one overflow probe, never trusting object metadata.
         byte[] raw = new BoundedInputStream(bytes).readAllBytes();
@@ -102,7 +107,9 @@ public final class SettlementCsvParser {
         return new SettlementRow(row, reference, centavos);
     }
 
-    /** Counts actual reads, including a one-byte overflow probe, without owning the source. */
+    /**
+     * Counts actual reads, including a one-byte overflow probe, without owning the source.
+     */
     static final class BoundedInputStream extends InputStream {
         private final InputStream source;
         private int count;

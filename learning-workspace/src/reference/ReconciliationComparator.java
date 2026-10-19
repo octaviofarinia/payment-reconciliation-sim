@@ -1,14 +1,8 @@
 package org.octavio.paymentreconciliationsim.worker.domain;
 
-import static org.octavio.paymentreconciliationsim.worker.domain.ReconciliationModel.*;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
+import static org.octavio.paymentreconciliationsim.worker.domain.ReconciliationModel.*;
 
 /**
  * Pure comparison of validated inputs with unique internal purchase references.

@@ -1,11 +1,12 @@
 package org.octavio.paymentreconciliationsim.security;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.UUID;
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
 import org.octavio.paymentreconciliationsim.http.ApiExceptionHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
@@ -13,6 +14,14 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import tools.jackson.databind.json.JsonMapper;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.UUID;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -50,20 +59,34 @@ public class DemoTokenFilter extends OncePerRequestFilter {
         if (worker || demo) {
             String authorization = request.getHeader("Authorization");
             if (authorization == null || !authorization.startsWith("Bearer ")) {
-                reject(response, 401, correlationId); return;
+                reject(response, 401, correlationId);
+                return;
             }
             byte[] supplied = authorization.substring(7).getBytes(StandardCharsets.UTF_8);
             // Compare both configured tokens on every authenticated route, without String.equals on secrets.
             boolean matchesDemo = MessageDigest.isEqual(demoToken, supplied);
             boolean matchesWorker = MessageDigest.isEqual(workerToken, supplied);
-            if (!matchesDemo && !matchesWorker) { reject(response, 401, correlationId); return; }
-            if (worker ? !matchesWorker : !matchesDemo) { reject(response, 403, correlationId); return; }
+            if (!matchesDemo && !matchesWorker) {
+                reject(response, 401, correlationId);
+                return;
+            }
+            if (worker ? !matchesWorker : !matchesDemo) {
+                reject(response, 403, correlationId);
+                return;
+            }
         }
         if (request.getMethod().equals("PUT") && path.matches("/internal/v1/reconciliation-runs/[^/]+/results")) {
             byte[] body;
-            try { body = request.getInputStream().readNBytes(MAX_REPORT_BYTES + 1); }
-            catch (IOException unreadable) { reject(response, 400, correlationId); return; }
-            if (body.length > MAX_REPORT_BYTES) { reject(response, 413, correlationId); return; }
+            try {
+                body = request.getInputStream().readNBytes(MAX_REPORT_BYTES + 1);
+            } catch (IOException unreadable) {
+                reject(response, 400, correlationId);
+                return;
+            }
+            if (body.length > MAX_REPORT_BYTES) {
+                reject(response, 413, correlationId);
+                return;
+            }
             chain.doFilter(new BufferedRequest(request, body), response);
         } else {
             chain.doFilter(request, response);
@@ -79,22 +102,47 @@ public class DemoTokenFilter extends OncePerRequestFilter {
 
     static final class BufferedRequest extends HttpServletRequestWrapper {
         private final byte[] body;
-        BufferedRequest(HttpServletRequest request, byte[] body) { super(request); this.body = body; }
-        @Override public ServletInputStream getInputStream() {
+
+        BufferedRequest(HttpServletRequest request, byte[] body) {
+            super(request);
+            this.body = body;
+        }
+
+        @Override
+        public ServletInputStream getInputStream() {
             return new BodyStream(body);
         }
-        @Override public BufferedReader getReader() {
+
+        @Override
+        public BufferedReader getReader() {
             return new BufferedReader(new InputStreamReader(getInputStream(), StandardCharsets.UTF_8));
         }
     }
 
     static final class BodyStream extends ServletInputStream {
         private final ByteArrayInputStream source;
-        BodyStream(byte[] body) { source = new ByteArrayInputStream(body); }
-        @Override public int read() { return source.read(); }
-        @Override public boolean isFinished() { return source.available() == 0; }
-        @Override public boolean isReady() { return true; }
-        @Override public void setReadListener(ReadListener listener) {
+
+        BodyStream(byte[] body) {
+            source = new ByteArrayInputStream(body);
+        }
+
+        @Override
+        public int read() {
+            return source.read();
+        }
+
+        @Override
+        public boolean isFinished() {
+            return source.available() == 0;
+        }
+
+        @Override
+        public boolean isReady() {
+            return true;
+        }
+
+        @Override
+        public void setReadListener(ReadListener listener) {
             throw new UnsupportedOperationException("Report submission uses synchronous input");
         }
     }

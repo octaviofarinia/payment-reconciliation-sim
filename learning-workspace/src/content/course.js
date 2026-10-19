@@ -22,7 +22,7 @@ export const modules = rawModules.map(module => {
   const spec = labSpecs[module.id];
   return spec ? { ...module, mission: { title: spec.title, brief: spec.intro, goal: `${spec.tasks.map(task => task.label).join('; ')}.` } } : module;
 });
-export const sources = [{ id: 'comparator', title: 'ReconciliationComparator.java', path: 'reconciliation-worker/src/main/java/org/octavio/paymentreconciliationsim/worker/domain/ReconciliationComparator.java', group: 'Worker', note: 'The pure domain rule behind the canonical dataset. Duplicate evidence is checked before missing records and amount comparison.', focus: [15, 60], content: comparator }, ...backendSources, ...cloudSources];
+export const sources = [{ id: 'comparator', title: 'ReconciliationComparator.java', path: 'reconciliation-worker/src/main/java/org/octavio/paymentreconciliationsim/worker/domain/ReconciliationComparator.java', group: 'Worker', note: 'The pure domain rule behind the canonical dataset. Duplicate evidence is checked before missing records and amount comparison.', focus: [11, 57], content: comparator }, ...backendSources, ...cloudSources];
 export const glossary = [
   { id: 'reference', term: 'Transaction reference', definition: 'The stable identifier used to join an internal purchase with every corresponding settlement row. Row position is not identity.', moduleId: 'reconciliation' },
   { id: 'centavos', term: 'Integer centavos', definition: 'Money represented in the smallest currency unit. ARS 400.00 is 40,000 centavos, avoiding floating-point comparison.', moduleId: 'reconciliation' },
