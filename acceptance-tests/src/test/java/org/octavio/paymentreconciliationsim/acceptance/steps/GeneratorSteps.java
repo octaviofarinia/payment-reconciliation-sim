@@ -11,7 +11,6 @@ import java.net.InetSocketAddress;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -85,7 +84,7 @@ public final class GeneratorSteps {
         int privateWorkerRequestsFromGenerator = (int) generatorRequests.stream().filter(r -> r.contains("/internal/") || r.contains("/worker/")).count();
         assertEquals(0, privateWorkerRequestsFromGenerator);
         assertTrue(generatorRequests.stream().allMatch(r -> r.matches("POST /api/v1/business-dates|POST /api/v1/transactions|POST /api/v1/business-dates/2026-10-01/close|POST /api/v1/reconciliation-runs|GET /api/v1/reconciliation-runs/[a-f0-9-]+(?:/results\\?page=\\d+&size=100)?")), generatorRequests.toString());
-        var runId = java.util.regex.Pattern.compile("Verified runId=([a-f0-9-]+) results=5").matcher(cliOutput);
+        var runId = java.util.regex.Pattern.compile("Verified runId=([a-f0-9-]+) results=100").matcher(cliOutput);
         assertTrue(runId.find(), cliOutput);
         world.runId = runId.group(1);
         var json = JsonMapper.builder().build();
@@ -99,8 +98,12 @@ public final class GeneratorSteps {
             }
             var identity = metadata.get("objectIdentity");
             byte[] uploaded = world.environment.s3().get(LocalEnvironment.BUCKET, identity.get("key").stringValue(), identity.get("versionId").stringValue());
-            String expectedCsv = "business_date,transaction_reference,amount_centavos,currency\n2026-10-01,MATCH-001,10000,ARS\n2026-10-01,EXT-001,30000,ARS\n2026-10-01,AMOUNT-001,45000,ARS\n2026-10-01,DUP-001,50000,ARS\n2026-10-01,DUP-001,50000,ARS\n";
-            assertArrayEquals(expectedCsv.getBytes(StandardCharsets.UTF_8), uploaded);
+            byte[] expectedCsv;
+            try (var fixture = getClass().getResourceAsStream("/fixtures/canonical.csv")) {
+                assertNotNull(fixture);
+                expectedCsv = fixture.readAllBytes();
+            }
+            assertArrayEquals(expectedCsv, uploaded);
             assertEquals(uploaded.length, metadata.get("byteLength").intValue());
             assertEquals(HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(uploaded)), metadata.get("sha256").stringValue());
         }

@@ -1,10 +1,10 @@
-import { purchases, settlement } from './lesson.js';
+import { purchases, settlement, references } from './lesson.js';
 import { labSpecs } from './lab-specs.js';
 export { labSpecs } from './lab-specs.js';
 
 const header = 'business_date,transaction_reference,amount_centavos,currency';
 export const canonicalCsv = `${header}\n${settlement.map(row => `2026-10-01,${row.reference},${row.amountCentavos},ARS`).join('\n')}\n`;
-export const canonicalMetadata = Object.freeze({ businessDate: '2026-10-01', byteLength: 211, sha256: '015b2dcb1e67077b122b07e109cd48aa79039adb3cec7f7545a6f46bdc040820' });
+export const canonicalMetadata = Object.freeze({ businessDate: '2026-10-01', byteLength: 3129, sha256: 'eb03cb8082c8e712a5d791ac5ce619f06585c8ae887e83611586574c1eda5ebe' });
 const damagedCsv = canonicalCsv.replace('AMOUNT-001,45000,ARS', 'AMOUNT-001,45000,USD');
 const defaults = {
   api: { fields: { method: 'POST', endpoint: 'date', role: 'demo' }, machine: { day: 'MISSING', purchases: 0, run: false, response: null } },
@@ -123,8 +123,8 @@ export function transitionLab(moduleId, supplied, action) {
   }
   if (moduleId === 'upload') {
     if (action.type === 'register') {
-      if (f.metadata !== 'exact') return stop(state, 'Metadata mismatch in this exercise. Register the exact 211-byte fixture and its SHA-256; a later byte/checksum check would reject different content.');
-      return good(state, 'Registered · 211 bytes + SHA-256 of the exact fixture. The API returns a scoped, expiring presigned upload.', ['register'], { registered: true });
+      if (f.metadata !== 'exact') return stop(state, 'Metadata mismatch in this exercise. Register the exact 3129-byte fixture and its SHA-256; a later byte/checksum check would reject different content.');
+      return good(state, 'Registered · 3129 bytes + SHA-256 of the exact fixture. The API returns a scoped, expiring presigned upload.', ['register'], { registered: true });
     }
     if (action.type === 'upload') {
       if (!m.registered) return stop(state, 'Register the upload metadata before sending bytes directly to S3.');
@@ -143,7 +143,7 @@ export function transitionLab(moduleId, supplied, action) {
     if (action.type === 'validate') {
       try {
         const rows = parseCsv(f.csv); const canonical = hasCanonicalRows(rows);
-        return good(state, `${rows.length} rows validated before comparison.${canonical ? ' The canonical input is restored.' : ' Valid scratch input; restore the canonical five rows to meet this mission’s target.'}`, canonical ? ['validate'] : [], { validated: true, rows, results: [], published: false });
+        return good(state, `${rows.length} rows validated before comparison.${canonical ? ' The canonical input is restored.' : ' Valid scratch input; restore the canonical 100 rows to meet this mission’s target.'}`, canonical ? ['validate'] : [], { validated: true, rows, results: [], published: false });
       } catch (error) { return stop(state, `${error.message} The entire file is rejected; no partial report is published.`, ['reject'], { validated: false, rows: [], results: [], published: false }); }
     }
     if (action.type === 'compare') {
@@ -173,7 +173,7 @@ export function transitionLab(moduleId, supplied, action) {
   }
   if (moduleId === 'recovery' || moduleId === 'capstone') {
     const capstone = moduleId === 'capstone';
-    if (capstone && action.type === 'close') return good(state, 'Day CLOSED · The canonical four purchases are now the stable comparison input.', ['close'], { day: 'CLOSED' });
+    if (capstone && action.type === 'close') return good(state, 'Day CLOSED · The canonical 80 purchases are now the stable comparison input.', ['close'], { day: 'CLOSED' });
     if (capstone && action.type === 'bind') {
       if (m.day !== 'CLOSED') return stop(state, 'Close the date before binding this run’s input.');
       if (f.version !== 'original') return stop(state, 'Choose retained original v1. Replacement v2 is not the registered input for this exercise.');
@@ -190,12 +190,12 @@ export function transitionLab(moduleId, supplied, action) {
       if (action.type === 'reprocess' && f.version !== 'original') return stop(state, 'ORIGINAL_UNAVAILABLE · Replacement is forbidden. Select the retained original to recover.');
       if (!m.healthy) return stop(state, 'FAILED · API_FAILURE, retryable=true. The diagnostic callback recorded the failed attempt; no results were published.', ['failure'], { status: 'FAILED', attempts: m.attempts + 1 });
       const recovered = action.type === 'reprocess' && state.achievements.includes('failure');
-      return good(state, `${action.type === 'reprocess' ? '202 accepted → worker executes → ' : ''}COMPLETED · Five results published from original v1. This step condenses the asynchronous execution.`, recovered ? ['recover'] : [], { status: 'COMPLETED', publications: 1, results: canonicalResults(), attempts: m.attempts + 1 });
+      return good(state, `${action.type === 'reprocess' ? '202 accepted → worker executes → ' : ''}COMPLETED · 100 results published from original v1. This step condenses the asynchronous execution.`, recovered ? ['recover'] : [], { status: 'COMPLETED', publications: 1, results: canonicalResults(), attempts: m.attempts + 1 });
     }
     if (capstone && action.type === 'audit') {
       if (m.status !== 'COMPLETED') return stop(state, 'Complete the run before auditing its report.');
-      if (f.resultCount !== '5' || f.integrity !== 'atomic') return stop(state, 'Revisit the evidence: four purchases and five rows form five distinct references. The complete report is published atomically.');
-      return good(state, 'Audit passed · Five distinct references, one result per reference, one complete atomic report.', ['audit']);
+      if (f.resultCount !== String(references.length) || f.integrity !== 'atomic') return stop(state, 'Revisit the evidence: 80 purchases and 100 rows form 100 distinct references. The complete report is published atomically.');
+      return good(state, 'Audit passed · 100 distinct references, one result per reference, one complete atomic report.', ['audit']);
     }
     if (capstone && action.type === 'extension') {
       if (f.extension !== 'adapter') return stop(state, 'A new storage transport belongs behind the storage adapter boundary. Keep the pure comparator unchanged; add adapter contract tests.');

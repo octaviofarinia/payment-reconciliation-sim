@@ -33,5 +33,670 @@
     "transactionReference": "DUP-001",
     "amountCentavos": 50000,
     "currency": "ARS"
+  },
+  {
+    "rowNumber": 6,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-002",
+    "amountCentavos": 20000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 7,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-002",
+    "amountCentavos": 40000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 8,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-002",
+    "amountCentavos": 55000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 9,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-002",
+    "amountCentavos": 60000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 10,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-002",
+    "amountCentavos": 60000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 11,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-003",
+    "amountCentavos": 30000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 12,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-003",
+    "amountCentavos": 50000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 13,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-003",
+    "amountCentavos": 65000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 14,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-003",
+    "amountCentavos": 70000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 15,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-003",
+    "amountCentavos": 70000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 16,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-004",
+    "amountCentavos": 40000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 17,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-004",
+    "amountCentavos": 60000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 18,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-004",
+    "amountCentavos": 75000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 19,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-004",
+    "amountCentavos": 80000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 20,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-004",
+    "amountCentavos": 80000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 21,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-005",
+    "amountCentavos": 50000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 22,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-005",
+    "amountCentavos": 70000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 23,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-005",
+    "amountCentavos": 85000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 24,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-005",
+    "amountCentavos": 90000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 25,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-005",
+    "amountCentavos": 90000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 26,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-006",
+    "amountCentavos": 60000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 27,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-006",
+    "amountCentavos": 80000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 28,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-006",
+    "amountCentavos": 95000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 29,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-006",
+    "amountCentavos": 100000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 30,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-006",
+    "amountCentavos": 100000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 31,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-007",
+    "amountCentavos": 70000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 32,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-007",
+    "amountCentavos": 90000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 33,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-007",
+    "amountCentavos": 105000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 34,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-007",
+    "amountCentavos": 110000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 35,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-007",
+    "amountCentavos": 110000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 36,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-008",
+    "amountCentavos": 80000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 37,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-008",
+    "amountCentavos": 100000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 38,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-008",
+    "amountCentavos": 115000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 39,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-008",
+    "amountCentavos": 120000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 40,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-008",
+    "amountCentavos": 120000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 41,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-009",
+    "amountCentavos": 90000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 42,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-009",
+    "amountCentavos": 110000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 43,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-009",
+    "amountCentavos": 125000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 44,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-009",
+    "amountCentavos": 130000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 45,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-009",
+    "amountCentavos": 130000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 46,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-010",
+    "amountCentavos": 100000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 47,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-010",
+    "amountCentavos": 120000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 48,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-010",
+    "amountCentavos": 135000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 49,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-010",
+    "amountCentavos": 140000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 50,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-010",
+    "amountCentavos": 140000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 51,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-011",
+    "amountCentavos": 110000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 52,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-011",
+    "amountCentavos": 130000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 53,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-011",
+    "amountCentavos": 145000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 54,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-011",
+    "amountCentavos": 150000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 55,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-011",
+    "amountCentavos": 150000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 56,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-012",
+    "amountCentavos": 120000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 57,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-012",
+    "amountCentavos": 140000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 58,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-012",
+    "amountCentavos": 155000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 59,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-012",
+    "amountCentavos": 160000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 60,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-012",
+    "amountCentavos": 160000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 61,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-013",
+    "amountCentavos": 130000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 62,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-013",
+    "amountCentavos": 150000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 63,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-013",
+    "amountCentavos": 165000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 64,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-013",
+    "amountCentavos": 170000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 65,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-013",
+    "amountCentavos": 170000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 66,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-014",
+    "amountCentavos": 140000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 67,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-014",
+    "amountCentavos": 160000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 68,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-014",
+    "amountCentavos": 175000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 69,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-014",
+    "amountCentavos": 180000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 70,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-014",
+    "amountCentavos": 180000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 71,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-015",
+    "amountCentavos": 150000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 72,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-015",
+    "amountCentavos": 170000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 73,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-015",
+    "amountCentavos": 185000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 74,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-015",
+    "amountCentavos": 190000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 75,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-015",
+    "amountCentavos": 190000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 76,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-016",
+    "amountCentavos": 160000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 77,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-016",
+    "amountCentavos": 180000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 78,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-016",
+    "amountCentavos": 195000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 79,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-016",
+    "amountCentavos": 200000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 80,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-016",
+    "amountCentavos": 200000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 81,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-017",
+    "amountCentavos": 170000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 82,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-017",
+    "amountCentavos": 190000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 83,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-017",
+    "amountCentavos": 205000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 84,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-017",
+    "amountCentavos": 210000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 85,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-017",
+    "amountCentavos": 210000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 86,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-018",
+    "amountCentavos": 180000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 87,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-018",
+    "amountCentavos": 200000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 88,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-018",
+    "amountCentavos": 215000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 89,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-018",
+    "amountCentavos": 220000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 90,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-018",
+    "amountCentavos": 220000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 91,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-019",
+    "amountCentavos": 190000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 92,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-019",
+    "amountCentavos": 210000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 93,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-019",
+    "amountCentavos": 225000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 94,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-019",
+    "amountCentavos": 230000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 95,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-019",
+    "amountCentavos": 230000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 96,
+    "businessDate": "2026-10-01",
+    "transactionReference": "MATCH-020",
+    "amountCentavos": 200000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 97,
+    "businessDate": "2026-10-01",
+    "transactionReference": "EXT-020",
+    "amountCentavos": 220000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 98,
+    "businessDate": "2026-10-01",
+    "transactionReference": "AMOUNT-020",
+    "amountCentavos": 235000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 99,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-020",
+    "amountCentavos": 240000,
+    "currency": "ARS"
+  },
+  {
+    "rowNumber": 100,
+    "businessDate": "2026-10-01",
+    "transactionReference": "DUP-020",
+    "amountCentavos": 240000,
+    "currency": "ARS"
   }
 ]

@@ -89,7 +89,7 @@ const steps = [
   {
     id: 'results', title: 'Read and verify results', route: 'Client → API ↔ MongoDB', kind: 'control', nodes: ['client', 'api', 'mongo'], edges: ['public', 'database'], source: 'backend-generator-workflow',
     body: 'The client polls metadata, fetches result pages only after completion, and independently compares the complete output with the expected report.',
-    record: (reference) => `${reference} is one result in a five-reference canonical report. A successful upload alone could never prove this final outcome.`,
+    record: (reference) => `${reference} is one result in a 100-reference canonical report. A successful upload alone could never prove this final outcome.`,
   },
 ];
 

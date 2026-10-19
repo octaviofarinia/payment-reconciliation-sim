@@ -20,7 +20,8 @@ test('copied fixtures and derived evidence preserve the full canonical scenario'
   }
   assert.deepEqual(purchases, (await canonical('canonical-purchases.json')).map(({ transactionReference, amountCentavos }) => ({ reference: transactionReference, amountCentavos })));
   assert.deepEqual(settlement, (await canonical('canonical-settlement.json')).map(({ transactionReference, amountCentavos, rowNumber }) => ({ reference: transactionReference, amountCentavos, rowNumber })));
-  assert.deepEqual(references, ['MATCH-001', 'MISS-001', 'AMOUNT-001', 'EXT-001', 'DUP-001']);
+  assert.equal(references.length, 100);
+  assert.deepEqual(new Set(references), new Set(expected.results.map(({ reference }) => reference)));
   assert.deepEqual(new Set(outcomes.map(({ value }) => value)), new Set(Object.keys(expected.summary.outcomeCounts)));
   const counts = {};
   for (const result of expected.results) {
@@ -88,17 +89,17 @@ test('wrong answers never advance progress and repeated answers never count twic
 });
 
 test('next cycles to uncompleted references and preserves selection when finished', () => {
-  let state = reduce({ type: 'select', reference: 'DUP-001' }, { type: 'next' });
-  assert.equal(state.selected, 'MATCH-001');
-  for (const reference of ['MATCH-001', 'MISS-001', 'AMOUNT-001', 'EXT-001', 'DUP-001']) {
+  let state = reduce({ type: 'select', reference: references.at(-1) }, { type: 'next' });
+  assert.equal(state.selected, references[0]);
+  for (const reference of references) {
     state = lessonReducer(state, { type: 'select', reference });
     state = lessonReducer(state, { type: 'predict', value: classify(reference) });
     state = lessonReducer(state, { type: 'check' });
   }
-  assert.equal(Object.keys(state.completed).length, 5);
-  assert.equal(lessonReducer(state, { type: 'next' }).selected, 'DUP-001');
+  assert.equal(Object.keys(state.completed).length, 100);
+  assert.equal(lessonReducer(state, { type: 'next' }).selected, references.at(-1));
   const partial = reduce({ type: 'predict', value: 'AMOUNT_MISMATCH' }, { type: 'check' }, { type: 'select', reference: 'MISS-001' }, { type: 'next' });
-  assert.equal(partial.selected, 'EXT-001');
+  assert.equal(partial.selected, references[3]);
   assert.equal(partial.feedback, null);
 });
 

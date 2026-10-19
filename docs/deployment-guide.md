@@ -498,7 +498,7 @@ java -jar scenario-generator/target/scenario-generator-0.0.1-SNAPSHOT-exec.jar \
 unset RECONCILIATION_DEMO_TOKEN
 ~~~
 
-Success prints `Verified runId=<id> results=5`.
+Success prints `Verified runId=<id> results=100`.
 
 - **Date:** Use a date before today in `America/Buenos_Aires` that hasn't been
   used yet.

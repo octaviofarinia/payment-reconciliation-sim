@@ -100,8 +100,8 @@ by default. All-matched generates 100 references of the form
 
 The client creates the date and purchases, closes it, registers and directly
 uploads the exact CSV, polls metadata and checks all result pages. Canonical has
-211 CSV bytes, four purchases, five settlement rows, four distinct settlement
-references and five results, one per outcome. Exit 0 prints
+3,129 CSV bytes, 80 purchases, 100 settlement rows, 80 distinct settlement
+references and 100 results, 20 per outcome. Exit 0 prints
 `Verified runId=<id> results=<count>`; exit 2 means invalid arguments/token; exit 1
 means workflow/upload/expected mismatch/failure/deadline/interruption. Failures
 after registration identify the run and public reprocess route. Recovery is

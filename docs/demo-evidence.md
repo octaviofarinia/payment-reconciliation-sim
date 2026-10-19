@@ -14,9 +14,9 @@ synthetic database for the canonical scenario's fixed references and a business
 date strictly before today in `America/Buenos_Aires`.
 
 The generator uses only the public API and the returned presigned upload
-instructions. A successful canonical run prints `Verified runId=<id> results=5`
+instructions. A successful canonical run prints `Verified runId=<id> results=100`
 after checking COMPLETED status and the complete report against the independent
-expected fixture. It produces four purchases, five settlement rows and one result
+expected fixture. It produces 80 purchases, 100 settlement rows and 20 results
 for each of the five outcomes.
 
 ## Deployment checks

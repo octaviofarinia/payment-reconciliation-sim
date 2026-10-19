@@ -107,8 +107,8 @@ def run_generator(jar, base, date, demo):
         if run_id:
             message += "; runId=" + run_id + "; POST /api/v1/reconciliation-runs/" + run_id + "/reprocess to recover"
         raise CheckFailure(message, run_id)
-    match = re.fullmatch(r"Verified runId=([0-9a-f-]{36}) results=5\s*", result.stdout)
-    require(match is not None, "Generator did not report a verified five-result run")
+    match = re.fullmatch(r"Verified runId=([0-9a-f-]{36}) results=100\s*", result.stdout)
+    require(match is not None, "Generator did not report a verified 100-result run")
     return str(uuid.UUID(match[1]))
 
 
@@ -285,7 +285,7 @@ class CloudRun:
 
 
 def realS3UploadPublishesReportWithinRuntimeBudget(run, maximum):
-    require(run.get("status") == "COMPLETED" and run.get("summary", {}).get("totalResultCount") == 5,
-            "Canonical run must complete with five results")
+    require(run.get("status") == "COMPLETED" and run.get("summary", {}).get("totalResultCount") == 100,
+            "Canonical run must complete with 100 results")
     require(all(maximum.get(key) is True for key in ("coldWarmProven", "targetMet", "configuredLimitMet")),
             "Maximum workload cold/warm runtime evidence is incomplete or exceeds budget")

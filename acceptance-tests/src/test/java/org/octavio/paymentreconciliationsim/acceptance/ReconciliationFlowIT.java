@@ -77,7 +77,7 @@ class ReconciliationFlowIT {
         var actualCanonicalBusinessJson = JSON.createObjectNode().set("summary", metadata.get("summary")).set("results", JSON.readTree(resultsResponse.body()).get("results"));
         var expectedCanonicalBusinessJson = JSON.readTree(fixture("canonical-expected.json"));
         assertEquals(expectedCanonicalBusinessJson, actualCanonicalBusinessJson);
-        assertEquals(5, metadata.get("summary").get("totalResultCount").intValue());
+        assertEquals(100, metadata.get("summary").get("totalResultCount").intValue());
         assertEquals(version, metadata.get("objectIdentity").get("versionId").stringValue());
         env.s3().store(LocalEnvironment.BUCKET, key, "changed latest bytes".getBytes(StandardCharsets.UTF_8));
         env.invokeWorker(Map.of("runId", id, "bucket", LocalEnvironment.BUCKET, "key", key, "versionId", version));

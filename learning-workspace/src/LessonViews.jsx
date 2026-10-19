@@ -15,7 +15,7 @@ function SelectedEvidence({ selected }) {
 }
 
 export function CourseView({ state, dispatch, onSource }) {
-  const complete = Object.keys(state.completed).length === 5;
+  const complete = Object.keys(state.completed).length === references.length;
   const heading = useRef(null);
   const previousStep = useRef(state.step);
   useEffect(() => {
@@ -45,7 +45,7 @@ export function CourseView({ state, dispatch, onSource }) {
       <p className="lead">A reconciliation explains the whole day. Every result connects a reference to the records that justify its classification.</p>
       <div className="day-counts"><div><strong>{purchases.length}</strong><span>internal purchases</span></div><div><strong>{settlement.length}</strong><span>settlement rows</span></div><div><strong>{references.length}</strong><span>distinct references</span></div></div>
       <h2>Count references, not rows.</h2><p>One reference can appear in both datasets, and a duplicate has multiple evidence rows. We compare the union of references and publish one result for each.</p>
-      <div className="takeaway"><strong>{complete ? 'You explained every reference.' : 'Put the rules into practice.'}</strong><p>{complete ? 'You found a match, two kinds of missing record, a different amount, and a duplicate. The same pure comparison rules are implemented in the Java worker.' : 'Classify all five references in Missions. Each correct prediction builds the evidence for a complete report.'}</p><button className="text-button" onClick={() => dispatch({ type: 'mode', mode: 'Missions' })}>{complete ? 'Review your mission' : 'Start the mission'} <ArrowRight size={17} /></button></div>
+      <div className="takeaway"><strong>{complete ? 'You explained every reference.' : 'Put the rules into practice.'}</strong><p>{complete ? 'You found a match, two kinds of missing record, a different amount, and a duplicate. The same pure comparison rules are implemented in the Java worker.' : 'Classify all 100 references in Missions. Each correct prediction builds the evidence for a complete report.'}</p><button className="text-button" onClick={() => dispatch({ type: 'mode', mode: 'Missions' })}>{complete ? 'Review your mission' : 'Start the mission'} <ArrowRight size={17} /></button></div>
       <button className="text-button" onClick={onSource}><Code size={18} /> Connect this lesson to the code</button>
     </>}
     <nav className="lesson-pagination" aria-label="Lesson steps"><button className="quiet-button" disabled={state.step === 0} onClick={() => dispatch({ type: 'step', step: state.step - 1 })}><ArrowLeft size={16} /> Previous</button><button className="secondary-button" onClick={() => state.step < 2 ? dispatch({ type: 'step', step: state.step + 1 }) : dispatch({ type: 'mode', mode: 'Missions' })}>{state.step < 2 ? 'Continue lesson' : 'Open Missions'} <ArrowRight size={16} /></button></nav>
@@ -55,12 +55,12 @@ export function CourseView({ state, dispatch, onSource }) {
 export function MissionView({ state, dispatch, onSource }) {
   const count = Object.keys(state.completed).length;
   return <section className="mission-content">
-    <div className="content-kicker"><ListChecks size={18} /><span>MISSION 01</span><span className="muted">{count} / 5 complete</span></div>
-    <h1>Reconcile the day.</h1><p className="lead">Inspect the evidence for each of the five references, choose an outcome, and check your prediction.</p>
+    <div className="content-kicker"><ListChecks size={18} /><span>MISSION 01</span><span className="muted">{count} / {references.length} complete</span></div>
+    <h1>Reconcile the day.</h1><p className="lead">Inspect the evidence for each of the {references.length} references, choose an outcome, and check your prediction.</p>
     <div className="case-list" aria-label="Mission references">{references.map((reference) => <button key={reference} className={`case-item ${state.selected === reference ? 'active' : ''}`} aria-pressed={state.selected === reference} onClick={() => dispatch({ type: 'select', reference })}><span>{reference}</span><span>{state.completed[reference] ? <><CheckCircle size={17} weight="fill" /> Classified</> : state.selected === reference ? <>Investigating <ArrowRight size={16} /></> : 'To investigate'}</span></button>)}</div>
     <div className="mission-evidence-heading"><div><p className="eyebrow">CURRENT CASE</p><h2>{state.selected}</h2></div><button className="text-button" onClick={() => dispatch({ type: 'mode', mode: 'Explorer' })}><MagnifyingGlass size={17} /> Inspect in Explorer</button></div>
     <SelectedEvidence selected={state.selected} />
     <div className="mission-guide"><p>Use the classification panel to test your answer. A wrong prediction is a chance to investigate; it won’t advance your progress.</p><button className="text-button" onClick={onSource}><Code size={18} /> View comparison code</button></div>
-    {count === 5 && <div className="mission-complete"><CheckCircle size={28} weight="fill" /><div><h2>All five references explained.</h2><p>You’ve completed the first reconciliation mission.</p></div></div>}
+    {count === references.length && <div className="mission-complete"><CheckCircle size={28} weight="fill" /><div><h2>All {references.length} references explained.</h2><p>You’ve completed the first reconciliation mission.</p></div></div>}
   </section>;
 }

@@ -20,8 +20,23 @@ public final class ScenarioFactory {
 
     public Scenario generate(long seed, LocalDate date, ScenarioKind kind) {
         if (kind == ScenarioKind.CANONICAL) {
-            return new Scenario(date, List.of(purchase("MATCH-001", date, 10000), purchase("MISS-001", date, 20000), purchase("AMOUNT-001", date, 40000), purchase("DUP-001", date, 50000)),
-                    List.of(new SettlementRow(1, "MATCH-001", 10000), new SettlementRow(2, "EXT-001", 30000), new SettlementRow(3, "AMOUNT-001", 45000), new SettlementRow(4, "DUP-001", 50000), new SettlementRow(5, "DUP-001", 50000)));
+            var purchases = new ArrayList<Purchase>();
+            var rows = new ArrayList<SettlementRow>();
+            for (int i = 1; i <= 20; i++) {
+                String suffix = String.format(Locale.ROOT, "-%03d", i);
+                long offset = (i - 1) * 10000L;
+                purchases.add(purchase("MATCH" + suffix, date, 10000 + offset));
+                purchases.add(purchase("MISS" + suffix, date, 20000 + offset));
+                purchases.add(purchase("AMOUNT" + suffix, date, 40000 + offset));
+                purchases.add(purchase("DUP" + suffix, date, 50000 + offset));
+                int firstRow = (i - 1) * 5 + 1;
+                rows.add(new SettlementRow(firstRow, "MATCH" + suffix, 10000 + offset));
+                rows.add(new SettlementRow(firstRow + 1, "EXT" + suffix, 30000 + offset));
+                rows.add(new SettlementRow(firstRow + 2, "AMOUNT" + suffix, 45000 + offset));
+                rows.add(new SettlementRow(firstRow + 3, "DUP" + suffix, 50000 + offset));
+                rows.add(new SettlementRow(firstRow + 4, "DUP" + suffix, 50000 + offset));
+            }
+            return new Scenario(date, List.copyOf(purchases), List.copyOf(rows));
         }
         var random = new SplittableRandom(seed);
         var purchases = new ArrayList<Purchase>();

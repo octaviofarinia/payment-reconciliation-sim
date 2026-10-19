@@ -95,7 +95,7 @@ class CanonicalGeneratorTests(unittest.TestCase):
             run_id = "12345678-1234-1234-1234-123456789012"
             with patch.dict(cloud.os.environ, {"WORKER_TOKEN": "private", "AWS_SECRET_ACCESS_KEY": "private"}), \
                  patch.object(cloud.subprocess, "run", return_value=subprocess.CompletedProcess([], 0,
-                              "Verified runId=" + run_id + " results=5\n", "")) as process:
+                              "Verified runId=" + run_id + " results=100\n", "")) as process:
                 self.assertEqual(run_id, cloud.benchmark.run_generator(jar, "http://127.0.0.1:8080", "2020-01-01", "demo"))
                 options = process.call_args.kwargs
                 self.assertEqual("demo", options["env"]["RECONCILIATION_DEMO_TOKEN"])
@@ -196,10 +196,10 @@ class EvidenceWorkflowTests(unittest.TestCase):
 
 
 class NamedCloudCheckTests(unittest.TestCase):
-    def test_named_check_needs_completed_five_results_and_proven_maximum_budgets(self):
+    def test_named_check_needs_completed_hundred_results_and_proven_maximum_budgets(self):
         self.assertTrue(hasattr(cloud.benchmark, "realS3UploadPublishesReportWithinRuntimeBudget"),
                         "Named cloud verification is missing")
-        run = {"status": "COMPLETED", "summary": {"totalResultCount": 5}}
+        run = {"status": "COMPLETED", "summary": {"totalResultCount": 100}}
         maximum = {"coldWarmProven": True, "targetMet": True, "configuredLimitMet": True}
         check = cloud.benchmark.realS3UploadPublishesReportWithinRuntimeBudget
         check(run, maximum)
@@ -208,6 +208,6 @@ class NamedCloudCheckTests(unittest.TestCase):
             with self.assertRaises(cloud.CheckFailure):
                 check(run, candidate)
         with self.assertRaises(cloud.CheckFailure):
-            check({"status": "FAILED", "summary": {"totalResultCount": 5}}, maximum)
+            check({"status": "FAILED", "summary": {"totalResultCount": 100}}, maximum)
         with self.assertRaises(cloud.CheckFailure):
             check({"status": "COMPLETED", "summary": {"totalResultCount": 1}}, maximum)

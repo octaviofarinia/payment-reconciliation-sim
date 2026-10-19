@@ -303,7 +303,7 @@ class SmokeWorkflowTests(unittest.TestCase):
             self.assertEqual("AUTOMATED_CHECKS_PASSED", report["status"])
             self.assertEqual("warm", report["runs"]["maximum"]["replay"]["environment"])
             self.assertEqual(3000, report["runs"]["maximum"]["summary"]["totalResultCount"])
-            self.assertEqual(5, report["runs"]["canonical"]["summary"]["totalResultCount"])
+            self.assertEqual(100, report["runs"]["canonical"]["summary"]["totalResultCount"])
             self.assertEqual("PENDING", report["checks"]["signatureAndExpiry"])
             self.assertEqual({maximum, canonical}, captured["replayed"])
             self.assertNotIn("mongoUri", Path(args.output).read_text())

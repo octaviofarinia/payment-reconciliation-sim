@@ -17,15 +17,19 @@ class ScenarioFactoryTest {
     private final LocalDate date = LocalDate.of(2026, 10, 1);
 
     @Test
-    void canonicalHasExactFiveOutcomesAndEvidence() {
+    void canonicalHasOneHundredReferencesAcrossFiveOutcomesAndPreservesEvidence() {
         var scenario = assertDoesNotThrow(() -> factory.generate(42, date, ScenarioKind.CANONICAL));
-        assertEquals(List.of("MATCH-001", "MISS-001", "AMOUNT-001", "DUP-001"), scenario.purchases().stream().map(Purchase::transactionReference).toList());
-        assertEquals(List.of(10000L, 30000L, 45000L, 50000L, 50000L), scenario.settlement().stream().map(SettlementRow::amountCentavos).toList());
+        assertEquals(80, scenario.purchases().size());
+        assertEquals(100, scenario.settlement().size());
+        assertEquals(List.of("MATCH-001", "MISS-001", "AMOUNT-001", "DUP-001"), scenario.purchases().subList(0, 4).stream().map(Purchase::transactionReference).toList());
+        assertEquals(List.of(10000L, 30000L, 45000L, 50000L, 50000L), scenario.settlement().subList(0, 5).stream().map(SettlementRow::amountCentavos).toList());
         var expected = factory.expected(scenario, ScenarioKind.CANONICAL);
-        assertEquals(new Summary(4, 5, 4, 5, Map.of("MATCHED", 1, "MISSING_IN_SETTLEMENT", 1, "MISSING_INTERNALLY", 1, "AMOUNT_MISMATCH", 1, "DUPLICATE", 1)), expected.summary());
-        assertEquals(new Result("DUP-001", "DUPLICATE", 50000L, "MERCHANT-001", List.of(new SettlementRow(4, "DUP-001", 50000), new SettlementRow(5, "DUP-001", 50000))), expected.results().get(1));
-        assertNull(expected.results().get(2).internalAmountCentavos());
-        assertEquals(List.of(), expected.results().get(4).settlementEvidence());
+        assertEquals(new Summary(80, 100, 80, 100, Map.of("MATCHED", 20, "MISSING_IN_SETTLEMENT", 20, "MISSING_INTERNALLY", 20, "AMOUNT_MISMATCH", 20, "DUPLICATE", 20)), expected.summary());
+        assertEquals(100, expected.results().stream().map(Result::reference).distinct().count());
+        assertEquals(new Result("DUP-020", "DUPLICATE", 240000L, "MERCHANT-001", List.of(new SettlementRow(99, "DUP-020", 240000), new SettlementRow(100, "DUP-020", 240000))), expected.results().stream().filter(r -> r.reference().equals("DUP-020")).findFirst().orElseThrow());
+        assertNull(expected.results().stream().filter(r -> r.reference().equals("EXT-020")).findFirst().orElseThrow().internalAmountCentavos());
+        assertEquals(List.of(), expected.results().stream().filter(r -> r.reference().equals("MISS-020")).findFirst().orElseThrow().settlementEvidence());
+        assertEquals(scenario, factory.generate(0, date, ScenarioKind.CANONICAL));
     }
 
     @Test
@@ -50,7 +54,8 @@ class ScenarioFactoryTest {
         var writer = new SettlementWriter();
         var scenario = assertDoesNotThrow(() -> factory.generate(42, date, ScenarioKind.CANONICAL));
         var bytes = writer.write(scenario);
-        assertEquals("business_date,transaction_reference,amount_centavos,currency\n2026-10-01,MATCH-001,10000,ARS\n2026-10-01,EXT-001,30000,ARS\n2026-10-01,AMOUNT-001,45000,ARS\n2026-10-01,DUP-001,50000,ARS\n2026-10-01,DUP-001,50000,ARS\n", new String(bytes, StandardCharsets.UTF_8));
+        var fixture = assertDoesNotThrow(() -> java.nio.file.Files.readAllBytes(java.nio.file.Path.of("../acceptance-tests/src/test/resources/fixtures/canonical.csv")));
+        assertArrayEquals(fixture, bytes);
         assertArrayEquals(bytes, writer.write(assertDoesNotThrow(() -> factory.generate(42, date, ScenarioKind.CANONICAL))));
         assertEquals("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", writer.sha256("abc".getBytes(StandardCharsets.UTF_8)));
     }

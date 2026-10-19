@@ -430,7 +430,7 @@ def smoke(args, evidence):
     expected = json.loads((fixture / "canonical-expected.json").read_text())
     raw = (fixture / "canonical.csv").read_bytes().replace(b"2026-10-01", args.business_date.encode())
     check.inspect(out, base, demo, args.business_date, run_id, raw, expected, start, entry)
-    require(entry["status"] == "COMPLETED" and entry["summary"]["totalResultCount"] == 5,
+    require(entry["status"] == "COMPLETED" and entry["summary"]["totalResultCount"] == 100,
             "realS3UploadPublishesReportWithinRuntimeBudget canonical assertion failed")
     for key in (entry["objectIdentity"]["key"], "runtime-config/worker.json"):
         url = "https://" + out["bucket"] + ".s3." + out["region"] + ".amazonaws.com/" + key

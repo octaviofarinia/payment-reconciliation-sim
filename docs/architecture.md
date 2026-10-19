@@ -146,7 +146,7 @@ The [deployment guide](deployment-guide.md) covers resource selection and teardo
 
 **REQ-16 Repeatable scenarios.** A seeded local generator creates purchases through the API, closes a past date, registers/uploads its CSV, polls status, and compares returned results with a committed expected-output fixture. It never writes directly to MongoDB or imports simulator services, repositories, domain logic, or the worker implementation. It uses the public API and the returned presigned S3 upload contract; private worker operations are not available to it. Seeded generation, CSV/checksum creation, polling, response validation, and expected-result checks are generator logic subject to the same unit coverage and mutation gates. New scenario datasets require unused references and dates or a fresh disposable database.
 
-The canonical scenario is:
+The canonical scenario contains 20 numbered examples of each outcome (suffixes `001` through `020`). The original examples are:
 
 | Reference | Internal centavos | Settlement rows in centavos | Expected |
 | --- | --- | --- | --- |
@@ -156,7 +156,7 @@ The canonical scenario is:
 | AMOUNT-001 | 40000 | 45000 | AMOUNT_MISMATCH |
 | DUP-001 | 50000 | 50000, 50000 | DUPLICATE |
 
-Expected counts: four internal purchases, five settlement rows, four distinct settlement references, five results, and one of each outcome. Additional fixtures cover an unknown duplicated reference, different duplicate amounts, all matched, header-only settlement, and an empty internal date.
+Each subsequent group adds 10,000 centavos to the previous group’s amounts and preserves the same five-outcome pattern. Expected counts: 80 internal purchases, 100 settlement rows, 80 distinct settlement references, 100 results, and 20 of each outcome. Additional fixtures cover an unknown duplicated reference, different duplicate amounts, all matched, header-only settlement, and an empty internal date.
 
 ## Maven modules and component boundaries
 

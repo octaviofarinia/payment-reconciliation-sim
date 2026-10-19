@@ -51,7 +51,7 @@ interface to complete each mission, including the rejection paths below.
 
 | Mission | Checks |
 | --- | --- |
-| Reconcile the day | Reject an incorrect classification; classify all five references correctly; open the complete-day lesson. |
+| Reconcile the day | Reject an incorrect classification; classify all 100 references correctly; open the complete-day lesson. |
 | API contracts | Reject a wrong-role request and complete the valid public workflow. |
 | Stable input | Exercise immutable replay, conflicting input and a late write to the closed date. |
 | Cloud boundary | Reject an expired PUT and protect the bound original from replacement. |

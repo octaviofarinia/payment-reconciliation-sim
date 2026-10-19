@@ -42,7 +42,7 @@ public final class PurchaseSteps {
         try (var fixture = getClass().getResourceAsStream("/fixtures/canonical-purchases.json")) {
             assertNotNull(fixture);
             var purchases = JsonMapper.builder().build().readTree(fixture);
-            assertEquals(4, purchases.size());
+            assertEquals(80, purchases.size());
             for (var purchase : purchases) {
                 post("/api/v1/transactions", purchase.toString());
                 assertEquals(201, world.response.statusCode());

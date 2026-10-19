@@ -78,7 +78,7 @@ class RunPublicationIT {
         var base = "/internal/v1/reconciliation-runs/" + id;
         assertEquals(409, request("GET", "/api/v1/reconciliation-runs/" + id + "/results", null).statusCode());
         var input = JSON.readTree(request("GET", base + "/input", null).body());
-        assertEquals(4, input.get("purchases").size());
+        assertEquals(80, input.get("purchases").size());
         assertEquals(200, request("PUT", base + "/processing", object(id)).statusCode());
         assertEquals(200, request("PUT", base + "/results", report(id)).statusCode());
         var metadata = JSON.readTree(request("GET", "/api/v1/reconciliation-runs/" + id, null).body());
@@ -88,9 +88,9 @@ class RunPublicationIT {
         assertEquals(expected.get("results"), JSON.readTree(request("GET", "/api/v1/reconciliation-runs/" + id + "/results?size=100", null).body()).get("results"));
         var aggregate = env.mongoDatabase().getCollection("reconciliation_runs").aggregate(java.util.List.of(new org.bson.Document("$unwind", "$report.results"), new org.bson.Document("$group", new org.bson.Document("_id", "$report.results.outcome").append("count", new org.bson.Document("$sum", 1))))).into(new java.util.ArrayList<>());
         assertEquals(5, aggregate.size());
-        for (var count : aggregate) assertEquals(1, count.getInteger("count"));
+        for (var count : aggregate) assertEquals(20, count.getInteger("count"));
         var stored = env.mongoDatabase().getCollection("reconciliation_runs").find().first();
-        var external = stored.get("report", org.bson.Document.class).getList("results", org.bson.Document.class).get(2);
+        var external = stored.get("report", org.bson.Document.class).getList("results", org.bson.Document.class).stream().filter(result -> result.getString("reference").equals("EXT-001")).findFirst().orElseThrow();
         assertTrue(external.containsKey("internalAmountCentavos"));
         assertNull(external.get("internalAmountCentavos"));
         assertTrue(external.containsKey("merchantId"));
@@ -116,7 +116,7 @@ class RunPublicationIT {
         java.util.Collections.reverse(values);
         results.removeAll();
         values.forEach(results::add);
-        var duplicate = (tools.jackson.databind.node.ArrayNode) results.get(3).get("settlementEvidence");
+        var duplicate = (tools.jackson.databind.node.ArrayNode) values.stream().filter(value -> value.get("reference").stringValue().equals("DUP-001")).findFirst().orElseThrow().get("settlementEvidence");
         var row = duplicate.remove(0);
         duplicate.add(row);
         assertEquals(200, request("PUT", base + "/results", reordered.toString()).statusCode());
@@ -210,7 +210,7 @@ class RunPublicationIT {
         ((tools.jackson.databind.node.ArrayNode) missing.get("results").get(0).get("settlementEvidence")).removeAll();
         var badOutcome = (tools.jackson.databind.node.ObjectNode) JSON.readTree(valid);
         ((tools.jackson.databind.node.ObjectNode) badOutcome.get("results").get(2)).put("outcome", "MATCHED");
-        for (var invalid : java.util.List.of(duplicate.toString(), missing.toString(), badOutcome.toString(), valid.replace("\"internalPurchaseCount\": 4", "\"internalPurchaseCount\": 3"), valid.replace("40000", "9223372036854775808"), valid.replace("40000", "1.5"))) {
+        for (var invalid : java.util.List.of(duplicate.toString(), missing.toString(), badOutcome.toString(), valid.replace("\"internalPurchaseCount\": 80", "\"internalPurchaseCount\": 79"), valid.replace("40000", "9223372036854775808"), valid.replace("40000", "1.5"))) {
             assertEquals(400, request("PUT", base + "/results", invalid).statusCode(), invalid);
             assertEquals(before, collection.find().first());
         }
@@ -218,10 +218,10 @@ class RunPublicationIT {
         assertEquals(200, request("PUT", base + "/results", valid).statusCode());
         var page = JSON.readTree(request("GET", "/api/v1/reconciliation-runs/" + id + "/results?outcome=DUPLICATE&page=0&size=500", null).body());
         assertEquals(100, page.get("size").intValue());
-        assertEquals(1, page.get("totalResults").intValue());
+        assertEquals(20, page.get("totalResults").intValue());
         assertEquals("DUP-001", page.get("results").get(0).get("reference").stringValue());
         var huge = JSON.readTree(request("GET", "/api/v1/reconciliation-runs/" + id + "/results?page=2147483647&size=100", null).body());
-        assertEquals(5, huge.get("totalResults").intValue());
+        assertEquals(100, huge.get("totalResults").intValue());
         assertEquals(0, huge.get("results").size());
         for (var query : java.util.List.of("page=-1", "size=0", "size=-1", "outcome=UNKNOWN"))
             assertEquals(400, request("GET", "/api/v1/reconciliation-runs/" + id + "/results?" + query, null).statusCode());

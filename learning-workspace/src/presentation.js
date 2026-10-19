@@ -8,8 +8,8 @@ export const explanations = {
 };
 export const hints = {
   MATCHED: 'Find the reference on both sides, then compare the amounts.',
-  MISSING_IN_SETTLEMENT: 'Search all five settlement rows for this purchase reference.',
-  MISSING_INTERNALLY: 'Search our four purchases for this settlement reference.',
+  MISSING_IN_SETTLEMENT: 'Search all settlement rows for this purchase reference.',
+  MISSING_INTERNALLY: 'Search our internal purchases for this settlement reference.',
   AMOUNT_MISMATCH: 'The references agree. Check the two amounts carefully.',
   DUPLICATE: 'Count the settlement rows for this reference before comparing amounts.',
 };

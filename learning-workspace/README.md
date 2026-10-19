@@ -12,7 +12,7 @@ Open [Reconciliation Lab on GitHub Pages](https://octaviofarinia.github.io/payme
 
 | Module | Focus | Browser practice |
 | --- | --- | --- |
-| 01 · Reconcile the day | Integer money, reference matching and five outcomes | Classify the five canonical references and retain every evidence row |
+| 01 · Reconcile the day | Integer money, reference matching and five outcomes | Classify all 100 canonical references and retain every evidence row |
 | 02 · Put an API around it | HTTP contracts, Spring boundaries and caller roles | Sequence valid requests and diagnose method and role errors |
 | 03 · Make the input stable | Immutable purchases, replay and business-day closure | Replay, conflict, close and attempt a late write |
 | 04 · Cross the cloud boundary | Registered metadata, checksums, uploads and object versions | Deliver the correct bytes and protect the original input |
@@ -33,7 +33,7 @@ Progress is saved in this browser origin's `localStorage` under `reconciliation-
 
 Library → Progress exports and restores a JSON backup and downloads a readable learning report. Import rejects unsupported or malformed files without replacing current progress. If browser storage is unavailable or full, the site reports that limitation and offers export; it does not synchronize across devices or accounts.
 
-`src/data/` contains exact copies of the canonical fixtures in `../acceptance-tests/src/test/resources/fixtures/`: four purchases, five settlement rows and the independent expected report. Amounts remain integer centavos until display. CSV editing belongs to the worker simulation and does not rewrite these canonical fixtures.
+`src/data/` contains exact copies of the canonical fixtures in `../acceptance-tests/src/test/resources/fixtures/`: 80 purchases, 100 settlement rows and the independent expected report. Amounts remain integer centavos until display. CSV editing belongs to the worker simulation and does not rewrite these canonical fixtures.
 
 `src/content/course.js`, `backend.js` and `cloud.js` define the curriculum, glossary and source links. `src/reference/` contains full source snapshots. The curriculum tests compare all 25 displayed snapshots byte-for-byte with the actual repository files, validate focus ranges and resolve every published source and concept reference. Refresh a snapshot deliberately when its original project file changes.
 

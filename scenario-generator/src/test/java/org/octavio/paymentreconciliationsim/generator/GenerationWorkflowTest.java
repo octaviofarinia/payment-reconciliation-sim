@@ -38,7 +38,7 @@ class GenerationWorkflowTest {
         order.verify(client).createDate(scenario.businessDate());
         for (var p : scenario.purchases()) order.verify(client).createPurchase(p);
         order.verify(client).closeDate(scenario.businessDate());
-        order.verify(client).register(eq(scenario.businessDate()), matches("[a-f0-9]{64}"), eq(211));
+        order.verify(client).register(eq(scenario.businessDate()), matches("[a-f0-9]{64}"), eq(3129));
         order.verify(client).upload(eq(registration.uploadInstructions()), any());
     }
 

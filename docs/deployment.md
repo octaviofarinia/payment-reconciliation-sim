@@ -277,7 +277,7 @@ the wrapper retains only one unambiguous UUID from the CLI's complete recovery
 marker in the sanitized error and partial canonical evidence. Missing/ambiguous
 markers, launch failures or wrapper timeouts may leave no known run ID; inspect
 public runs for the requested date and do not infer that registration never occurred. The wrapper verifies
-COMPLETED, totalResultCount=5, all five outcomes and complete independent expected
+COMPLETED, totalResultCount=100, all five outcomes and complete independent expected
 results, original checksum/version, direct delivery and its own correlated replay.
 The named realS3UploadPublishesReportWithinRuntimeBudget check passes only when
 canonical and the requested maximum cold/warm benchmark both pass.

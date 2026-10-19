@@ -117,7 +117,7 @@ export const cloudModules = [
         paragraphs: [
           'Imagine the API commits the report, but its response never reaches the worker. The worker cannot infer whether publication succeeded from that lost response. A later delivery may read and compare the same input again. The service canonicalizes the report so an identical completed publication is a no-op, while a conflicting report is rejected.',
           'The repository enforces publication with one Mongo findAndModify operation. Its predicate requires the matching object identity and a status other than COMPLETED. Failure updates also exclude completed runs. These atomic conditions protect the result when attempts overlap or a delayed failure arrives after success. Reserved Lambda concurrency one is a capacity limit, not the mechanism that makes this correct.',
-          'Do not confuse delivery duplicates with settlement duplicates. DUP-001 has two rows in the business input and produces the DUPLICATE classification. Replaying an S3 event is an infrastructure event; it must not add another result or change the five-result report. The contract is repeatable work with protected effects, not a promise that execution happens exactly once.',
+          'Do not confuse delivery duplicates with settlement duplicates. DUP-001 has two rows in the business input and produces the DUPLICATE classification. Replaying an S3 event is an infrastructure event; it must not add another result or change the 100-result report. The contract is repeatable work with protected effects, not a promise that execution happens exactly once.',
         ],
         takeaway: { title: 'Completed means stable', text: 'An identical replay preserves the report; a conflicting publication fails; a late attempt failure cannot downgrade completion.' },
         sourceIds: ['cloud-publication', 'cloud-processing', 'cloud-recovery'], concepts: ['cloud-idempotency', 'cloud-atomic-publication', 'cloud-attempt'],
@@ -126,7 +126,7 @@ export const cloudModules = [
     mission: {
       title: 'Recover a run without changing its meaning',
       brief: 'Interrupt the worker’s API connection, inspect the failure, restore access and select the retained original. Then replay the completed delivery.',
-      goal: 'Reach COMPLETED with the original input, preserve all five canonical results, and prove that a second delivery does not alter the report.',
+      goal: 'Reach COMPLETED with the original input, preserve all 100 canonical results, and prove that a second delivery does not alter the report.',
     },
     lab: {
       title: 'Reproduce recovery with the local harness',
@@ -153,7 +153,7 @@ export const cloudModules = [
         lead: 'A green worker log is useful, but it is not a complete correctness check.',
         paragraphs: [
           'The scenario generator behaves like an external client. It creates purchases, closes the business date, registers the settlement checksum and length, uploads through the returned instructions, and polls the public API. Once the run is completed, it retrieves the report and compares it with expected results. A completed identity replay skips the upload because no new object version is necessary.',
-          'The canonical expected report is committed independently of the worker’s comparator. Verification checks all results and their evidence, not just a total of five or a COMPLETED status. That matters for the selected reference: an amount mismatch with the wrong amounts, or a duplicate missing one settlement row, could still produce a plausible summary.',
+          'The canonical expected report is committed independently of the worker’s comparator. Verification checks all results and their evidence, not just a total of 100 or a COMPLETED status. That matters for the selected reference: an amount mismatch with the wrong amounts, or a duplicate missing one settlement row, could still produce a plausible summary.',
           'Use different evidence for different claims. Unit tests exercise logic; acceptance tests use real Java HTTP, Mongo and the worker with an S3 stub; this course models behavior in a browser. The AWS deployment and a generator simulation have been verified separately. Deployment checks inspect AWS delivery and routing; runtime benchmarks measure cold and warm attempts. Account eligibility, usage and cleanup are checked for each deployment.',
         ],
         takeaway: { title: 'A claim needs matching evidence', text: 'Compare the complete report against independent expectations, and never relabel a browser model or a local stub as an observed cloud deployment.' },

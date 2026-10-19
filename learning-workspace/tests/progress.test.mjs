@@ -24,7 +24,7 @@ test('cross-module navigation and persistence retain the canonical selected reco
   assert.equal(restored.moduleId, 'recovery');
   assert.equal(restored.lens, 'system');
 });
-test('all five correct classifications earn one module; reset is scoped', () => {
+test('all 100 correct classifications earn one module; reset is scoped', () => {
   let state = createProgress();
   state = progressReducer(state, { type: 'navigate', moduleId: 'api', step: 1, overview: false });
   state = progressReducer(state, { type: 'bookmark' });

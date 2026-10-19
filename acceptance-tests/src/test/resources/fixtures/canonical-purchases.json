@@ -1,6 +1,562 @@
 [
- {"transactionReference":"MATCH-001","merchantId":"MERCHANT-001","businessDate":"2026-10-01","amountCentavos":10000,"currency":"ARS"},
- {"transactionReference":"MISS-001","merchantId":"MERCHANT-001","businessDate":"2026-10-01","amountCentavos":20000,"currency":"ARS"},
- {"transactionReference":"AMOUNT-001","merchantId":"MERCHANT-001","businessDate":"2026-10-01","amountCentavos":40000,"currency":"ARS"},
- {"transactionReference":"DUP-001","merchantId":"MERCHANT-001","businessDate":"2026-10-01","amountCentavos":50000,"currency":"ARS"}
+  {
+    "transactionReference": "MATCH-001",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 10000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-001",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 20000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-001",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 40000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-001",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 50000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-002",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 20000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-002",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 30000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-002",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 50000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-002",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 60000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-003",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 30000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-003",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 40000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-003",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 60000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-003",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 70000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-004",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 40000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-004",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 50000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-004",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 70000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-004",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 80000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-005",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 50000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-005",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 60000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-005",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 80000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-005",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 90000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-006",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 60000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-006",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 70000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-006",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 90000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-006",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 100000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-007",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 70000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-007",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 80000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-007",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 100000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-007",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 110000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-008",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 80000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-008",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 90000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-008",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 110000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-008",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 120000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-009",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 90000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-009",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 100000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-009",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 120000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-009",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 130000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-010",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 100000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-010",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 110000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-010",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 130000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-010",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 140000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-011",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 110000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-011",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 120000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-011",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 140000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-011",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 150000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-012",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 120000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-012",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 130000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-012",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 150000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-012",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 160000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-013",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 130000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-013",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 140000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-013",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 160000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-013",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 170000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-014",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 140000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-014",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 150000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-014",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 170000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-014",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 180000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-015",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 150000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-015",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 160000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-015",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 180000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-015",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 190000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-016",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 160000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-016",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 170000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-016",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 190000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-016",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 200000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-017",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 170000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-017",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 180000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-017",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 200000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-017",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 210000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-018",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 180000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-018",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 190000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-018",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 210000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-018",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 220000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-019",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 190000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-019",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 200000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-019",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 220000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-019",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 230000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MATCH-020",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 200000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "MISS-020",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 210000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "AMOUNT-020",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 230000,
+    "currency": "ARS"
+  },
+  {
+    "transactionReference": "DUP-020",
+    "merchantId": "MERCHANT-001",
+    "businessDate": "2026-10-01",
+    "amountCentavos": 240000,
+    "currency": "ARS"
+  }
 ]

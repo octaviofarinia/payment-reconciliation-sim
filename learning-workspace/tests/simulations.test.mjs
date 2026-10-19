@@ -58,7 +58,7 @@ test('CSV rejection publishes no partial output; repair computes all canonical r
   assert.equal(s.machine.published, false);
   s = field('worker', s, 'csv', canonicalCsv); s = step('worker', s, 'validate');
   s = step('worker', s, 'compare'); s = step('worker', s, 'publish');
-  assert.equal(s.machine.results.length, 5);
+  assert.equal(s.machine.results.length, 100);
   assert.equal(s.machine.results.find(r => r.reference === 'DUP-001').outcome, 'DUPLICATE');
   assert.equal(isLabComplete('worker', s), true);
   s = field('worker', s, 'csv', canonicalCsv.replace('45000', '-45000'));
@@ -116,7 +116,7 @@ test('capstone cannot complete without recovery, result audit and boundary decis
   s = step('capstone', s, 'restore'); s = step('capstone', s, 'reprocess');
   s = field('capstone', s, 'resultCount', '9'); s = step('capstone', s, 'audit');
   assert.equal(s.achievements.includes('audit'), false);
-  s = field('capstone', s, 'resultCount', '5'); s = field('capstone', s, 'integrity', 'atomic'); s = step('capstone', s, 'audit');
+  s = field('capstone', s, 'resultCount', '100'); s = field('capstone', s, 'integrity', 'atomic'); s = step('capstone', s, 'audit');
   assert.equal(isLabComplete('capstone', s), false);
   s = field('capstone', s, 'extension', 'comparator'); s = step('capstone', s, 'extension');
   assert.equal(isLabComplete('capstone', s), false);

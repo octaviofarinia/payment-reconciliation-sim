@@ -1,15 +1,15 @@
 {
   "summary": {
     "internalPurchaseCount": 0,
-    "settlementRowCount": 5,
-    "distinctSettlementReferenceCount": 4,
-    "totalResultCount": 4,
+    "settlementRowCount": 100,
+    "distinctSettlementReferenceCount": 80,
+    "totalResultCount": 80,
     "outcomeCounts": {
       "MATCHED": 0,
       "MISSING_IN_SETTLEMENT": 0,
-      "MISSING_INTERNALLY": 3,
+      "MISSING_INTERNALLY": 60,
       "AMOUNT_MISMATCH": 0,
-      "DUPLICATE": 1
+      "DUPLICATE": 20
     }
   },
   "results": [
@@ -23,6 +23,253 @@
           "rowNumber": 3,
           "reference": "AMOUNT-001",
           "amountCentavos": 45000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-002",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 8,
+          "reference": "AMOUNT-002",
+          "amountCentavos": 55000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-003",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 13,
+          "reference": "AMOUNT-003",
+          "amountCentavos": 65000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-004",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 18,
+          "reference": "AMOUNT-004",
+          "amountCentavos": 75000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-005",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 23,
+          "reference": "AMOUNT-005",
+          "amountCentavos": 85000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-006",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 28,
+          "reference": "AMOUNT-006",
+          "amountCentavos": 95000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-007",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 33,
+          "reference": "AMOUNT-007",
+          "amountCentavos": 105000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-008",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 38,
+          "reference": "AMOUNT-008",
+          "amountCentavos": 115000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-009",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 43,
+          "reference": "AMOUNT-009",
+          "amountCentavos": 125000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-010",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 48,
+          "reference": "AMOUNT-010",
+          "amountCentavos": 135000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-011",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 53,
+          "reference": "AMOUNT-011",
+          "amountCentavos": 145000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-012",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 58,
+          "reference": "AMOUNT-012",
+          "amountCentavos": 155000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-013",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 63,
+          "reference": "AMOUNT-013",
+          "amountCentavos": 165000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-014",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 68,
+          "reference": "AMOUNT-014",
+          "amountCentavos": 175000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-015",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 73,
+          "reference": "AMOUNT-015",
+          "amountCentavos": 185000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-016",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 78,
+          "reference": "AMOUNT-016",
+          "amountCentavos": 195000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-017",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 83,
+          "reference": "AMOUNT-017",
+          "amountCentavos": 205000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-018",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 88,
+          "reference": "AMOUNT-018",
+          "amountCentavos": 215000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-019",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 93,
+          "reference": "AMOUNT-019",
+          "amountCentavos": 225000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-020",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 98,
+          "reference": "AMOUNT-020",
+          "amountCentavos": 235000
         }
       ]
     },
@@ -45,6 +292,348 @@
       ]
     },
     {
+      "reference": "DUP-002",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 9,
+          "reference": "DUP-002",
+          "amountCentavos": 60000
+        },
+        {
+          "rowNumber": 10,
+          "reference": "DUP-002",
+          "amountCentavos": 60000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-003",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 14,
+          "reference": "DUP-003",
+          "amountCentavos": 70000
+        },
+        {
+          "rowNumber": 15,
+          "reference": "DUP-003",
+          "amountCentavos": 70000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-004",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 19,
+          "reference": "DUP-004",
+          "amountCentavos": 80000
+        },
+        {
+          "rowNumber": 20,
+          "reference": "DUP-004",
+          "amountCentavos": 80000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-005",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 24,
+          "reference": "DUP-005",
+          "amountCentavos": 90000
+        },
+        {
+          "rowNumber": 25,
+          "reference": "DUP-005",
+          "amountCentavos": 90000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-006",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 29,
+          "reference": "DUP-006",
+          "amountCentavos": 100000
+        },
+        {
+          "rowNumber": 30,
+          "reference": "DUP-006",
+          "amountCentavos": 100000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-007",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 34,
+          "reference": "DUP-007",
+          "amountCentavos": 110000
+        },
+        {
+          "rowNumber": 35,
+          "reference": "DUP-007",
+          "amountCentavos": 110000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-008",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 39,
+          "reference": "DUP-008",
+          "amountCentavos": 120000
+        },
+        {
+          "rowNumber": 40,
+          "reference": "DUP-008",
+          "amountCentavos": 120000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-009",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 44,
+          "reference": "DUP-009",
+          "amountCentavos": 130000
+        },
+        {
+          "rowNumber": 45,
+          "reference": "DUP-009",
+          "amountCentavos": 130000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-010",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 49,
+          "reference": "DUP-010",
+          "amountCentavos": 140000
+        },
+        {
+          "rowNumber": 50,
+          "reference": "DUP-010",
+          "amountCentavos": 140000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-011",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 54,
+          "reference": "DUP-011",
+          "amountCentavos": 150000
+        },
+        {
+          "rowNumber": 55,
+          "reference": "DUP-011",
+          "amountCentavos": 150000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-012",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 59,
+          "reference": "DUP-012",
+          "amountCentavos": 160000
+        },
+        {
+          "rowNumber": 60,
+          "reference": "DUP-012",
+          "amountCentavos": 160000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-013",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 64,
+          "reference": "DUP-013",
+          "amountCentavos": 170000
+        },
+        {
+          "rowNumber": 65,
+          "reference": "DUP-013",
+          "amountCentavos": 170000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-014",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 69,
+          "reference": "DUP-014",
+          "amountCentavos": 180000
+        },
+        {
+          "rowNumber": 70,
+          "reference": "DUP-014",
+          "amountCentavos": 180000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-015",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 74,
+          "reference": "DUP-015",
+          "amountCentavos": 190000
+        },
+        {
+          "rowNumber": 75,
+          "reference": "DUP-015",
+          "amountCentavos": 190000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-016",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 79,
+          "reference": "DUP-016",
+          "amountCentavos": 200000
+        },
+        {
+          "rowNumber": 80,
+          "reference": "DUP-016",
+          "amountCentavos": 200000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-017",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 84,
+          "reference": "DUP-017",
+          "amountCentavos": 210000
+        },
+        {
+          "rowNumber": 85,
+          "reference": "DUP-017",
+          "amountCentavos": 210000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-018",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 89,
+          "reference": "DUP-018",
+          "amountCentavos": 220000
+        },
+        {
+          "rowNumber": 90,
+          "reference": "DUP-018",
+          "amountCentavos": 220000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-019",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 94,
+          "reference": "DUP-019",
+          "amountCentavos": 230000
+        },
+        {
+          "rowNumber": 95,
+          "reference": "DUP-019",
+          "amountCentavos": 230000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-020",
+      "outcome": "DUPLICATE",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 99,
+          "reference": "DUP-020",
+          "amountCentavos": 240000
+        },
+        {
+          "rowNumber": 100,
+          "reference": "DUP-020",
+          "amountCentavos": 240000
+        }
+      ]
+    },
+    {
       "reference": "EXT-001",
       "outcome": "MISSING_INTERNALLY",
       "internalAmountCentavos": null,
@@ -58,6 +647,253 @@
       ]
     },
     {
+      "reference": "EXT-002",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 7,
+          "reference": "EXT-002",
+          "amountCentavos": 40000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-003",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 12,
+          "reference": "EXT-003",
+          "amountCentavos": 50000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-004",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 17,
+          "reference": "EXT-004",
+          "amountCentavos": 60000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-005",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 22,
+          "reference": "EXT-005",
+          "amountCentavos": 70000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-006",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 27,
+          "reference": "EXT-006",
+          "amountCentavos": 80000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-007",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 32,
+          "reference": "EXT-007",
+          "amountCentavos": 90000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-008",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 37,
+          "reference": "EXT-008",
+          "amountCentavos": 100000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-009",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 42,
+          "reference": "EXT-009",
+          "amountCentavos": 110000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-010",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 47,
+          "reference": "EXT-010",
+          "amountCentavos": 120000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-011",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 52,
+          "reference": "EXT-011",
+          "amountCentavos": 130000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-012",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 57,
+          "reference": "EXT-012",
+          "amountCentavos": 140000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-013",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 62,
+          "reference": "EXT-013",
+          "amountCentavos": 150000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-014",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 67,
+          "reference": "EXT-014",
+          "amountCentavos": 160000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-015",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 72,
+          "reference": "EXT-015",
+          "amountCentavos": 170000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-016",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 77,
+          "reference": "EXT-016",
+          "amountCentavos": 180000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-017",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 82,
+          "reference": "EXT-017",
+          "amountCentavos": 190000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-018",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 87,
+          "reference": "EXT-018",
+          "amountCentavos": 200000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-019",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 92,
+          "reference": "EXT-019",
+          "amountCentavos": 210000
+        }
+      ]
+    },
+    {
+      "reference": "EXT-020",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 97,
+          "reference": "EXT-020",
+          "amountCentavos": 220000
+        }
+      ]
+    },
+    {
       "reference": "MATCH-001",
       "outcome": "MISSING_INTERNALLY",
       "internalAmountCentavos": null,
@@ -67,6 +903,253 @@
           "rowNumber": 1,
           "reference": "MATCH-001",
           "amountCentavos": 10000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-002",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 6,
+          "reference": "MATCH-002",
+          "amountCentavos": 20000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-003",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 11,
+          "reference": "MATCH-003",
+          "amountCentavos": 30000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-004",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 16,
+          "reference": "MATCH-004",
+          "amountCentavos": 40000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-005",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 21,
+          "reference": "MATCH-005",
+          "amountCentavos": 50000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-006",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 26,
+          "reference": "MATCH-006",
+          "amountCentavos": 60000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-007",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 31,
+          "reference": "MATCH-007",
+          "amountCentavos": 70000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-008",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 36,
+          "reference": "MATCH-008",
+          "amountCentavos": 80000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-009",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 41,
+          "reference": "MATCH-009",
+          "amountCentavos": 90000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-010",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 46,
+          "reference": "MATCH-010",
+          "amountCentavos": 100000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-011",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 51,
+          "reference": "MATCH-011",
+          "amountCentavos": 110000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-012",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 56,
+          "reference": "MATCH-012",
+          "amountCentavos": 120000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-013",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 61,
+          "reference": "MATCH-013",
+          "amountCentavos": 130000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-014",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 66,
+          "reference": "MATCH-014",
+          "amountCentavos": 140000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-015",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 71,
+          "reference": "MATCH-015",
+          "amountCentavos": 150000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-016",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 76,
+          "reference": "MATCH-016",
+          "amountCentavos": 160000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-017",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 81,
+          "reference": "MATCH-017",
+          "amountCentavos": 170000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-018",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 86,
+          "reference": "MATCH-018",
+          "amountCentavos": 180000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-019",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 91,
+          "reference": "MATCH-019",
+          "amountCentavos": 190000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-020",
+      "outcome": "MISSING_INTERNALLY",
+      "internalAmountCentavos": null,
+      "merchantId": null,
+      "settlementEvidence": [
+        {
+          "rowNumber": 96,
+          "reference": "MATCH-020",
+          "amountCentavos": 200000
         }
       ]
     }

@@ -5,7 +5,7 @@ export const purchases = Object.freeze(canonicalPurchases.map(({ transactionRefe
   Object.freeze({ reference: transactionReference, amountCentavos })));
 export const settlement = Object.freeze(canonicalSettlement.map(({ transactionReference, amountCentavos, rowNumber }) =>
   Object.freeze({ reference: transactionReference, amountCentavos, rowNumber })));
-export const references = Object.freeze(['MATCH-001', 'MISS-001', 'AMOUNT-001', 'EXT-001', 'DUP-001']);
+export const references = Object.freeze([...new Set([...purchases, ...settlement].map(({ reference }) => reference))]);
 export const outcomes = Object.freeze([
   { value: 'MATCHED', label: 'Matched' },
   { value: 'MISSING_IN_SETTLEMENT', label: 'Missing in settlement' },

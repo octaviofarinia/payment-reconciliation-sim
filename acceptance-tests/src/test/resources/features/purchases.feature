@@ -7,7 +7,7 @@ Feature: Simulated purchase ingestion and closed business dates
     When I ingest the canonical purchases
     And I close purchase date "2026-10-01"
     Then the HTTP status is 200
-    And the closed purchase boundary contains 4 purchases
+    And the closed purchase boundary contains 80 purchases
     When I close purchase date "2026-10-01"
     Then the HTTP status is 200
     And the purchase boundary is unchanged

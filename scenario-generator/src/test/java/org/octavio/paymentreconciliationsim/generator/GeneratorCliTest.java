@@ -55,7 +55,7 @@ class GeneratorCliTest {
                 if (path.equals("/api/v1/reconciliation-runs"))
                     body = "{\"runId\":\"cli-run\",\"status\":\"COMPLETED\",\"created\":false}";
                 else if (path.endsWith("/results"))
-                    body = "{\"page\":0,\"size\":100,\"totalResults\":5,\"results\":" + expectedNode.get("results") + "}";
+                    body = "{\"page\":0,\"size\":100,\"totalResults\":100,\"results\":" + expectedNode.get("results") + "}";
                 else if (path.endsWith("/cli-run"))
                     body = "{\"runId\":\"cli-run\",\"status\":\"COMPLETED\",\"summary\":" + expectedNode.get("summary") + "}";
             }
@@ -75,7 +75,7 @@ class GeneratorCliTest {
             assertEquals(0, run(actual, env));
             assertTrue(output.toString().contains("Verified runId=cli-run"));
             var wrong = Files.createTempFile("generator-wrong", ".json");
-            Files.writeString(wrong, expected.replace("\"MATCHED\": 1", "\"MATCHED\": 2"));
+            Files.writeString(wrong, expected.replace("\"MATCHED\": 20", "\"MATCHED\": 21"));
             var override = Arrays.copyOf(actual, actual.length + 2);
             override[actual.length] = "--expected";
             override[actual.length + 1] = wrong.toString();
@@ -115,7 +115,7 @@ class GeneratorCliTest {
             if (path.equals("/api/v1/reconciliation-runs"))
                 body = "{\"runId\":\"cli-run\",\"status\":\"COMPLETED\",\"created\":false}";
             else if (path.endsWith("/results"))
-                body = "{\"page\":0,\"size\":100,\"totalResults\":5,\"results\":" + expected.get("results") + "}";
+                body = "{\"page\":0,\"size\":100,\"totalResults\":100,\"results\":" + expected.get("results") + "}";
             else if (path.endsWith("/cli-run"))
                 body = count[0]++ == 0 ? "{\"runId\":\"cli-run\",\"status\":\"PROCESSING\"}" : "{\"runId\":\"cli-run\",\"status\":\"COMPLETED\",\"summary\":" + expected.get("summary") + "}";
             byte[] bytes = body.getBytes(java.nio.charset.StandardCharsets.UTF_8);

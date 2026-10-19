@@ -3,7 +3,7 @@ Feature: Complete prepared reports publish atomically
     Given an OPEN business date "2026-10-01"
     When I ingest the canonical purchases
     And I close purchase date "2026-10-01"
-    Then the closed purchase boundary contains 4 purchases
+    Then the closed purchase boundary contains 80 purchases
 
   Scenario: Awaiting uploads never expose partial reconciliation
     When I register the prepared canonical settlement

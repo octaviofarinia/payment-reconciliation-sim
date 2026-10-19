@@ -1,11 +1,11 @@
 {
   "summary": {
-    "internalPurchaseCount": 4,
-    "settlementRowCount": 4,
-    "distinctSettlementReferenceCount": 4,
-    "totalResultCount": 4,
+    "internalPurchaseCount": 80,
+    "settlementRowCount": 80,
+    "distinctSettlementReferenceCount": 80,
+    "totalResultCount": 80,
     "outcomeCounts": {
-      "MATCHED": 4,
+      "MATCHED": 80,
       "MISSING_IN_SETTLEMENT": 0,
       "MISSING_INTERNALLY": 0,
       "AMOUNT_MISMATCH": 0,
@@ -20,9 +20,256 @@
       "merchantId": "MERCHANT-001",
       "settlementEvidence": [
         {
-          "rowNumber": 2,
+          "rowNumber": 3,
           "reference": "AMOUNT-001",
           "amountCentavos": 40000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-002",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 50000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 7,
+          "reference": "AMOUNT-002",
+          "amountCentavos": 50000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-003",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 60000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 11,
+          "reference": "AMOUNT-003",
+          "amountCentavos": 60000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-004",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 70000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 15,
+          "reference": "AMOUNT-004",
+          "amountCentavos": 70000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-005",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 80000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 19,
+          "reference": "AMOUNT-005",
+          "amountCentavos": 80000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-006",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 90000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 23,
+          "reference": "AMOUNT-006",
+          "amountCentavos": 90000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-007",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 100000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 27,
+          "reference": "AMOUNT-007",
+          "amountCentavos": 100000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-008",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 110000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 31,
+          "reference": "AMOUNT-008",
+          "amountCentavos": 110000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-009",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 120000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 35,
+          "reference": "AMOUNT-009",
+          "amountCentavos": 120000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-010",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 130000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 39,
+          "reference": "AMOUNT-010",
+          "amountCentavos": 130000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-011",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 140000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 43,
+          "reference": "AMOUNT-011",
+          "amountCentavos": 140000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-012",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 150000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 47,
+          "reference": "AMOUNT-012",
+          "amountCentavos": 150000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-013",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 160000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 51,
+          "reference": "AMOUNT-013",
+          "amountCentavos": 160000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-014",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 170000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 55,
+          "reference": "AMOUNT-014",
+          "amountCentavos": 170000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-015",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 180000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 59,
+          "reference": "AMOUNT-015",
+          "amountCentavos": 180000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-016",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 190000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 63,
+          "reference": "AMOUNT-016",
+          "amountCentavos": 190000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-017",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 200000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 67,
+          "reference": "AMOUNT-017",
+          "amountCentavos": 200000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-018",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 210000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 71,
+          "reference": "AMOUNT-018",
+          "amountCentavos": 210000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-019",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 220000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 75,
+          "reference": "AMOUNT-019",
+          "amountCentavos": 220000
+        }
+      ]
+    },
+    {
+      "reference": "AMOUNT-020",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 230000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 79,
+          "reference": "AMOUNT-020",
+          "amountCentavos": 230000
         }
       ]
     },
@@ -33,9 +280,256 @@
       "merchantId": "MERCHANT-001",
       "settlementEvidence": [
         {
-          "rowNumber": 3,
+          "rowNumber": 4,
           "reference": "DUP-001",
           "amountCentavos": 50000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-002",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 60000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 8,
+          "reference": "DUP-002",
+          "amountCentavos": 60000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-003",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 70000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 12,
+          "reference": "DUP-003",
+          "amountCentavos": 70000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-004",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 80000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 16,
+          "reference": "DUP-004",
+          "amountCentavos": 80000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-005",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 90000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 20,
+          "reference": "DUP-005",
+          "amountCentavos": 90000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-006",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 100000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 24,
+          "reference": "DUP-006",
+          "amountCentavos": 100000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-007",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 110000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 28,
+          "reference": "DUP-007",
+          "amountCentavos": 110000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-008",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 120000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 32,
+          "reference": "DUP-008",
+          "amountCentavos": 120000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-009",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 130000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 36,
+          "reference": "DUP-009",
+          "amountCentavos": 130000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-010",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 140000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 40,
+          "reference": "DUP-010",
+          "amountCentavos": 140000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-011",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 150000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 44,
+          "reference": "DUP-011",
+          "amountCentavos": 150000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-012",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 160000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 48,
+          "reference": "DUP-012",
+          "amountCentavos": 160000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-013",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 170000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 52,
+          "reference": "DUP-013",
+          "amountCentavos": 170000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-014",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 180000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 56,
+          "reference": "DUP-014",
+          "amountCentavos": 180000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-015",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 190000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 60,
+          "reference": "DUP-015",
+          "amountCentavos": 190000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-016",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 200000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 64,
+          "reference": "DUP-016",
+          "amountCentavos": 200000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-017",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 210000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 68,
+          "reference": "DUP-017",
+          "amountCentavos": 210000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-018",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 220000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 72,
+          "reference": "DUP-018",
+          "amountCentavos": 220000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-019",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 230000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 76,
+          "reference": "DUP-019",
+          "amountCentavos": 230000
+        }
+      ]
+    },
+    {
+      "reference": "DUP-020",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 240000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 80,
+          "reference": "DUP-020",
+          "amountCentavos": 240000
         }
       ]
     },
@@ -53,15 +547,509 @@
       ]
     },
     {
+      "reference": "MATCH-002",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 20000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 5,
+          "reference": "MATCH-002",
+          "amountCentavos": 20000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-003",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 30000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 9,
+          "reference": "MATCH-003",
+          "amountCentavos": 30000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-004",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 40000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 13,
+          "reference": "MATCH-004",
+          "amountCentavos": 40000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-005",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 50000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 17,
+          "reference": "MATCH-005",
+          "amountCentavos": 50000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-006",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 60000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 21,
+          "reference": "MATCH-006",
+          "amountCentavos": 60000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-007",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 70000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 25,
+          "reference": "MATCH-007",
+          "amountCentavos": 70000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-008",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 80000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 29,
+          "reference": "MATCH-008",
+          "amountCentavos": 80000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-009",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 90000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 33,
+          "reference": "MATCH-009",
+          "amountCentavos": 90000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-010",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 100000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 37,
+          "reference": "MATCH-010",
+          "amountCentavos": 100000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-011",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 110000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 41,
+          "reference": "MATCH-011",
+          "amountCentavos": 110000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-012",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 120000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 45,
+          "reference": "MATCH-012",
+          "amountCentavos": 120000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-013",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 130000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 49,
+          "reference": "MATCH-013",
+          "amountCentavos": 130000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-014",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 140000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 53,
+          "reference": "MATCH-014",
+          "amountCentavos": 140000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-015",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 150000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 57,
+          "reference": "MATCH-015",
+          "amountCentavos": 150000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-016",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 160000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 61,
+          "reference": "MATCH-016",
+          "amountCentavos": 160000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-017",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 170000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 65,
+          "reference": "MATCH-017",
+          "amountCentavos": 170000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-018",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 180000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 69,
+          "reference": "MATCH-018",
+          "amountCentavos": 180000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-019",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 190000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 73,
+          "reference": "MATCH-019",
+          "amountCentavos": 190000
+        }
+      ]
+    },
+    {
+      "reference": "MATCH-020",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 200000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 77,
+          "reference": "MATCH-020",
+          "amountCentavos": 200000
+        }
+      ]
+    },
+    {
       "reference": "MISS-001",
       "outcome": "MATCHED",
       "internalAmountCentavos": 20000,
       "merchantId": "MERCHANT-001",
       "settlementEvidence": [
         {
-          "rowNumber": 4,
+          "rowNumber": 2,
           "reference": "MISS-001",
           "amountCentavos": 20000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-002",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 30000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 6,
+          "reference": "MISS-002",
+          "amountCentavos": 30000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-003",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 40000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 10,
+          "reference": "MISS-003",
+          "amountCentavos": 40000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-004",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 50000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 14,
+          "reference": "MISS-004",
+          "amountCentavos": 50000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-005",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 60000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 18,
+          "reference": "MISS-005",
+          "amountCentavos": 60000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-006",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 70000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 22,
+          "reference": "MISS-006",
+          "amountCentavos": 70000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-007",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 80000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 26,
+          "reference": "MISS-007",
+          "amountCentavos": 80000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-008",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 90000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 30,
+          "reference": "MISS-008",
+          "amountCentavos": 90000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-009",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 100000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 34,
+          "reference": "MISS-009",
+          "amountCentavos": 100000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-010",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 110000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 38,
+          "reference": "MISS-010",
+          "amountCentavos": 110000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-011",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 120000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 42,
+          "reference": "MISS-011",
+          "amountCentavos": 120000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-012",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 130000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 46,
+          "reference": "MISS-012",
+          "amountCentavos": 130000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-013",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 140000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 50,
+          "reference": "MISS-013",
+          "amountCentavos": 140000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-014",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 150000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 54,
+          "reference": "MISS-014",
+          "amountCentavos": 150000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-015",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 160000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 58,
+          "reference": "MISS-015",
+          "amountCentavos": 160000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-016",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 170000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 62,
+          "reference": "MISS-016",
+          "amountCentavos": 170000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-017",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 180000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 66,
+          "reference": "MISS-017",
+          "amountCentavos": 180000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-018",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 190000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 70,
+          "reference": "MISS-018",
+          "amountCentavos": 190000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-019",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 200000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 74,
+          "reference": "MISS-019",
+          "amountCentavos": 200000
+        }
+      ]
+    },
+    {
+      "reference": "MISS-020",
+      "outcome": "MATCHED",
+      "internalAmountCentavos": 210000,
+      "merchantId": "MERCHANT-001",
+      "settlementEvidence": [
+        {
+          "rowNumber": 78,
+          "reference": "MISS-020",
+          "amountCentavos": 210000
         }
       ]
     }
