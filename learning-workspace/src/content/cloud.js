@@ -18,8 +18,8 @@ export const cloudSources = [
   { id: 'cloud-publication', title: 'Atomic publication and completion protection', path: 'reconciliation-api/src/main/java/org/octavio/paymentreconciliationsim/run/RunRepository.java', group: 'API', note: 'Mongo findAndModify predicates prevent conflicting identity binding and protect a completed report from later failures.', focus: [29, 42], content: repository },
   { id: 'cloud-processing', title: 'The worker failure boundary', path: 'reconciliation-worker/src/main/java/org/octavio/paymentreconciliationsim/worker/ProcessingService.java', group: 'Worker', note: 'The worker validates the full input before publishing. Transport failures remain failed invocations even if their diagnostic callback also fails.', focus: [47, 95], content: processing },
   { id: 'cloud-generator', title: 'A client verifies the whole result', path: 'scenario-generator/src/main/java/org/octavio/paymentreconciliationsim/generator/GenerationWorkflow.java', group: 'Generator', note: 'The generator uses the public client, waits for completion, retrieves the report and compares it with an expected report.', focus: [8, 35], content: generator },
-  { id: 'cloud-testing', title: 'Verification modes and evidence boundaries', path: 'docs/testing.md', group: 'Evidence', note: 'Local Java, HTTP and Mongo checks establish different claims from actual AWS delivery. The retained checkpoint is historical evidence, not a fresh course run.', focus: [3, 56], content: testing },
-  { id: 'cloud-deployment', title: 'Deployment rehearsal and pending cloud evidence', path: 'docs/deployment.md', group: 'Evidence', note: 'The deployment definition is source-only. Account checks, Terraform validation, actual cloud delivery, Atlas startup and teardown remain pending in the project documentation.', focus: [3, 35], content: deployment },
+  { id: 'cloud-testing', title: 'Test modes and quality gates', path: 'docs/testing.md', group: 'Evidence', note: 'Maven profiles select unit, acceptance, coverage and mutation checks. The local acceptance harness uses real Java HTTP and MongoDB with an S3 stub.', focus: [3, 30], content: testing },
+  { id: 'cloud-deployment', title: 'AWS deployment and runtime configuration', path: 'docs/deployment.md', group: 'Evidence', note: 'Terraform provisions the EC2 API, private Lambda worker and versioned S3 bucket. The deployment reference covers networking, runtime secrets, smoke checks and teardown.', focus: [9, 34], content: deployment },
 ]
 
 export const cloudModules = [
@@ -154,16 +154,16 @@ export const cloudModules = [
         paragraphs: [
           'The scenario generator behaves like an external client. It creates purchases, closes the business date, registers the settlement checksum and length, uploads through the returned instructions, and polls the public API. Once the run is completed, it retrieves the report and compares it with expected results. A completed identity replay skips the upload because no new object version is necessary.',
           'The canonical expected report is committed independently of the worker’s comparator. Verification checks all results and their evidence, not just a total of five or a COMPLETED status. That matters for the selected reference: an amount mismatch with the wrong amounts, or a duplicate missing one settlement row, could still produce a plausible summary.',
-          'Use different evidence for different claims. Unit tests exercise logic; acceptance tests use real Java HTTP, Mongo and the worker with an S3 stub; this course models behavior in a browser. The repository documents a retained local verification checkpoint. Actual AWS signatures, delivery, private routing, cold/warm timings, account eligibility and teardown remain pending cloud observations.',
+          'Use different evidence for different claims. Unit tests exercise logic; acceptance tests use real Java HTTP, Mongo and the worker with an S3 stub; this course models behavior in a browser. The AWS deployment and a generator simulation have been verified separately. Deployment checks inspect AWS delivery and routing; runtime benchmarks measure cold and warm attempts. Account eligibility, usage and cleanup are checked for each deployment.',
         ],
         takeaway: { title: 'A claim needs matching evidence', text: 'Compare the complete report against independent expectations, and never relabel a browser model or a local stub as an observed cloud deployment.' },
         sourceIds: ['cloud-generator', 'cloud-testing', 'cloud-deployment'], concepts: ['cloud-independent-oracle', 'cloud-evidence-boundary'],
       },
       {
         id: 'capstone-deployment', title: 'Rehearse the complete lifecycle', kicker: '08.2 · Deployment and operations',
-        lead: 'A deployment is a sequence of verified handoffs, including the handoff back to an empty environment.',
+        lead: 'Deploy verified artifacts, configure runtime access, check a complete run and remove resources when finished.',
         paragraphs: [
-          'Begin with local verified artifacts and the deployment prerequisites. The documented cloud design requires account-specific eligibility, current credits and service access, an appropriate concurrency quota, and an Atlas M0 database with scoped roles. Source code cannot establish that a real account qualifies or that a deployment costs nothing. Review an actual Terraform plan only after those checks exist.',
+          'Begin with local verified artifacts and the deployment prerequisites. The deployment requires account-specific service access, sufficient Lambda concurrency and an Atlas M0 database with scoped roles. The optional Free-plan preflight also checks current credits and eligibility. Review the actual Terraform plan and applicable charges before applying it.',
           'Terraform provisions the network, roles, versioned bucket, EC2 and Lambda. Bootstrap installs Java and the service definition, but it contains neither application secrets nor the API JAR. Artifact and protected runtime configuration are delivered separately. The operator then verifies Atlas startup, the SSH tunnel, real upload enforcement, notification delivery, a completed canonical run, and failure recovery.',
           'Teardown belongs to the same lifecycle. The documented flow stops new work, accounts for asynchronous delivery, removes retained S3 object versions and runtime config, destroys the managed resources, checks independently for leftovers, and removes the dedicated Atlas access. The course rehearsal performs none of these cloud operations. Its purpose is to teach the order and the evidence required at each boundary.',
         ],
@@ -196,7 +196,7 @@ export const cloudModules = [
         'Trace the packaged generator scenario in generator.feature and GenerationWorkflow. Explain why its expected report must remain independent of the worker comparator.',
         'Choose one extension: a new outcome, an asynchronous queue boundary, or reports that outgrow the embedded document. Draw the affected components and write down the invariant to preserve.',
         'For a code extension, add an independent expected example and a failing behavioral test before implementation. Keep cloud provisioning outside this local exercise.',
-        'Use docs/deployment.md to rehearse the cloud sequence on paper. Mark actual account, Terraform and cloud observations as pending until they have been performed in an authorized environment.',
+        'Use docs/deployment.md to rehearse the cloud sequence on paper. Identify the account, Terraform and runtime checks needed for a new deployment.',
       ],
       expected: 'Fresh local reports support your local correctness claim, and the extension proposal names affected contracts and a meaningful verification strategy. Browser completion does not claim cloud deployment or new Java verification.',
     },

@@ -1,6 +1,6 @@
 # Reconciliation Lab
 
-A complete React/Vite learning site for developers who know basic Java and Spring and want to understand, modify and extend this payment reconciliation project. The selected dark Systems Workbench design connects three modes: **Course** explains each layer, **Explorer** connects its evidence and components, and **Missions** assesses it through browser interactions.
+A React/Vite learning site for developers who know basic Java and Spring and want to understand, modify and extend this payment reconciliation project. The dark workbench connects three modes: **Course** explains each layer, **Explorer** connects its evidence and components, and **Missions** assesses it through browser interactions.
 
 The site contains **8 modules, 24 lessons and 8 assessed browser missions**, with an optional local coding lab for every module. Explorer offers **Data, System and Code** lenses. The library includes **25 source entries with exact project snapshots** and **49 glossary entries**; some project files and concepts appear in more than one teaching context.
 
@@ -71,7 +71,7 @@ npm run build
 npm test
 ```
 
-`npm test` runs the canonical lesson, simulation, progress, curriculum and Sites worker suites. Run the build before the full suite because Sites packaging tests inspect generated artifacts. `npm run test:lesson` and `npm run test:sites` run those focused suites separately. The build writes the client to `dist/client/` and prepares `dist/server/index.js` and `dist/.openai/hosting.json` for a Sites handoff. No publish or cloud deployment happens during this build.
+`npm test` runs the canonical lesson, simulation, progress, curriculum and Sites worker suites. Run the build before the full suite because Sites packaging tests inspect generated artifacts. `npm run test:lesson` and `npm run test:sites` run those focused suites separately. The build writes the client to `dist/client/` and prepares `dist/server/index.js` and `dist/.openai/hosting.json` for Sites hosting. The build runs locally.
 
 ### Windows and WSL
 
@@ -111,14 +111,22 @@ npm test
 npm run preview
 ```
 
-Open the preview at `/payment-reconciliation-sim/`. Existing hash links, such as `/payment-reconciliation-sim/#/course/recovery/2`, work when shared or refreshed. Generated files remain excluded from Git. GitHub Pages serves the static client; the Sites server package remains available for a separate Sites handoff.
+Open the preview at `/payment-reconciliation-sim/`. Existing hash links, such as `/payment-reconciliation-sim/#/course/recovery/2`, work when shared or refreshed. Generated files remain excluded from Git. GitHub Pages serves the static client; the Sites server package remains available for Sites hosting.
 
 Deployment requires every test to pass, including snapshot parity with the Java and Terraform sources. When those project files change, update the teaching snapshots deliberately before deploying the updated course. Workflow failures are visible in **Actions → Publish learning site**; the previous successful deployment stays available.
 
-## Evidence and limits
+## Simulation scope
 
 This site is a browser simulation with local persistence. It has no login, hosted progress service, production backend calls or cloud execution. The source viewer explains Java and Terraform; the browser does not execute them. Optional local labs provide commands, prerequisites and expected evidence for the actual project, and are not required for core course completion.
 
-The repository documents a historical local Java verification checkpoint. Those results are not a fresh verification caused by opening this course. Actual Terraform validation, AWS delivery and authorization, Atlas startup, cloud runtime measurements, account eligibility and teardown remain pending in the project documentation. The Evidence section keeps those boundaries visible. Capstone queues, larger report storage and new outcomes are proposed extensions, not implemented backend features.
+The Java backend has its own unit, acceptance, coverage and mutation checks in
+[testing.md](../docs/testing.md). The AWS deployment and generator simulation
+have been verified separately from this course. [Cloud validation](../docs/demo-evidence.md)
+describes deployed checks and runtime benchmarks. Completing a browser mission
+records learning progress; it does not run those checks.
 
-See `design-qa.md` for visual and interaction acceptance evidence for this site. The backend and infrastructure remain separate from the learning frontend.
+Capstone queues, larger report storage and new outcomes are extension exercises.
+They are not implemented backend features.
+
+[Design and interaction checks](design-qa.md) describes the layout, accessibility
+requirements and browser verification procedure.

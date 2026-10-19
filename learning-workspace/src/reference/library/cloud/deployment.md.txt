@@ -1,12 +1,9 @@
-# AWS deployment
+# AWS deployment reference
 
-This is a source-only deployment definition. Start with the current
-[handoff and prerequisites](../README.md), [verified application checkpoint](testing.md#retained-verified-application-checkpoint)
-and [full requirement ledger](testing.md#requirement-traceability). Terraform and AWS CLI were absent in
-the implementation WSL environment. Terraform fmt/init/validate/plan, account
-preflight, EC2 bootstrap, Atlas startup, actual notification delivery, cloud smoke
-and teardown are **pending**, not established by the offline tests. Nothing here
-upgrades an AWS account plan or creates an Atlas resource.
+Terraform defines the AWS infrastructure for the API and worker. The
+[deployment guide](deployment-guide.md) covers setup from a fresh clone; this
+reference describes the topology, runtime configuration and operational scripts.
+[Cloud validation](demo-evidence.md) covers deployment checks and benchmarks.
 
 ## Topology and fixed bounds
 
@@ -34,34 +31,34 @@ gateway-only bucket restriction: an external generator must be able to use a
 presigned upload. Only ObjectCreated events matching settlements/ and .csv invoke
 Lambda. Terraform installs invoke permission and versioning before notification.
 
-## Prerequisites before any apply
+## Prerequisites
 
-The user prepares Terraform >=1.9,<2, AWS CLI v2 with freetier get-account-plan-state,
-Python 3, OpenSSH, Java 21/build tools and configured AWS identity in the chosen
-environment. The scripts neither install tools nor read or display credential
-files. Use an AWS profile outside the repository; do not paste credentials into
-chat, Terraform variables or shell arguments.
+Deployment requires Terraform >=1.9,<2, AWS CLI v2, Python 3, OpenSSH,
+Java 21/build tools and configured AWS credentials. The optional Free-plan
+preflight also requires `freetier get-account-plan-state` support in the CLI.
+The scripts neither install tools nor read or display credential files. Use an
+AWS profile outside the repository; do not paste credentials into Terraform
+variables or shell arguments.
 
-Confirm in the actual account that its plan is FREE/ACTIVE, USD credits remain,
-and the plan has not expired. Verify each intended service/resource is available
-under that plan and that the selected EC2 type, public IPv4, 8 GiB gp3, S3
-storage/requests, Lambda/VPC and CloudWatch consumption fit current benefits and
-credits. A positive credit balance is not proof of resource eligibility or a
-zero-cost estimate. Record the account/region-specific evidence and review usage
-in Billing/Free Tier before and after the session. Do not upgrade the account to
-make a blocked service available.
+Check resource availability, the selected instance type, Lambda concurrency and
+applicable charges in the target account and region. The deployment uses one
+public IPv4, 8 GiB gp3, S3, Lambda/VPC and CloudWatch. For a Free-plan deployment,
+verify FREE/ACTIVE status, credits, expiry and service eligibility. The preflight
+below enforces those Free-plan conditions and does not accept Paid-plan accounts.
+The [deployment guide](deployment-guide.md#step-2-check-account-limits-and-cost)
+also covers deployment with other account plans. Review Billing/Free Tier before
+and after running the stack.
 
 Create an Atlas **M0** cluster through Atlas, with an application database (for
 example reconciliation). Through Atlas UI/API, provision a database user with
 readWrite plus dbAdmin scoped only to that database, or verified equivalent
 narrower permissions. Startup installs validators using createCollection,
 createIndex and collMod; readWrite alone is insufficient for collMod. Do not use
-atlasAdmin or unsupported createUser/createRole database commands. Successful
-cloud startup and the smoke transaction remain the actual compatibility check.
+atlasAdmin or unsupported createUser/createRole database commands. Verify schema
+initialization and a successful API request after deployment.
 
-Create an ignored .runtime/eligibility.json containing current evidence, not
-credentials. The following shape documents required fields; replace every
-placeholder with actual evidence before using it:
+For the Free-plan preflight, create an ignored `.runtime/eligibility.json` with
+current account and resource observations. Replace the example values before use:
 
 ~~~json
 {
@@ -83,8 +80,7 @@ placeholder with actual evidence before using it:
 }
 ~~~
 
-From the repository root, after user preparation and authorization for read-only
-account checks:
+Run the optional Free-plan preflight from the repository root:
 
 ~~~sh
 umask 077
@@ -97,9 +93,8 @@ python3 scripts/cloud-smoke.py preflight \
 
 The command checks STS identity, actual Free Tier plan fields, x86_64 support and
 Lambda account settings. At least **101 currently unreserved concurrency units**
-are required to reserve one while retaining 100. A quota of 10, 50 or 100 blocks
-this design. Resolve only through an approved change compatible with the Free
-plan; otherwise keep deployment pending. Never remove the cap or upgrade a plan.
+are required to reserve one while retaining 100. A quota below 101 cannot support
+the configured reservation. Request a quota increase before applying; retain the worker’s reserved concurrency of one.
 Missing/denied/unsupported metadata also blocks provisioning. The evidence file
 must be refreshed within 24 hours; retain the returned plan/credits/expiry/quota
 and evidence hash. Resource eligibility and Atlas fields are explicit operator
@@ -107,14 +102,14 @@ attestations, not values this script can independently obtain from AWS.
 
 ## Terraform validation and deployment order
 
-Build verified artifacts with the established commands in [testing.md](testing.md).
-Use the current reviewed artifacts if already verified; no runtime rebuild is
-needed merely to edit infrastructure. The default worker path is resolved from
-infra. Copy infra/terraform.tfvars.example to ignored infra/terraform.tfvars,
+Build the deployment artifacts with the commands in [testing.md](testing.md).
+The default worker path is resolved from infra. Copy infra/terraform.tfvars.example
+to ignored infra/terraform.tfvars,
 choose the verified region/account/instance type and current /32, and supply only
 the SSH **public** key. Set prerequisites_confirmed=true only after the preflight
-and account-specific resource/Atlas checks above. This explicit false-by-default
-variable prevents an accidental plan/apply with unconfirmed prerequisites.
+and account-specific resource/Atlas checks. For other account plans, complete the
+checks in the deployment guide instead of the Free-plan-only preflight. This
+false-by-default variable prevents a plan/apply with unconfirmed prerequisites.
 
 ~~~sh
 terraform -chdir=infra fmt -check
@@ -122,26 +117,23 @@ terraform -chdir=infra init -backend=false
 terraform -chdir=infra validate
 terraform -chdir=infra plan -out=reviewed.tfplan
 terraform -chdir=infra show -json reviewed.tfplan > infra/plan.json
-python3 scripts/cloud-smoke.py plan infra/plan.json
 ~~~
 
-Provider hashicorp/aws is pinned to 6.16.0. Initial init must generate and verify
-.terraform.lock.hcl; review and commit that lockfile when tooling is prepared.
-No lockfile/checksums were fabricated. Keep local state/plan files private and
-ignored. No remote backend or extra service is provisioned.
+Provider `hashicorp/aws` is pinned to 6.69.1, and
+[`infra/.terraform.lock.hcl`](../infra/.terraform.lock.hcl) is committed.
+`terraform init` uses its checksums to verify the provider package. Keep local
+state and plan files private and ignored. The configuration uses local state.
 
-The named terraformPlanHasNoUnapprovedChargeableNetworkComponents guard reads
-actual Terraform JSON, rejects unapproved resource types, interface endpoints and
-incorrect Lambda/retry/log settings. Its unit-test fixtures are not plan evidence.
-It complements manual review: confirm exactly the intended VPC/subnets/routes,
-one eligible EC2/volume/public IPv4, private/versioned bucket, one Lambda,
-gateway endpoint, scoped roles and seven-day log group. Review IAM, route and SG
-diffs and resource eligibility; the guard is not a cost oracle. No saved plan
-exists from this source-only implementation. If formatting requires corrections,
-run terraform fmt and re-run the sequence before approval.
+Review the actual plan for the intended resources, IAM policies, routes and
+security groups. `scripts/cloud-smoke.py plan infra/plan.json` provides an
+additional allowlist and configuration check. It rejects plans whose Lambda
+environment keys are represented as an unknown map with
+`Cannot verify unknown Lambda environment keys`; for those plans, inspect the
+three environment keys against `infra/compute.tf` manually. This limitation is
+also documented in the [deployment guide](deployment-guide.md#step-6-plan-and-apply).
+The script does not estimate cost or establish account eligibility.
 
-Only after prerequisites, successful checks, current credit/quota recheck and
-explicit provisioning authorization, apply the reviewed plan:
+After checking the plan and current account limits, apply the saved plan:
 
 ~~~sh
 terraform -chdir=infra apply reviewed.tfplan
@@ -149,9 +141,9 @@ terraform -chdir=infra output -json > .runtime/outputs.json
 ~~~
 
 Refresh outputs after any change. EC2 bootstrap installs Corretto 21 on that
-future EC2 host and prepares systemd directories; it does not carry an artifact
+EC2 host and prepares systemd directories; it does not carry an artifact
 or secrets, and the service cannot start until both are supplied. Verify the
-EC2 SSH host key through a trusted channel and add it to known_hosts yourself.
+EC2 SSH host key through a trusted channel and add it to known_hosts.
 Deployment requires StrictHostKeyChecking=yes; it never disables host checking.
 
 Add exactly EC2's current public IPv4 /32 to Atlas's network access list. Use a
@@ -230,8 +222,8 @@ the application started; a failed process needs EC2 service diagnostics inspecte
 locally with secret-aware handling. Merely requesting a systemd restart is not
 proof of Atlas schema initialization.
 
-With explicit cloud smoke authorization, prepare a fresh disposable demo database:
-the canonical generator uses fixed globally unique references. Choose two unused
+Use a fresh disposable demo database for smoke checks; the canonical generator
+uses fixed globally unique references. Choose two unused
 business dates strictly before today in America/Buenos_Aires. The benchmark date
 defaults to the canonical date minus one day; --benchmark-date can choose another
 distinct past date. The script checks ISO/distinct dates, while the API owns the
@@ -250,8 +242,8 @@ python3 scripts/cloud-smoke.py smoke --outputs .runtime/outputs.json \
 The --output path must be new and its parent must exist. The script reserves it
 with mode 0600 before cloud mutation and retains sanitized partial evidence on
 failure. It never overwrites an earlier report. Keep generated reports ignored
-until reviewed for sanitization. No measured cloud result exists from this source
-preparation; [demo-evidence.md](demo-evidence.md) records every pending criterion.
+until reviewed for sanitization. [Cloud validation](demo-evidence.md) describes
+additional upload, recovery and cleanup checks.
 
 The benchmark executes first: 1,000 purchases, 2,000 distinct settlement references
 disjoint from purchases, exactly 2,097,152 CSV bytes and 3,000 expected results.
@@ -266,9 +258,8 @@ the same request ID; a delayed initial duplicate cannot satisfy this replay chec
 CloudWatch supplies the same request's duration, init, billed duration, configured
 and used memory, and stream. Cold requires Init Duration. Warm requires the later
 successful replay in that exact stream without Init Duration. Missing or ambiguous
-proof fails the benchmark, leaving the observations for investigation. Prepare a
-fresh worker through the reviewed replacement procedure only with deployment
-authorization if needed; invocation order alone never establishes cold/warm.
+proof fails the benchmark, leaving the observations for investigation. If a fresh
+worker is needed, use the replacement procedure above. Invocation order alone does not establish cold or warm execution.
 
 The target is strictly less than 120 seconds for Lambda Duration plus Init Duration
 when present. The configured limit is strictly less than 300 seconds for Lambda
@@ -277,7 +268,7 @@ from immediately before upload to observed completion, including network/polling
 latency. It captures observed correlated attempts; it does not infer retry scheduling
 or prove the controlled outage scenario from their count. A miss exits nonzero.
 
-The canonical phase invokes the unchanged executable
+The canonical phase invokes the executable
 scenario-generator/target/scenario-generator-0.0.1-SNAPSHOT-exec.jar with public
 --base-url, --business-date, --seed 0 and --scenario canonical arguments. Only
 RECONCILIATION_DEMO_TOKEN is passed as a secret; it receives no worker/Atlas/AWS
@@ -295,9 +286,9 @@ Deployed topology/worker IAM (including the SourceFunctionArn ENI deny), log
 retention, private networking, public/worker HTTP restrictions, Swagger availability
 and anonymous S3 denial are checked. Run without --benchmark for canonical smoke
 only; maximum-workload and the named combined check stay PENDING. Output status
-AUTOMATED_CHECKS_PASSED is limited to these automated checks: account eligibility,
-real signature/expiry abuse, controlled outage/manual recovery, usage visibility
-and teardown still require the evidence procedure below.
+`AUTOMATED_CHECKS_PASSED` applies to the requested automated
+checks. Account eligibility, signature/expiry rejection, controlled outage, usage
+and teardown have separate procedures in [cloud validation](demo-evidence.md).
 
 If a run stops progressing, query its public metadata. After strictly more than
 20 minutes incomplete metadata can flag recoveryNeeded. POST
@@ -334,9 +325,9 @@ AWS ENI deletion can take time. Remove the Atlas /32 and dedicated database user
 through Atlas, and delete the disposable demo database/cluster only if intended.
 Remove local runtime files and securely manage any retained state/evidence.
 Review Billing/Free Tier/credits after resource deletion because usage reporting
-can lag. Retain evidence of teardown; this task has not executed it.
+can lag. Retain the teardown observations with the deployment record.
 
-## Sources checked during implementation
+## References
 
 - [AWS account plans](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier.html)
   and [GetAccountPlanState CLI](https://docs.aws.amazon.com/cli/latest/reference/freetier/get-account-plan-state.html).
