@@ -112,7 +112,7 @@ export function restoreProgress(raw) {
 export function learningReport(state, modules) {
   const stats = courseStats(state);
   return [
-    '# Reconciliation Lab — learning report', '',
+    '# Reconciliation Lab: learning report', '',
     `${stats.count} of 8 assessed missions complete · ${stats.opened} of 24 lessons opened.`,
     `Selected canonical reference: ${state.selected}.`, '',
     ...modules.map((module) => `${moduleComplete(state, module.id) ? '[complete]' : '[in progress]'} ${module.number} ${module.title}\n  Outcome: ${module.outcome}`), '',

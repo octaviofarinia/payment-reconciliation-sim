@@ -25,7 +25,7 @@ function RequestLab({ lab, onAction, configure }) {
     <div className="lab-form-grid"><SelectField label="Method" name="method" value={f.method} onChange={configure}><Options items={['POST', 'GET', 'PUT'].map(x => [x, x])} /></SelectField><SelectField label="Bearer role" name="role" value={f.role} onChange={configure}><Options items={[["demo", "Public / demo"], ["worker", "Internal / worker"], ["none", "No token"]]} /></SelectField><SelectField label="Endpoint" name="endpoint" value={f.endpoint} onChange={configure}><Options items={[["date", "Create business date"], ["purchase", "Create purchase"], ["close", "Close business date"], ["run", "Register reconciliation run"]]} /></SelectField></div>
     <div className="lab-request"><div className="lab-code-heading"><span>{f.method}</span><code>{endpointNames[f.endpoint]}</code></div><pre>{bodies[f.endpoint] ? JSON.stringify(bodies[f.endpoint], null, 2) : 'No request body'}</pre><p className="lab-note">The registration checksum describes the exact canonical CSV. No bearer or remote endpoint is used.</p></div>
     <LabButton action="send" onAction={onAction} primary>Send simulated request</LabButton>
-    <div className="lab-stats"><Stat label="Business date" value={m.day} /><Stat label="Purchases" value={m.purchases} /><Stat label="Last HTTP status" value={m.response ?? '—'} /></div>
+    <div className="lab-stats"><Stat label="Business date" value={m.day} /><Stat label="Purchases" value={m.purchases} /><Stat label="Last HTTP status" value={m.response ?? 'Not sent'} /></div>
   </>;
 }
 

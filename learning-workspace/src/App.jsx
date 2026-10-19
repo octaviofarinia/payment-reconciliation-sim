@@ -50,7 +50,7 @@ function CurriculumRail({ state, navigate, onLibrary }) {
 function ConfirmReset({ target, onCancel, onConfirm }) {
   const ref = useRef(null);
   useEffect(() => { if (target && !ref.current.open) ref.current.showModal(); if (!target && ref.current.open) ref.current.close(); }, [target]);
-  return <dialog ref={ref} className="confirm-dialog" aria-labelledby="reset-title" onCancel={onCancel} onClose={onCancel}><h2 id="reset-title">{target === 'all' ? 'Start a fresh learning journey?' : 'Reset this mission?'}</h2><p>{target === 'all' ? 'This clears your saved missions, bookmarks, and lesson history from this browser. Export a backup from the Library first if you want to keep them.' : 'This clears the current mission’s attempts and earned completion. Your other modules and bookmarks stay saved.'}</p><div><button className="secondary-button" onClick={onCancel} autoFocus>Keep my progress</button><button className="reset-confirm-button" onClick={onConfirm}>{target === 'all' ? 'Reset all progress' : 'Reset mission'}</button></div></dialog>;
+  return <dialog ref={ref} className="confirm-dialog" aria-labelledby="reset-title" onCancel={onCancel} onClose={onCancel}><h2 id="reset-title">{target === 'all' ? 'Reset all course progress?' : 'Reset this mission?'}</h2><p>{target === 'all' ? 'This clears your saved missions, bookmarks, and lesson history from this browser. Export a backup from the Library first if you want to keep them.' : 'This clears the current mission’s attempts and earned completion. Your other modules and bookmarks stay saved.'}</p><div><button className="secondary-button" onClick={onCancel} autoFocus>Keep my progress</button><button className="reset-confirm-button" onClick={onConfirm}>{target === 'all' ? 'Reset all progress' : 'Reset mission'}</button></div></dialog>;
 }
 
 export function App() {
@@ -125,7 +125,7 @@ export function App() {
     } catch (error) { setNotice(error.message || 'Could not read the progress file. Your current progress has not changed.'); }
   }
   function confirmReset() {
-    if (resetTarget === 'all') { rawDispatch({ type: 'reset-all' }); window.location.hash = '#/overview'; setNotice('All progress reset. Your new journey is ready.'); }
+    if (resetTarget === 'all') { rawDispatch({ type: 'reset-all' }); window.location.hash = '#/overview'; setNotice('All progress reset.'); }
     else { rawDispatch({ type: 'reset-module', moduleId: resetTarget }); setNotice('This mission was reset. Other progress is saved.'); }
     setResetVersion((value) => value + 1); setResetTarget(null);
   }

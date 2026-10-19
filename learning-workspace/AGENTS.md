@@ -17,3 +17,7 @@ The site uses the dark Systems Workbench design. Keep Course, Explorer, and Miss
 Preserve the workbench design, eight modules and 24 lessons, eight assessed browser missions, Data/System/Code Explorer lenses, source and glossary library, search, bookmarks, resumable local progress, backups and optional local coding labs. Course, Explorer and Missions must continue to share the canonical dataset and selected reference across the whole site.
 
 Keep opened-lesson counts distinct from earned mission completion. Use the versioned progress format and validate restored simulation histories. Preserve exact source snapshots and their repository paths; update parity checks when source changes. Label browser simulations and proposed extensions clearly. The backend deployment and generator simulation have been verified on AWS; browser mission completion is a separate learning activity. Deployment and benchmark procedures live in `../docs/`.
+
+## Copy style
+
+Apply the unslop guidelines to learner-facing copy. Use concrete descriptions of the system, lesson content and button actions. Avoid repeated slogans, journey metaphors and em dashes in authored copy, including exported learning reports. Keep precise technical contrasts, useful teaching repetition and exact source snapshots intact.

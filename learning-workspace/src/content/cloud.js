@@ -108,7 +108,7 @@ export const cloudModules = [
           'RecoveryService binds the verified object atomically before invoking Lambda. This order prevents concurrent recoveries from choosing different originals. The worker receives the run ID, bucket, key and version ID. A completed run is a no-op; a failed or stale run can return to processing after the original has been verified.',
           'If no matching upload exists for an unbound run, the API reports UPLOAD_NEEDED. If a previously bound original is unavailable, it reports ORIGINAL_UNAVAILABLE and forbids replacement. In the mission, restoring connectivity is helpful; selecting the newest different version is not. Repeating computation is safe only when you know which evidence it repeats.',
         ],
-        takeaway: { title: 'Identity survives failure', text: 'Keep the original object version and registered checksum attached to the run. Recovery reuses that identity rather than selecting a convenient replacement.' },
+        takeaway: { title: 'Original input during recovery', text: 'Keep the original object version and registered checksum attached to the run. Recovery reuses that identity rather than selecting a convenient replacement.' },
         sourceIds: ['cloud-recovery', 'cloud-processing', 'cloud-publication'], concepts: ['cloud-object-identity', 'cloud-idempotency'],
       },
       {
@@ -172,13 +172,13 @@ export const cloudModules = [
       },
       {
         id: 'capstone-extension', title: 'Change one boundary deliberately', kicker: '08.3 · Extend the architecture',
-        lead: 'You now know enough to ask what a new requirement changes—and what must remain true.',
+        lead: 'For each new requirement, identify the components that change and the rules that must remain true.',
         paragraphs: [
           'Finish the capstone by stabilizing the purchase day, delivering the original settlement, recovering from an interrupted attempt, publishing, and asserting the full report. Keep one reference selected as you move between Course, Explorer and Missions. Its local evidence lets you connect a small business rule to object storage, transport, API validation and database publication.',
           'Choose an extension because of a concrete pressure. Adding a queue could provide a new buffering and redrive boundary between S3 and the worker. Larger reports would require revisiting the embedded Mongo document, atomic publication and result pagination. A new business classification would affect the comparator, report contract, API validator, canonical fixtures and independent generator expectations.',
           'These are design proposals, not features already present. For your chosen extension, name the changed components, one invariant to preserve and a test that would expose a regression. A queue must preserve the original object identity through redelivery. Larger report storage needs an explicit completion protocol. A new outcome needs evidence that both producer and consumer agree on its meaning.',
         ],
-        takeaway: { title: 'Own the contract before adding the technology', text: 'A useful extension names the pressure it addresses, the boundaries it changes, the invariant it preserves and the evidence that verifies it.' },
+        takeaway: { title: 'Extension contracts and verification', text: 'A useful extension names the pressure it addresses, the boundaries it changes, the invariant it preserves and the evidence that verifies it.' },
         sourceIds: ['cloud-generator', 'cloud-publication', 'cloud-processing', 'cloud-testing'], concepts: ['cloud-system-invariant', 'cloud-independent-oracle', 'cloud-atomic-publication'],
       },
     ],

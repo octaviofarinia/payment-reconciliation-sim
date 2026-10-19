@@ -37,20 +37,20 @@ export const backendSources = [
 export const backendModules = [
   {
     id: 'api', number: '02', title: 'Put an API around it',
-    summary: 'Turn the tiny comparator into a system with explicit contracts and owners.',
+    summary: 'Define HTTP contracts and separate the responsibilities of the API, worker and client.',
     outcome: 'Trace a request through Spring and choose the correct public or worker contract.',
     duration: '25 min', lens: 'code',
     sourceIds: ['backend-purchase-controller', 'backend-purchase-decoder', 'backend-token-filter', 'backend-generator-workflow'],
     lessons: [
       {
-        id: 'api-contracts', title: 'A request is a promise', kicker: 'From Java values to HTTP',
+        id: 'api-contracts', title: 'Validate a purchase request', kicker: 'From Java values to HTTP',
         lead: 'The first boundary turns untrusted JSON into a purchase the application can reason about.',
         paragraphs: [
           'The comparator receives validated Java values. A caller starts with JSON. POST /api/v1/transactions therefore passes through PurchaseRequestDecoder before PurchaseService can write anything. The decoder requires exactly transactionReference, merchantId, businessDate, amountCentavos, and currency. Unknown or missing fields fail instead of being silently ignored.',
           'For AMOUNT-001, amountCentavos is the integer 40000, displayed as ARS 400.00. The request decoder requires an integral JSON number that fits a Java long; the purchase model then requires a positive amount and the literal currency ARS. A string such as "40000", a decimal, or an invalid calendar date is a contract error, not a reconciliation mismatch.',
           'The controller exposes the result: 201 means a new purchase was created, while 200 means an identical purchase already existed. 400 means the request itself was invalid. Keeping those meanings separate lets a client decide whether to fix its payload, continue, or investigate a conflict.',
         ],
-        takeaway: { title: 'Validate before doing business', text: 'HTTP decoding checks representation. The service applies business rules. The comparator never needs to know how JSON arrived.' },
+        takeaway: { title: 'Request validation and business rules', text: 'HTTP decoding checks representation. The service applies business rules. The comparator never needs to know how JSON arrived.' },
         sourceIds: ['backend-purchase-controller', 'backend-purchase-decoder'],
         concepts: ['backend-contract', 'backend-controller', 'backend-centavos'],
       },
@@ -103,7 +103,7 @@ export const backendModules = [
           'Now replay MATCH-001 with 10001 centavos, a different merchant, or another date. The identity already belongs to different business fields, so the service returns 409. A currency other than ARS instead fails request validation with 400 before the service runs. A create never becomes an update. This immutability lets a future worker trust a closed ledger.',
           'The distinction also explains a subtle case: an identical replay after the day is CLOSED still returns the existing purchase. The service resolves that replay before asking to reserve a new slot. A genuinely new reference after closure takes the reservation path and fails.',
         ],
-        takeaway: { title: 'Retry the intention, preserve the fact', text: 'An identical create is a safe replay. A changed create with the same identity is a conflict, not an edit.' },
+        takeaway: { title: 'Identical replay or conflict', text: 'An identical create is a safe replay. A changed create with the same identity is a conflict, not an edit.' },
         sourceIds: ['backend-purchase-service'],
         concepts: ['backend-idempotency', 'backend-immutable', 'backend-transaction'],
       },
@@ -115,7 +115,7 @@ export const backendModules = [
           'Closing the date conditionally changes that same document from OPEN to CLOSED and increments its revision. Because close and reserve write the same guard, a concurrent transaction cannot slip a late purchase through a stale read. The retry policy can retry a transient conflict and evaluate the now-current day state.',
           'Closing an already closed date returns the existing date. Reading reconciliation input requires CLOSED. The worker then reads immutable purchases for that date in reference order. The project does not copy a transaction snapshot into each run; stability comes from closure plus immutable records.',
         ],
-        takeaway: { title: 'Turn the invariant into contention', text: 'The shared guard document forces close and new-purchase reservation to coordinate instead of trusting a separate check.' },
+        takeaway: { title: 'A shared guard for closure and purchase writes', text: 'The shared guard document forces close and new-purchase reservation to coordinate instead of trusting a separate check.' },
         sourceIds: ['backend-business-date', 'backend-purchase-service'],
         concepts: ['backend-transaction', 'backend-guard', 'backend-mongodb'],
       },
@@ -127,7 +127,7 @@ export const backendModules = [
           'The registration also records byteLength. Reusing a logical identity with a different declared length conflicts. Once processing binds a versioned S3 object, object identity adds bucket, key, and versionId to the checksum. A replacement upload cannot quietly become the input of the already-bound run.',
           'For the canonical day, this means AMOUNT-001 remains an internal 40000-centavo purchase while its selected settlement evidence remains 45000. A retry is allowed to recover from transport trouble. It is not allowed to reinterpret which purchase, file version, or rules were used.',
         ],
-        takeaway: { title: 'Reproducibility is a design choice', text: 'Closed immutable purchases, exact settlement bytes, and a rules version give a retry a stable meaning.' },
+        takeaway: { title: 'Stable input for every retry', text: 'Closed immutable purchases, exact settlement bytes, and a rules version give a retry a stable meaning.' },
         sourceIds: ['backend-run-service', 'backend-run-repository'],
         concepts: ['backend-sha256', 'backend-idempotency', 'backend-object-version'],
       },
@@ -156,7 +156,7 @@ export const backendModules = [
           'A new registration creates AWAITING_UPLOAD with source=SIMULATED, rulesVersion=v1, and a key shaped like settlements/YYYY-MM-DD/runId.csv. A repeated logical identity returns the same run. HTTP 201 versus 200 describes creation versus replay; neither means reconciliation is finished.',
           'An incomplete registration includes upload instructions. A completed replay returns no new upload instructions because the report already exists. A checksum identifies bytes, including whitespace and line endings: editing an apparently cosmetic newline creates different bytes and therefore a different digest.',
         ],
-        takeaway: { title: 'A run is an accepted intention', text: 'Registration records what should be processed. Upload, processing, and completed publication are later events.' },
+        takeaway: { title: 'Registered input metadata', text: 'Registration records what should be processed. Upload, processing, and completed publication are later events.' },
         sourceIds: ['backend-run-service'],
         concepts: ['backend-sha256', 'backend-object-storage', 'backend-idempotency'],
       },
@@ -202,7 +202,7 @@ export const backendModules = [
     sourceIds: ['backend-worker-handler', 'backend-processing-service', 'backend-csv-parser', 'backend-comparator', 'backend-report-validator', 'backend-run-repository'],
     lessons: [
       {
-        id: 'worker-ingestion', title: 'Earn the right to compare', kicker: 'Validate the whole file',
+        id: 'worker-ingestion', title: 'Validate the entire CSV', kicker: 'Validate the whole file',
         lead: 'A malformed final row invalidates the input even if every earlier row looked usable.',
         paragraphs: [
           'SettlementCsvParser bounds actual bytes at 2097152 and data rows at 2000. It decodes UTF-8 strictly, then uses RFC 4180 CSV parsing with no trimming or ignored empty lines. The header must be exactly business_date,transaction_reference,amount_centavos,currency, in that order. Row numbers count data records, beginning at one after the header.',
@@ -214,7 +214,7 @@ export const backendModules = [
         concepts: ['backend-csv', 'backend-boundary', 'backend-centavos'],
       },
       {
-        id: 'worker-orchestration', title: 'Keep the algorithm in the middle', kicker: 'Adapters around a pure core',
+        id: 'worker-orchestration', title: 'Separate comparison from I/O', kicker: 'Adapters around a pure core',
         lead: 'The Lambda handler coordinates delivery. The comparator only decides what the evidence means.',
         paragraphs: [
           'ReconciliationHandler is a plain Java Lambda entry point. It parses each invocation record, attaches an attempt ID, and hands valid references to ProcessingService. The service fetches metadata, verifies versioned bytes, binds processing identity, fetches the closed internal input, checks identity again, parses the complete CSV, compares, and publishes.',

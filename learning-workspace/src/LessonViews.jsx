@@ -4,9 +4,9 @@ import { evidenceFor, references, outcomes, purchases, settlement } from './less
 import { explanations, money } from './presentation.js';
 
 export const lessonSteps = [
-  { title: 'Two versions of the truth.', short: 'Compare amounts' },
-  { title: 'Give every difference a name.', short: 'Classify the result' },
-  { title: 'See the complete day.', short: 'See the bigger picture' },
+  { title: 'Compare purchases and settlement.', short: 'Compare amounts' },
+  { title: 'Classify each reference.', short: 'Classify the result' },
+  { title: 'Read the daily report.', short: 'Read the daily report' },
 ];
 
 function SelectedEvidence({ selected }) {
@@ -29,7 +29,7 @@ export function CourseView({ state, dispatch, onSource }) {
     <div className="content-kicker"><BookOpen size={17} /><span>THE FIRST RECONCILIATION</span><span className="muted">{state.step + 1} / 3</span></div>
     <h1 ref={heading} tabIndex="-1">{lessonSteps[state.step].title}</h1>
     {state.step === 0 && <>
-      <p className="lead">Our system recorded the purchases. Later, the processor sent a settlement file. They describe the same day — but do they tell the same story?</p>
+      <p className="lead">After our system recorded the purchases, the processor sent a settlement file for the same day.</p>
       <p>Start with the <strong>transaction reference</strong>. It identifies a purchase across both datasets. Find the same reference, then compare the amounts.</p>
       <div className="lesson-selected"><span className="eyebrow">EXPLORING TOGETHER</span><span className="selected-reference">{state.selected}</span></div>
       <SelectedEvidence selected={state.selected} />
@@ -37,7 +37,7 @@ export function CourseView({ state, dispatch, onSource }) {
       <div className="takeaway"><strong>Try it yourself</strong><p>Open the Explorer and select a row. Your selected reference follows you back here and into the mission.</p><button className="text-button" onClick={() => dispatch({ type: 'mode', mode: 'Explorer' })}>Explore this record <ArrowRight size={17} /></button></div>
     </>}
     {state.step === 1 && <>
-      <p className="lead">Every distinct reference receives one outcome. Each outcome explains the evidence we found — or the evidence that is missing.</p>
+      <p className="lead">Every distinct reference receives one outcome based on the records present or missing in each dataset.</p>
       <div className="rule-list">{outcomes.map(({ value, label }) => <section key={value}><h3>{label}</h3><p>{explanations[value]}</p></section>)}</div>
       <div className="takeaway"><strong>Order matters</strong><p>Check for duplicate settlement rows first. Two identical amounts still represent two rows, so the outcome is Duplicate.</p><button className="text-button" onClick={onSource}><Code size={18} /> See the Java rule</button></div>
     </>}
@@ -56,7 +56,7 @@ export function MissionView({ state, dispatch, onSource }) {
   const count = Object.keys(state.completed).length;
   return <section className="mission-content">
     <div className="content-kicker"><ListChecks size={18} /><span>MISSION 01</span><span className="muted">{count} / 5 complete</span></div>
-    <h1>Reconcile the day.</h1><p className="lead">Five references. Five explanations. Inspect the evidence, choose an outcome, and check your prediction.</p>
+    <h1>Reconcile the day.</h1><p className="lead">Inspect the evidence for each of the five references, choose an outcome, and check your prediction.</p>
     <div className="case-list" aria-label="Mission references">{references.map((reference) => <button key={reference} className={`case-item ${state.selected === reference ? 'active' : ''}`} aria-pressed={state.selected === reference} onClick={() => dispatch({ type: 'select', reference })}><span>{reference}</span><span>{state.completed[reference] ? <><CheckCircle size={17} weight="fill" /> Classified</> : state.selected === reference ? <>Investigating <ArrowRight size={16} /></> : 'To investigate'}</span></button>)}</div>
     <div className="mission-evidence-heading"><div><p className="eyebrow">CURRENT CASE</p><h2>{state.selected}</h2></div><button className="text-button" onClick={() => dispatch({ type: 'mode', mode: 'Explorer' })}><MagnifyingGlass size={17} /> Inspect in Explorer</button></div>
     <SelectedEvidence selected={state.selected} />
