@@ -1,18 +1,21 @@
 package org.octavio.paymentreconciliationsim.config;
 
-import java.math.BigDecimal;
-import java.util.List;
+import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.*;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.octavio.paymentreconciliationsim.http.ApiError;
 import org.octavio.paymentreconciliationsim.http.ApiExceptionHandler;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import io.swagger.v3.core.converter.ModelConverters;
-import io.swagger.v3.oas.models.*;
-import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.media.*;
-import io.swagger.v3.oas.models.responses.ApiResponse;
-import io.swagger.v3.oas.models.security.*;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @Configuration(proxyBeanMethods = false)
 public class OpenApiConfiguration {
@@ -28,7 +31,7 @@ public class OpenApiConfiguration {
                 .addProperty("merchantId", new StringSchema().minLength(1).maxLength(64).description("1 to 64 Unicode codepoints; preserved without normalization"))
                 .addProperty("businessDate", new DateSchema())
                 .addProperty("amountCentavos", new IntegerSchema().format("int64").minimum(BigDecimal.ONE)
-                    .maximum(BigDecimal.valueOf(Long.MAX_VALUE)).description("Positive integer ARS centavos; fractional numbers rejected"))
+                        .maximum(BigDecimal.valueOf(Long.MAX_VALUE)).description("Positive integer ARS centavos; fractional numbers rejected"))
                 .addProperty("currency", new StringSchema()._enum(List.of("ARS")))
                 .required(List.of("transactionReference", "merchantId", "businessDate", "amountCentavos", "currency")));
         components.addSchemas("RegisterRun", new ObjectSchema().addProperty("businessDate", new DateSchema())

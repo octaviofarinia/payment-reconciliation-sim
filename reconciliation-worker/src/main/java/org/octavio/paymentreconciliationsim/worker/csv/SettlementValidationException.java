@@ -1,6 +1,8 @@
 package org.octavio.paymentreconciliationsim.worker.csv;
 
-/** Deterministic input rejection; record 0 identifies the header or whole file. */
+/**
+ * Deterministic input rejection; record 0 identifies the header or whole file.
+ */
 public final class SettlementValidationException extends RuntimeException {
     private final String code;
     private final long recordNumber;
@@ -15,6 +17,11 @@ public final class SettlementValidationException extends RuntimeException {
         this.recordNumber = recordNumber;
     }
 
-    public String code() { return code; }
-    public long recordNumber() { return recordNumber; }
+    public String code() {
+        return code;
+    }
+
+    public long recordNumber() {
+        return recordNumber;
+    }
 }

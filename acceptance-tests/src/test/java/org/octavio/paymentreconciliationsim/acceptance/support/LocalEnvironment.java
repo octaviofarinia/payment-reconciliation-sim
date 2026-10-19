@@ -1,21 +1,16 @@
 package org.octavio.paymentreconciliationsim.acceptance.support;
 
-import java.net.URI;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.UUID;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.octavio.paymentreconciliationsim.PaymentReconciliationSimApplication;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.web.server.context.WebServerApplicationContext;
 import org.springframework.boot.web.server.context.WebServerInitializedEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.boot.web.server.context.WebServerApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,26 +19,34 @@ import org.testcontainers.DockerClientFactory;
 import org.testcontainers.mongodb.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
 
-/** Owns the suite's real local processes; Cucumber scenario state is held separately. */
+import java.net.URI;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.UUID;
+
+/**
+ * Owns the suite's real local processes; Cucumber scenario state is held separately.
+ */
 public final class LocalEnvironment implements AutoCloseable {
     public static final String DEMO_TOKEN = "acceptance-demo-token";
     public static final String WORKER_TOKEN = "acceptance-worker-token";
     public static final String BUCKET = "acceptance-settlements";
+    // Allow the complete five-minute invocation plus local scheduling/cleanup margin.
+    private static final long WORKER_WAIT_SECONDS = 330;
     private final MongoDBContainer mongo = new MongoDBContainer(DockerImageName.parse("mongo:8.0.14")).withReplicaSet();
     private final S3Stub s3 = new S3Stub();
     private final String databaseName = "acceptance_" + UUID.randomUUID().toString().replace("-", "");
     private final String[] extraArguments;
     private final java.util.function.BooleanSupplier dockerAvailable;
+    private final java.util.concurrent.ExecutorService workerExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final java.util.concurrent.ConcurrentLinkedQueue<java.util.concurrent.Future<?>> workerInvocations = new java.util.concurrent.ConcurrentLinkedQueue<>();
     private MongoClient mongoClient;
     private ConfigurableApplicationContext context;
     private URI apiBaseUri;
     private Thread shutdownHook;
     private volatile boolean closed;
     private boolean resourcesClosed;
-    // Allow the complete five-minute invocation plus local scheduling/cleanup margin.
-    private static final long WORKER_WAIT_SECONDS = 330;
-    private final java.util.concurrent.ExecutorService workerExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
-    private final java.util.concurrent.ConcurrentLinkedQueue<java.util.concurrent.Future<?>> workerInvocations = new java.util.concurrent.ConcurrentLinkedQueue<>();
     private software.amazon.awssdk.services.s3.S3Client workerS3;
     private java.net.http.HttpClient workerHttp;
     private org.octavio.paymentreconciliationsim.worker.ReconciliationHandler workerHandler;
@@ -55,6 +58,12 @@ public final class LocalEnvironment implements AutoCloseable {
     LocalEnvironment(java.util.function.BooleanSupplier dockerAvailable, String... extraArguments) {
         this.dockerAvailable = dockerAvailable;
         this.extraArguments = extraArguments.clone();
+    }
+
+    private static RuntimeException append(RuntimeException first, RuntimeException next) {
+        if (first == null) return next;
+        first.addSuppressed(next);
+        return first;
     }
 
     public synchronized void start() {
@@ -73,9 +82,9 @@ public final class LocalEnvironment implements AutoCloseable {
             application.addInitializers(initialized -> {
                 context = initialized;
                 initialized.getBeanFactory().registerSingleton("localLambdaInvoker",
-                    (org.octavio.paymentreconciliationsim.worker.LambdaInvoker) invocation -> enqueueWorker(java.util.Map.of(
-                        "runId",invocation.runId().toString(),"bucket",invocation.bucket(),
-                        "key",invocation.key(),"versionId",invocation.versionId())));
+                        (org.octavio.paymentreconciliationsim.worker.LambdaInvoker) invocation -> enqueueWorker(java.util.Map.of(
+                                "runId", invocation.runId().toString(), "bucket", invocation.bucket(),
+                                "key", invocation.key(), "versionId", invocation.versionId())));
             });
             application.addListeners((ApplicationListener<WebServerInitializedEvent>) event ->
                     apiBaseUri = URI.create("http://127.0.0.1:" + event.getWebServer().getPort()));
@@ -93,7 +102,7 @@ public final class LocalEnvironment implements AutoCloseable {
             arguments.add("--reconciliation.s3.bucket=" + BUCKET);
             arguments.addAll(java.util.List.of(extraArguments));
             context = application.run(arguments.toArray(String[]::new));
-            int port = ((WebServerApplicationContext)context).getWebServer().getPort();
+            int port = ((WebServerApplicationContext) context).getWebServer().getPort();
             apiBaseUri = URI.create("http://127.0.0.1:" + port);
             // Explicit dummy credentials: never resolve the host's AWS configuration.
             workerS3 = software.amazon.awssdk.services.s3.S3Client.builder()
@@ -114,37 +123,62 @@ public final class LocalEnvironment implements AutoCloseable {
                                     "object", java.util.Map.of("key", java.net.URLEncoder.encode(upload.key(), java.nio.charset.StandardCharsets.UTF_8),
                                             "versionId", upload.versionId())))))));
         } catch (RuntimeException | Error failure) {
-            try { close(); } catch (RuntimeException cleanupFailure) { failure.addSuppressed(cleanupFailure); }
+            try {
+                close();
+            } catch (RuntimeException cleanupFailure) {
+                failure.addSuppressed(cleanupFailure);
+            }
             throw failure;
         }
     }
 
-    public URI apiBaseUri() { return apiBaseUri; }
-    public URI s3Endpoint() { return s3.endpoint(); }
-    public S3Stub s3() { return s3; }
-    public MongoClient mongoClient() { return mongoClient; }
-    public MongoDatabase mongoDatabase() { return mongoClient.getDatabase(databaseName); }
+    public URI apiBaseUri() {
+        return apiBaseUri;
+    }
+
+    public URI s3Endpoint() {
+        return s3.endpoint();
+    }
+
+    public S3Stub s3() {
+        return s3;
+    }
+
+    public MongoClient mongoClient() {
+        return mongoClient;
+    }
+
+    public MongoDatabase mongoDatabase() {
+        return mongoClient.getDatabase(databaseName);
+    }
+
     public org.octavio.paymentreconciliationsim.storage.SettlementStorage settlementStorage() {
         return context.getBean(org.octavio.paymentreconciliationsim.storage.SettlementStorage.class);
     }
-    public Clock clock() { return context.getBean(Clock.class); }
 
-    private void enqueueWorker(java.util.Map<String,Object> event) {
+    public Clock clock() {
+        return context.getBean(Clock.class);
+    }
+
+    private void enqueueWorker(java.util.Map<String, Object> event) {
         if (closed) throw new IllegalStateException("The local environment is already closed");
         workerInvocations.add(workerExecutor.submit(() -> invokeWorker(event)));
     }
 
-    public void invokeWorker(java.util.Map<String,Object> event) { workerHandler.handleRequest(event, null); }
+    public void invokeWorker(java.util.Map<String, Object> event) {
+        workerHandler.handleRequest(event, null);
+    }
 
-    /** Upload callbacks are asynchronous; drain before reset/close to prohibit cross-scenario writes. */
+    /**
+     * Upload callbacks are asynchronous; drain before reset/close to prohibit cross-scenario writes.
+     */
     public void awaitWorker() {
         java.util.concurrent.Future<?> invocation;
         while ((invocation = workerInvocations.peek()) != null) {
             try {
                 invocation.get(WORKER_WAIT_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
                 workerInvocations.remove(invocation);
-            }
-            catch (InterruptedException interrupted) {
+            } catch (InterruptedException interrupted) {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Local worker wait interrupted", interrupted);
             } catch (java.util.concurrent.ExecutionException failure) {
@@ -161,7 +195,9 @@ public final class LocalEnvironment implements AutoCloseable {
         }
     }
 
-    /** Preserve startup-created indexes while removing every scenario's database and S3 data. */
+    /**
+     * Preserve startup-created indexes while removing every scenario's database and S3 data.
+     */
     public void resetScenario() {
         if (closed) throw new IllegalStateException("The local environment is already closed");
         awaitWorker();
@@ -171,15 +207,24 @@ public final class LocalEnvironment implements AutoCloseable {
         s3.reset();
     }
 
-    boolean mongoRunning() { return mongo.isRunning(); }
-    boolean springRunning() { return context != null && context.isActive(); }
+    boolean mongoRunning() {
+        return mongo.isRunning();
+    }
+
+    boolean springRunning() {
+        return context != null && context.isActive();
+    }
 
     @Override
     public synchronized void close() {
         if (resourcesClosed) return;
         closed = true;
         RuntimeException failure = null;
-        try { awaitWorker(); } catch (RuntimeException e) { failure = e; }
+        try {
+            awaitWorker();
+        } catch (RuntimeException e) {
+            failure = e;
+        }
         workerExecutor.shutdownNow();
         // Never release shared resources on Future cancellation alone. If this wait fails,
         // the environment stays unusable, and a later close can finish actual cleanup.
@@ -200,42 +245,65 @@ public final class LocalEnvironment implements AutoCloseable {
         }
         resourcesClosed = true;
         if (workerHttp != null) {
-            try { workerHttp.close(); } catch (RuntimeException e) { failure = append(failure, e); }
+            try {
+                workerHttp.close();
+            } catch (RuntimeException e) {
+                failure = append(failure, e);
+            }
         }
         if (workerS3 != null) {
-            try { workerS3.close(); } catch (RuntimeException e) { failure = append(failure, e); }
+            try {
+                workerS3.close();
+            } catch (RuntimeException e) {
+                failure = append(failure, e);
+            }
         }
         if (context != null) {
-            try { context.close(); } catch (RuntimeException e) { failure = append(failure, e); }
+            try {
+                context.close();
+            } catch (RuntimeException e) {
+                failure = append(failure, e);
+            }
         }
         if (mongoClient != null) {
-            try { mongoClient.close(); } catch (RuntimeException e) { failure = append(failure, e); }
+            try {
+                mongoClient.close();
+            } catch (RuntimeException e) {
+                failure = append(failure, e);
+            }
         }
-        try { s3.close(); } catch (RuntimeException e) { failure = append(failure, e); }
-        try { mongo.stop(); } catch (RuntimeException e) { failure = append(failure, e); }
+        try {
+            s3.close();
+        } catch (RuntimeException e) {
+            failure = append(failure, e);
+        }
+        try {
+            mongo.stop();
+        } catch (RuntimeException e) {
+            failure = append(failure, e);
+        }
         if (shutdownHook != null && Thread.currentThread() != shutdownHook) {
-            try { Runtime.getRuntime().removeShutdownHook(shutdownHook); }
-            catch (IllegalStateException shuttingDown) { /* The registered hook still closes idempotently. */ }
+            try {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            } catch (IllegalStateException shuttingDown) { /* The registered hook still closes idempotently. */ }
         }
         if (failure != null) throw failure;
-    }
-
-    private static RuntimeException append(RuntimeException first, RuntimeException next) {
-        if (first == null) return next;
-        first.addSuppressed(next);
-        return first;
     }
 
     @Configuration(proxyBeanMethods = false)
     public static class FixedClockConfiguration {
         @Bean("acceptanceClock")
         @Primary
-        Clock acceptanceClock() { return Clock.fixed(Instant.parse("2026-10-02T15:00:00Z"), ZoneOffset.UTC); }
+        Clock acceptanceClock() {
+            return Clock.fixed(Instant.parse("2026-10-02T15:00:00Z"), ZoneOffset.UTC);
+        }
 
         @Bean
         @ConditionalOnProperty(name = "acceptance.fail-startup", havingValue = "true")
         ApplicationRunner startupFailureProbe() {
-            return arguments -> { throw new IllegalStateException("Deliberate acceptance startup failure after HTTP initialization"); };
+            return arguments -> {
+                throw new IllegalStateException("Deliberate acceptance startup failure after HTTP initialization");
+            };
         }
     }
 }

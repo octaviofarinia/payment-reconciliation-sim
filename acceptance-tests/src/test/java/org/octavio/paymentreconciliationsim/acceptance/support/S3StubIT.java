@@ -1,17 +1,19 @@
 package org.octavio.paymentreconciliationsim.acceptance.support;
 
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.ChecksumMode;
+
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class S3StubIT {
@@ -69,7 +71,7 @@ class S3StubIT {
                 assertArrayEquals(first, stub.get("bucket", "a+b/c %2F.csv", put.versionId()));
                 String stored = stub.store("bucket", "direct.csv", second);
                 second[0] = 99;
-                assertArrayEquals(new byte[]{42, 0, (byte)0xc0}, client.getObjectAsBytes(b -> b.bucket("bucket").key("direct.csv").versionId(stored)).asByteArray());
+                assertArrayEquals(new byte[]{42, 0, (byte) 0xc0}, client.getObjectAsBytes(b -> b.bucket("bucket").key("direct.csv").versionId(stored)).asByteArray());
             }
         }
     }

@@ -1,18 +1,32 @@
 package org.octavio.paymentreconciliationsim.storage;
 
-import java.io.*;
-import java.net.URI;
-import java.time.*;
-import java.util.*;
-import org.junit.jupiter.api.*;
-import org.octavio.paymentreconciliationsim.run.RunContracts.*;
-import software.amazon.awssdk.auth.credentials.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.octavio.paymentreconciliationsim.run.RunContracts.ObjectIdentity;
+import org.octavio.paymentreconciliationsim.run.RunContracts.RunMetadata;
+import org.octavio.paymentreconciliationsim.run.RunContracts.Status;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.http.AbortableInputStream;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.*;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.net.URI;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -25,16 +39,31 @@ class S3SettlementStorageTest {
     S3Presigner presigner;
     S3SettlementStorage storage;
 
-    @BeforeEach void setup() {
+    static ObjectVersion version(String key, String id, Instant instant) {
+        return ObjectVersion.builder().key(key).versionId(id).lastModified(instant).build();
+    }
+
+    static RunMetadata run(ObjectIdentity object) {
+        return new RunMetadata(UUID.fromString("aaaaaaaa-0000-0000-0000-000000000001"), "SIMULATED", "2026-10-01",
+                HASH, "v1", 3, KEY, Status.AWAITING_UPLOAD, object, null, null, NOW, NOW, false);
+    }
+
+    @BeforeEach
+    void setup() {
         presigner = S3Presigner.builder().region(Region.US_EAST_1)
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("acceptance", "acceptance")))
                 .endpointOverride(URI.create("http://localhost:9000"))
                 .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build()).build();
         storage = new S3SettlementStorage(client, presigner, "bucket");
     }
-    @AfterEach void close() { presigner.close(); }
 
-    @Test void uploadChecksumAndBoundVersionAreStable() {
+    @AfterEach
+    void close() {
+        presigner.close();
+    }
+
+    @Test
+    void uploadChecksumAndBoundVersionAreStable() {
         var instructions = storage.upload(KEY, HASH, 3);
         assertEquals(BASE64, instructions.requiredHeaders().get("x-amz-checksum-sha256"));
         assertEquals("3", instructions.requiredHeaders().get("content-length"));
@@ -49,7 +78,8 @@ class S3SettlementStorageTest {
         assertThrows(UnsupportedOperationException.class, () -> instructions.requiredHeaders().put("other", "value"));
     }
 
-    @Test void rejectsInvalidUploadBoundsAndChecksumBeforeSigning() {
+    @Test
+    void rejectsInvalidUploadBoundsAndChecksumBeforeSigning() {
         for (long length : new long[]{0, -1, 2097153, Long.MAX_VALUE}) {
             assertThrows(IllegalArgumentException.class, () -> storage.upload(KEY, HASH, length));
         }
@@ -60,14 +90,17 @@ class S3SettlementStorageTest {
         assertEquals("2097152", storage.upload(KEY, HASH, 2097152).requiredHeaders().get("content-length"));
     }
 
-    @Test void recoveryCannotChangeTheBucketOfAnExistingBinding() {
+    @Test
+    void recoveryCannotChangeTheBucketOfAnExistingBinding() {
         var foreign = new ObjectIdentity("foreign", KEY, "first", HASH);
-        head("first", 3, BASE64); body("first", new byte[]{97, 98, 99});
+        head("first", 3, BASE64);
+        body("first", new byte[]{97, 98, 99});
         assertTrue(storage.recoverUploadedVersion(run(foreign)).isEmpty());
         verifyNoInteractions(client);
     }
 
-    @Test void recoveryChecksOnlyBoundVersionEvenWhenOtherRetainedBytesMatch() {
+    @Test
+    void recoveryChecksOnlyBoundVersionEvenWhenOtherRetainedBytesMatch() {
         var bound = new ObjectIdentity("bucket", KEY, "first", HASH);
         head("first", 3, BASE64);
         body("first", new byte[]{97, 98, 99});
@@ -78,7 +111,8 @@ class S3SettlementStorageTest {
         verify(client, never()).listObjectVersions(any(ListObjectVersionsRequest.class));
     }
 
-    @Test void lostEventRecoveryFindsEarliestMatchingRetainedVersionAcrossPages() {
+    @Test
+    void lostEventRecoveryFindsEarliestMatchingRetainedVersionAcrossPages() {
         when(client.listObjectVersions(any(ListObjectVersionsRequest.class))).thenAnswer(call -> {
             ListObjectVersionsRequest request = call.getArgument(0);
             assertEquals("bucket", request.bucket());
@@ -93,14 +127,18 @@ class S3SettlementStorageTest {
             return ListObjectVersionsResponse.builder().isTruncated(false)
                     .versions(version(KEY, "first", NOW.minusSeconds(1))).build();
         });
-        head("first", 3, BASE64); body("first", new byte[]{97, 98, 99});
-        head("later", 3, BASE64); body("later", new byte[]{97, 98, 99});
-        head("wrong", 3, null); body("wrong", new byte[]{97, 98, 100});
+        head("first", 3, BASE64);
+        body("first", new byte[]{97, 98, 99});
+        head("later", 3, BASE64);
+        body("later", new byte[]{97, 98, 99});
+        head("wrong", 3, null);
+        body("wrong", new byte[]{97, 98, 100});
         assertEquals(new ObjectIdentity("bucket", KEY, "first", HASH), storage.recoverUploadedVersion(run(null)).orElseThrow());
         verify(client, never()).headObject(HeadObjectRequest.builder().bucket("bucket").key(KEY).versionId("irrelevant").checksumMode(ChecksumMode.ENABLED).build());
     }
 
-    @Test void recoveryRejectsWrongSizeChecksumAndRawBytesWithoutUsingEtag() {
+    @Test
+    void recoveryRejectsWrongSizeChecksumAndRawBytesWithoutUsingEtag() {
         var bound = new ObjectIdentity("bucket", KEY, "first", HASH);
         head("first", 2, BASE64);
         assertTrue(storage.recoverUploadedVersion(run(bound)).isEmpty());
@@ -117,7 +155,8 @@ class S3SettlementStorageTest {
         assertEquals(bound, storage.recoverUploadedVersion(run(bound)).orElseThrow());
     }
 
-    @Test void recoveryReturnsEmptyForNoVersionsOrDeletedVersionAndPropagatesTransportFailures() {
+    @Test
+    void recoveryReturnsEmptyForNoVersionsOrDeletedVersionAndPropagatesTransportFailures() {
         when(client.listObjectVersions(any(ListObjectVersionsRequest.class)))
                 .thenReturn(ListObjectVersionsResponse.builder().isTruncated(false).build());
         assertTrue(storage.recoverUploadedVersion(run(null)).isEmpty());
@@ -130,13 +169,17 @@ class S3SettlementStorageTest {
         head("first", 3, BASE64);
         when(client.getObject(any(GetObjectRequest.class))).thenAnswer(call -> new ResponseInputStream<>(
                 GetObjectResponse.builder().build(), AbortableInputStream.create(new InputStream() {
-                    @Override public int read() throws IOException { throw new IOException("broken connection"); }
-                })));
+            @Override
+            public int read() throws IOException {
+                throw new IOException("broken connection");
+            }
+        })));
         assertEquals("broken connection", assertThrows(UncheckedIOException.class,
                 () -> storage.recoverUploadedVersion(run(bound))).getCause().getMessage());
     }
 
-    @Test void recoveryNeverBindsPrefixMatchesFromOtherKeys() {
+    @Test
+    void recoveryNeverBindsPrefixMatchesFromOtherKeys() {
         when(client.listObjectVersions(any(ListObjectVersionsRequest.class)))
                 .thenReturn(ListObjectVersionsResponse.builder().isTruncated(false)
                         .versions(version(KEY + ".other", "irrelevant", NOW)).build());
@@ -145,12 +188,15 @@ class S3SettlementStorageTest {
         verify(client, never()).getObject(any(GetObjectRequest.class));
     }
 
-    @Test void recoverySkipsMismatchedCandidateAndKeepsSearching() {
+    @Test
+    void recoverySkipsMismatchedCandidateAndKeepsSearching() {
         when(client.listObjectVersions(any(ListObjectVersionsRequest.class)))
                 .thenReturn(ListObjectVersionsResponse.builder().isTruncated(false)
                         .versions(version(KEY, "wrong", NOW), version(KEY, "later", NOW.plusSeconds(1))).build());
-        head("wrong", 3, null); body("wrong", new byte[]{97, 98, 100});
-        head("later", 3, BASE64); body("later", new byte[]{97, 98, 99});
+        head("wrong", 3, null);
+        body("wrong", new byte[]{97, 98, 100});
+        head("later", 3, BASE64);
+        body("later", new byte[]{97, 98, 99});
         assertEquals("later", storage.recoverUploadedVersion(run(null)).orElseThrow().versionId());
         head("later", 2, BASE64);
         assertTrue(storage.recoverUploadedVersion(run(null)).isEmpty());
@@ -161,20 +207,15 @@ class S3SettlementStorageTest {
         verify(client).getObject(GetObjectRequest.builder().bucket("bucket").key(KEY).versionId(version).checksumMode(ChecksumMode.ENABLED).build());
         verifyNoMoreInteractions(client);
     }
+
     void head(String version, long size, String checksum) {
         doReturn(HeadObjectResponse.builder().contentLength(size).checksumSHA256(checksum).eTag(HASH).build())
                 .when(client).headObject(HeadObjectRequest.builder().bucket("bucket").key(KEY).versionId(version).checksumMode(ChecksumMode.ENABLED).build());
     }
+
     void body(String version, byte[] bytes) {
         when(client.getObject(GetObjectRequest.builder().bucket("bucket").key(KEY).versionId(version).checksumMode(ChecksumMode.ENABLED).build()))
                 .thenAnswer(call -> new ResponseInputStream<>(GetObjectResponse.builder().build(),
                         AbortableInputStream.create(new ByteArrayInputStream(bytes))));
-    }
-    static ObjectVersion version(String key, String id, Instant instant) {
-        return ObjectVersion.builder().key(key).versionId(id).lastModified(instant).build();
-    }
-    static RunMetadata run(ObjectIdentity object) {
-        return new RunMetadata(UUID.fromString("aaaaaaaa-0000-0000-0000-000000000001"), "SIMULATED", "2026-10-01",
-                HASH, "v1", 3, KEY, Status.AWAITING_UPLOAD, object, null, null, NOW, NOW, false);
     }
 }

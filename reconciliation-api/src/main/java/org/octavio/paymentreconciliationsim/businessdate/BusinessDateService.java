@@ -1,9 +1,5 @@
 package org.octavio.paymentreconciliationsim.businessdate;
 
-import java.time.Clock;
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
 import org.octavio.paymentreconciliationsim.model.CreationResult;
 import org.octavio.paymentreconciliationsim.model.Purchase;
 import org.octavio.paymentreconciliationsim.repository.PurchaseRepository;
@@ -16,6 +12,12 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 @Service
@@ -57,7 +59,9 @@ public class BusinessDateService {
         });
     }
 
-    /** Called inside the purchase transaction. This guard write conflicts with close. */
+    /**
+     * Called inside the purchase transaction. This guard write conflicts with close.
+     */
     public void reserve(LocalDate date) {
         var reserved = mongo.findAndModify(
                 Query.query(where("_id").is(date.toString()).and("state").is(BusinessDay.State.OPEN)

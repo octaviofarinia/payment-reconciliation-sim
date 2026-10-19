@@ -1,6 +1,5 @@
 package org.octavio.paymentreconciliationsim.config;
 
-import java.time.Duration;
 import org.octavio.paymentreconciliationsim.service.RetryDelay;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +8,8 @@ import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Duration;
 
 @Configuration(proxyBeanMethods = false)
 public class MongoConfiguration {

@@ -3,11 +3,15 @@ package org.octavio.paymentreconciliationsim.acceptance.support;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** Shared real-database transaction verification for acceptance callers. */
+/**
+ * Shared real-database transaction verification for acceptance callers.
+ */
 public final class MongoTransactionProbe {
-    private MongoTransactionProbe() {}
+    private MongoTransactionProbe() {
+    }
 
     public static void assertCommitAndRollback(MongoClient client, MongoCollection<Document> collection) {
         // Create collection outside transactions: no implicit DDL dependency in the probe.

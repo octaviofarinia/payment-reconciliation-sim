@@ -1,18 +1,24 @@
 package org.octavio.paymentreconciliationsim.config;
 
-import java.net.URI;
-import java.util.concurrent.atomic.AtomicReference;
-import software.amazon.awssdk.http.*;
-import software.amazon.awssdk.services.s3.S3Client;
-import static org.mockito.Mockito.mockStatic;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
-import software.amazon.awssdk.auth.credentials.*;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.http.*;
+import software.amazon.awssdk.services.s3.S3Client;
+
+import java.net.URI;
+import java.util.concurrent.atomic.AtomicReference;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mockStatic;
 
 class AwsConfigurationTest {
     final AwsConfiguration config = new AwsConfiguration();
-    @Test void localClientsUseExplicitDummyCredentialsAndPathStyleEndpoint() {
+
+    @Test
+    void localClientsUseExplicitDummyCredentialsAndPathStyleEndpoint() {
         var environment = new MockEnvironment().withProperty("reconciliation.s3.endpoint", "http://localhost:9000")
                 .withProperty("reconciliation.aws.region", "us-east-1")
                 .withProperty("reconciliation.aws.access-key", "acceptance")
@@ -31,7 +37,9 @@ class AwsConfigurationTest {
         environment = new MockEnvironment().withProperty("reconciliation.s3.endpoint", "http://localhost:9000");
         assertEquals("local", config.awsCredentials(environment).resolveCredentials().accessKeyId());
     }
-    @Test void cloudClientsUseRoleCredentialChainWithoutResolvingHostCredentials() {
+
+    @Test
+    void cloudClientsUseRoleCredentialChainWithoutResolvingHostCredentials() {
         var environment = new MockEnvironment().withProperty("reconciliation.aws.region", "us-east-1");
         var credentials = config.awsCredentials(environment);
         assertInstanceOf(DefaultCredentialsProvider.class, credentials);
@@ -42,24 +50,33 @@ class AwsConfigurationTest {
         ((DefaultCredentialsProvider) credentials).close();
     }
 
-    @Test void clientsUseConfiguredTransportHostAndPathWithDummyCredentials() {
+    @Test
+    void clientsUseConfiguredTransportHostAndPathWithDummyCredentials() {
         var request = new AtomicReference<SdkHttpRequest>();
         SdkHttpClient offlineTransport = new SdkHttpClient() {
-            @Override public ExecutableHttpRequest prepareRequest(HttpExecuteRequest execution) {
+            @Override
+            public ExecutableHttpRequest prepareRequest(HttpExecuteRequest execution) {
                 request.set(execution.httpRequest());
                 return new ExecutableHttpRequest() {
-                    @Override public HttpExecuteResponse call() {
+                    @Override
+                    public HttpExecuteResponse call() {
                         return HttpExecuteResponse.builder()
                                 .response(SdkHttpResponse.builder().statusCode(200)
                                         .putHeader("content-length", "0").build()).build();
                     }
-                    @Override public void abort() {}
+
+                    @Override
+                    public void abort() {
+                    }
                 };
             }
-            @Override public void close() {}
+
+            @Override
+            public void close() {
+            }
         };
         var dummyCredentials = StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "dummy"));
-        for (String endpoint : new String[] {null, "http://storage.example.test:9000"}) {
+        for (String endpoint : new String[]{null, "http://storage.example.test:9000"}) {
             var environment = new MockEnvironment().withProperty("reconciliation.aws.region", "eu-west-1");
             if (endpoint != null) environment.withProperty("reconciliation.s3.endpoint", endpoint);
             request.set(null);

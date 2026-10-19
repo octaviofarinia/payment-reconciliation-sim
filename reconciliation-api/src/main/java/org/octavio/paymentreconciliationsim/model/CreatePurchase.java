@@ -1,8 +1,9 @@
 package org.octavio.paymentreconciliationsim.model;
 
-import java.time.LocalDate;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
 
 public record CreatePurchase(String transactionReference, String merchantId, LocalDate businessDate,
                              long amountCentavos, String currency) {

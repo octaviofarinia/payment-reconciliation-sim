@@ -1,6 +1,10 @@
 package org.octavio.paymentreconciliationsim.worker.csv;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.octavio.paymentreconciliationsim.worker.domain.ReconciliationModel.SettlementRow;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -9,50 +13,19 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.octavio.paymentreconciliationsim.worker.domain.ReconciliationModel.SettlementRow;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class SettlementCsvParserTest {
     private static final LocalDate DATE = LocalDate.of(2026, 10, 1);
     private static final String HEADER = "business_date,transaction_reference,amount_centavos,currency";
     private final SettlementCsvParser parser = new SettlementCsvParser();
 
-    @Test
-    void preservesCanonicalRowsAndDuplicateEvidence() throws IOException {
-        assertEquals(List.of(new SettlementRow(1, "MATCH-001", 10000),
-                new SettlementRow(2, "EXT-001", 30000), new SettlementRow(3, "AMOUNT-001", 45000),
-                new SettlementRow(4, "DUP-001", 50000), new SettlementRow(5, "DUP-001", 50000)),
-                parse(HEADER + "\n2026-10-01,MATCH-001,10000,ARS\n2026-10-01,EXT-001,30000,ARS\n"
-                        + "2026-10-01,AMOUNT-001,45000,ARS\n2026-10-01,DUP-001,50000,ARS\n"
-                        + "2026-10-01,DUP-001,50000,ARS\n"));
-    }
-
-    @ParameterizedTest
-    @MethodSource("validRepresentations")
-    void acceptsQuotedFieldsAndBothLineEndings(String csv) throws IOException {
-        assertEquals(List.of(new SettlementRow(1, "a_Z-09", Long.MAX_VALUE)), parse(csv));
-    }
-
     static Stream<String> validRepresentations() {
         return Stream.of(HEADER + "\n2026-10-01,a_Z-09,9223372036854775807,ARS",
                 HEADER + "\r\n2026-10-01,a_Z-09,9223372036854775807,ARS\r\n",
                 "\"business_date\",\"transaction_reference\",\"amount_centavos\",\"currency\"\n"
                         + "\"2026-10-01\",\"a_Z-09\",\"9223372036854775807\",\"ARS\"\n");
-    }
-
-    @Test
-    void headerOnlyHasZeroExternalTransactions() throws IOException {
-        assertEquals(List.of(), parse(HEADER));
-        assertEquals(List.of(), parse(HEADER + "\r\n"));
-    }
-
-    @ParameterizedTest
-    @MethodSource("invalidHeaders")
-    void requiresExactMandatoryHeader(String csv, String code) {
-        invalid(csv, code, 0);
     }
 
     static Stream<Arguments> invalidHeaders() {
@@ -65,12 +38,6 @@ class SettlementCsvParserTest {
                 Arguments.of(HEADER.replace("currency", "Currency"), "INVALID_HEADER"),
                 Arguments.of(" " + HEADER, "INVALID_HEADER"),
                 Arguments.of("\"business_date", "MALFORMED_CSV"));
-    }
-
-    @ParameterizedTest
-    @MethodSource("invalidRows")
-    void rejectsWholeFileAtInvalidLogicalRecord(String row, String code) {
-        invalid(HEADER + "\n2026-10-01,GOOD,1,ARS\n" + row, code, 2);
     }
 
     static Stream<Arguments> invalidRows() {
@@ -104,6 +71,40 @@ class SettlementCsvParserTest {
                 Arguments.of("2026-10-01,A,1,", "INVALID_CURRENCY"),
                 Arguments.of("2026-10-01,\"A\"garbage,1,ARS", "MALFORMED_CSV"),
                 Arguments.of("2026-10-01,\"A\nB", "MALFORMED_CSV"));
+    }
+
+    @Test
+    void preservesCanonicalRowsAndDuplicateEvidence() throws IOException {
+        assertEquals(List.of(new SettlementRow(1, "MATCH-001", 10000),
+                        new SettlementRow(2, "EXT-001", 30000), new SettlementRow(3, "AMOUNT-001", 45000),
+                        new SettlementRow(4, "DUP-001", 50000), new SettlementRow(5, "DUP-001", 50000)),
+                parse(HEADER + "\n2026-10-01,MATCH-001,10000,ARS\n2026-10-01,EXT-001,30000,ARS\n"
+                        + "2026-10-01,AMOUNT-001,45000,ARS\n2026-10-01,DUP-001,50000,ARS\n"
+                        + "2026-10-01,DUP-001,50000,ARS\n"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("validRepresentations")
+    void acceptsQuotedFieldsAndBothLineEndings(String csv) throws IOException {
+        assertEquals(List.of(new SettlementRow(1, "a_Z-09", Long.MAX_VALUE)), parse(csv));
+    }
+
+    @Test
+    void headerOnlyHasZeroExternalTransactions() throws IOException {
+        assertEquals(List.of(), parse(HEADER));
+        assertEquals(List.of(), parse(HEADER + "\r\n"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidHeaders")
+    void requiresExactMandatoryHeader(String csv, String code) {
+        invalid(csv, code, 0);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidRows")
+    void rejectsWholeFileAtInvalidLogicalRecord(String row, String code) {
+        invalid(HEADER + "\n2026-10-01,GOOD,1,ARS\n" + row, code, 2);
     }
 
     @Test
@@ -144,18 +145,29 @@ class SettlementCsvParserTest {
     void preservesTransportFailureAndExternallyOwnedStream() throws IOException {
         IOException transport = new IOException("transport failed");
         InputStream broken = new InputStream() {
-            @Override public int read() throws IOException { throw transport; }
+            @Override
+            public int read() throws IOException {
+                throw transport;
+            }
         };
         assertSame(transport, assertThrows(IOException.class, () -> parser.parse(broken, DATE)));
         var stream = new ByteArrayInputStream((HEADER + "\n2026-10-01,A,1,ARS").getBytes(StandardCharsets.UTF_8)) {
             boolean closed;
-            @Override public void close() { closed = true; }
+
+            @Override
+            public void close() {
+                closed = true;
+            }
         };
         assertEquals(1, parser.parse(stream, DATE).size());
         assertFalse(stream.closed);
         var invalidStream = new ByteArrayInputStream(new byte[0]) {
             boolean closed;
-            @Override public void close() { closed = true; }
+
+            @Override
+            public void close() {
+                closed = true;
+            }
         };
         assertThrows(SettlementValidationException.class, () -> parser.parse(invalidStream, DATE));
         assertFalse(invalidStream.closed);
@@ -164,7 +176,7 @@ class SettlementCsvParserTest {
     @Test
     void boundedStreamPreservesUnsignedSingleByteAndEof() throws IOException {
         var stream = new SettlementCsvParser.BoundedInputStream(
-                new ByteArrayInputStream(new byte[] {(byte) 0xff}));
+                new ByteArrayInputStream(new byte[]{(byte) 0xff}));
         assertEquals(255, stream.read());
         assertEquals(-1, stream.read());
     }

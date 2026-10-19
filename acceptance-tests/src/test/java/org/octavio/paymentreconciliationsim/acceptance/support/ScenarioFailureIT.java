@@ -3,7 +3,8 @@ package org.octavio.paymentreconciliationsim.acceptance.support;
 import io.cucumber.core.cli.Main;
 import org.junit.jupiter.api.Test;
 import org.octavio.paymentreconciliationsim.acceptance.steps.EnvironmentSteps;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ScenarioFailureIT {
     @Test
@@ -12,7 +13,7 @@ class ScenarioFailureIT {
         byte exit;
         try {
             exit = Main.run(new String[]{"--glue", "org.octavio.paymentreconciliationsim.acceptance.steps",
-                "--plugin", "json:" + report, "classpath:fixtures/failing-environment.feature"}, getClass().getClassLoader());
+                    "--plugin", "json:" + report, "classpath:fixtures/failing-environment.feature"}, getClass().getClassLoader());
         } finally {
             java.nio.file.Files.deleteIfExists(report);
         }

@@ -1,48 +1,62 @@
 package org.octavio.paymentreconciliationsim.acceptance.steps;
 
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
-import io.cucumber.java.Before;
 import io.cucumber.java.After;
-import io.cucumber.java.BeforeAll;
 import io.cucumber.java.AfterAll;
+import io.cucumber.java.Before;
+import io.cucumber.java.BeforeAll;
 import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import org.bson.Document;
 import org.octavio.paymentreconciliationsim.acceptance.support.LocalEnvironment;
 import org.octavio.paymentreconciliationsim.acceptance.support.MongoTransactionProbe;
 import org.octavio.paymentreconciliationsim.acceptance.support.ScenarioWorld;
+
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public final class EnvironmentSteps {
     private static LocalEnvironment suiteEnvironment;
     private final ScenarioWorld world;
-    public EnvironmentSteps(ScenarioWorld world) { this.world = world; }
 
-    public static LocalEnvironment suiteEnvironment() { return suiteEnvironment; }
+    public EnvironmentSteps(ScenarioWorld world) {
+        this.world = world;
+    }
+
+    public static LocalEnvironment suiteEnvironment() {
+        return suiteEnvironment;
+    }
 
     @BeforeAll
     public static void startSuite() {
         suiteEnvironment = new LocalEnvironment();
         suiteEnvironment.start();
     }
+
     @AfterAll
     public static void closeSuite() {
         if (suiteEnvironment != null) suiteEnvironment.close();
     }
+
     @Before(order = 0)
     public void isolateScenario() {
         suiteEnvironment.resetScenario();
         world.environment = suiteEnvironment;
     }
+
     @After(order = 0)
-    public void clearScenario() { suiteEnvironment.resetScenario(); }
+    public void clearScenario() {
+        suiteEnvironment.resetScenario();
+    }
 
     @Given("the local reconciliation environment is running")
-    public void environmentRunning() { assertNotNull(world.environment.apiBaseUri()); }
+    public void environmentRunning() {
+        assertNotNull(world.environment.apiBaseUri());
+    }
 
     @Given("the scenario state and persistent fixtures are fresh")
     public void scenarioFresh() {
@@ -52,6 +66,7 @@ public final class EnvironmentSteps {
         assertEquals(0, world.environment.mongoDatabase().getCollection("isolation_probe").countDocuments());
         assertNull(world.environment.s3().get(LocalEnvironment.BUCKET, "isolation_probe", null));
     }
+
     @When("I retain scenario fixtures")
     public void retainFixtures() {
         world.runId = "scenario-probe";
@@ -68,8 +83,11 @@ public final class EnvironmentSteps {
                     .GET().build(), HttpResponse.BodyHandlers.ofByteArray());
         }
     }
+
     @Then("the HTTP status is {int}")
-    public void httpStatus(int expected) { assertEquals(expected, world.response.statusCode()); }
+    public void httpStatus(int expected) {
+        assertEquals(expected, world.response.statusCode());
+    }
 
     @Then("Mongo supports committing and rolling back transactions")
     public void mongoTransactions() {

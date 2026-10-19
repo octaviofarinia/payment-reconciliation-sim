@@ -1,15 +1,22 @@
 package org.octavio.paymentreconciliationsim.acceptance.steps;
 
-import java.net.URI;
-import java.net.http.*;
-import java.time.*;
-import java.util.UUID;
-import io.cucumber.java.en.*;
-import org.octavio.paymentreconciliationsim.acceptance.support.*;
-import org.octavio.paymentreconciliationsim.run.RunContracts.*;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
+import org.octavio.paymentreconciliationsim.acceptance.support.LocalEnvironment;
+import org.octavio.paymentreconciliationsim.acceptance.support.ScenarioWorld;
+import org.octavio.paymentreconciliationsim.run.RunContracts.ObjectIdentity;
+import org.octavio.paymentreconciliationsim.run.RunContracts.RunInput;
+import org.octavio.paymentreconciliationsim.run.RunContracts.RunMetadata;
 import org.octavio.paymentreconciliationsim.storage.SettlementStorage;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UploadSteps {
@@ -21,13 +28,15 @@ public class UploadSteps {
     private String first;
     private String second;
 
-    public UploadSteps(ScenarioWorld world) { this.world = world; }
+    public UploadSteps(ScenarioWorld world) {
+        this.world = world;
+    }
 
     private HttpResponse<String> request(String method, String path, String body) throws Exception {
         try (var http = HttpClient.newHttpClient()) {
             return http.send(HttpRequest.newBuilder(world.environment.apiBaseUri().resolve(path))
                     .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + (path.startsWith("/internal/")?LocalEnvironment.WORKER_TOKEN:LocalEnvironment.DEMO_TOKEN))
+                    .header("Authorization", "Bearer " + (path.startsWith("/internal/") ? LocalEnvironment.WORKER_TOKEN : LocalEnvironment.DEMO_TOKEN))
                     .method(method, body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(body))
                     .build(), HttpResponse.BodyHandlers.ofString());
         }
@@ -60,7 +69,7 @@ public class UploadSteps {
     private HttpResponse<String> upload(byte[] bytes) throws Exception {
         try (var http = HttpClient.newHttpClient()) {
             return http.send(HttpRequest.newBuilder(URI.create(registration.get("uploadInstructions").get("url").stringValue()))
-                    .header("x-amz-checksum-sha256", CHECKSUM).PUT(HttpRequest.BodyPublishers.ofByteArray(bytes)).build(),
+                            .header("x-amz-checksum-sha256", CHECKSUM).PUT(HttpRequest.BodyPublishers.ofByteArray(bytes)).build(),
                     HttpResponse.BodyHandlers.ofString());
         }
     }

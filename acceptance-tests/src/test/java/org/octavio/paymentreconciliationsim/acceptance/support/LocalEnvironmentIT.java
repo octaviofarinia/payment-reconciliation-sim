@@ -1,5 +1,8 @@
 package org.octavio.paymentreconciliationsim.acceptance.support;
 
+import org.bson.Document;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -7,11 +10,22 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
-import org.bson.Document;
-import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class LocalEnvironmentIT {
+    static void assertStopped(LocalEnvironment environment, URI api, URI s3) throws Exception {
+        assertFalse(environment.springRunning());
+        assertFalse(environment.s3().isRunning());
+        assertFalse(environment.mongoRunning());
+        try (var client = HttpClient.newHttpClient()) {
+            for (var endpoint : new URI[]{api, s3}) {
+                assertThrows(IOException.class, () -> client.send(HttpRequest.newBuilder(endpoint)
+                        .timeout(Duration.ofSeconds(2)).build(), HttpResponse.BodyHandlers.discarding()));
+            }
+        }
+    }
+
     @Test
     void localEnvironmentUsesRealHttpAndReplicaSet() throws Exception {
         var environment = new LocalEnvironment();
@@ -56,18 +70,6 @@ class LocalEnvironmentIT {
             assertThrows(RuntimeException.class, environment::start);
             assertNotNull(environment.apiBaseUri(), "Startup probe must fail after the HTTP server opened its port");
             assertStopped(environment, environment.apiBaseUri(), environment.s3Endpoint());
-        }
-    }
-
-    static void assertStopped(LocalEnvironment environment, URI api, URI s3) throws Exception {
-        assertFalse(environment.springRunning());
-        assertFalse(environment.s3().isRunning());
-        assertFalse(environment.mongoRunning());
-        try (var client = HttpClient.newHttpClient()) {
-            for (var endpoint : new URI[]{api, s3}) {
-                assertThrows(IOException.class, () -> client.send(HttpRequest.newBuilder(endpoint)
-                        .timeout(Duration.ofSeconds(2)).build(), HttpResponse.BodyHandlers.discarding()));
-            }
         }
     }
 }

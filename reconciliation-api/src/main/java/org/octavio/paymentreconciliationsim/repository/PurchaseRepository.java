@@ -1,11 +1,13 @@
 package org.octavio.paymentreconciliationsim.repository;
 
-import java.util.List;
 import org.octavio.paymentreconciliationsim.model.Purchase;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 @Repository

@@ -1,9 +1,5 @@
 package org.octavio.paymentreconciliationsim.storage;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.time.Duration;
-import java.util.*;
 import org.octavio.paymentreconciliationsim.run.RunContracts.ObjectIdentity;
 import org.octavio.paymentreconciliationsim.run.RunContracts.RunMetadata;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +11,11 @@ import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.time.Duration;
+import java.util.*;
+
 @Service
 public class S3SettlementStorage implements SettlementStorage {
     private final S3Client client;
@@ -22,7 +23,7 @@ public class S3SettlementStorage implements SettlementStorage {
     private final String bucket;
 
     public S3SettlementStorage(S3Client client, S3Presigner presigner,
-            @Value("${reconciliation.s3.bucket}") String bucket) {
+                               @Value("${reconciliation.s3.bucket}") String bucket) {
         this.client = client;
         this.presigner = presigner;
         this.bucket = bucket;

@@ -1,28 +1,44 @@
 package org.octavio.paymentreconciliationsim.acceptance;
 
-import java.net.URI;
-import java.net.http.*;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.*;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.octavio.paymentreconciliationsim.acceptance.support.LocalEnvironment;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
-import static org.junit.jupiter.api.Assertions.*;
 
-/** Boundary evidence crosses real HTTP, stored versions, handler and Mongo publication. */
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
+import java.util.HexFormat;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * Boundary evidence crosses real HTTP, stored versions, handler and Mongo publication.
+ */
 class CsvBoundaryIT {
-    static LocalEnvironment environment;
     static final JsonMapper JSON = JsonMapper.builder().build();
     static final String HEADER = "business_date,transaction_reference,amount_centavos,currency\n";
-    @BeforeAll static void start() { environment = new LocalEnvironment(); environment.start(); }
-    @AfterAll static void stop() { if (environment != null) environment.close(); }
-    @BeforeEach void reset() throws Exception {
-        environment.resetScenario();
-        assertEquals(201, request("POST", "/business-dates", "{\"businessDate\":\"2026-10-01\"}").statusCode());
-        assertEquals(200, request("POST", "/business-dates/2026-10-01/close", "{}").statusCode());
+    static LocalEnvironment environment;
+
+    @BeforeAll
+    static void start() {
+        environment = new LocalEnvironment();
+        environment.start();
     }
+
+    @AfterAll
+    static void stop() {
+        if (environment != null) environment.close();
+    }
+
     static HttpResponse<String> request(String method, String path, String body) throws Exception {
         try (var client = HttpClient.newHttpClient()) {
             return client.send(HttpRequest.newBuilder(environment.apiBaseUri().resolve("/api/v1" + path))
@@ -31,10 +47,12 @@ class CsvBoundaryIT {
                     .build(), HttpResponse.BodyHandlers.ofString());
         }
     }
+
     static HttpResponse<String> register(byte[] bytes) throws Exception {
         String hash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
         return request("POST", "/reconciliation-runs", "{\"businessDate\":\"2026-10-01\",\"sha256\":\"" + hash + "\",\"byteLength\":" + bytes.length + "}");
     }
+
     static JsonNode upload(String csv) throws Exception {
         byte[] bytes = csv.getBytes(StandardCharsets.UTF_8);
         var response = register(bytes);
@@ -49,7 +67,16 @@ class CsvBoundaryIT {
         environment.awaitWorker();
         return JSON.readTree(request("GET", "/reconciliation-runs/" + registration.path("runId").asText(), null).body());
     }
-    @Test void exactlyTwoThousandRowsPublishCompleteResultsAndOneExtraFailsWithoutPartialOutput() throws Exception {
+
+    @BeforeEach
+    void reset() throws Exception {
+        environment.resetScenario();
+        assertEquals(201, request("POST", "/business-dates", "{\"businessDate\":\"2026-10-01\"}").statusCode());
+        assertEquals(200, request("POST", "/business-dates/2026-10-01/close", "{}").statusCode());
+    }
+
+    @Test
+    void exactlyTwoThousandRowsPublishCompleteResultsAndOneExtraFailsWithoutPartialOutput() throws Exception {
         var valid = upload(HEADER + java.util.stream.IntStream.range(0, 2000)
                 .mapToObj(index -> "2026-10-01,R_" + index + ",1,ARS\n").collect(java.util.stream.Collectors.joining()));
         assertEquals("COMPLETED", valid.path("status").asText());
@@ -64,7 +91,9 @@ class CsvBoundaryIT {
         assertTrue(invalid.path("summary").isNull());
         assertEquals(409, request("GET", "/reconciliation-runs/" + invalid.path("runId").asText() + "/results", null).statusCode());
     }
-    @Test void exactlyTwoMiBPublishAndOneAdditionalByteCannotRegister() throws Exception {
+
+    @Test
+    void exactlyTwoMiBPublishAndOneAdditionalByteCannotRegister() throws Exception {
         String prefix = HEADER + "2026-10-01,A,1,\"ARS\"";
         String csv = prefix + " ".repeat(2097152 - prefix.length() - 1) + "\n";
         assertEquals(2097152, csv.getBytes(StandardCharsets.UTF_8).length);

@@ -1,75 +1,40 @@
 package org.octavio.paymentreconciliationsim.acceptance.support;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
+import com.github.tomakehurst.wiremock.extension.ResponseDefinitionTransformerV2;
+import com.github.tomakehurst.wiremock.http.ResponseDefinition;
+import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
+
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.HexFormat;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
-import com.github.tomakehurst.wiremock.extension.ResponseDefinitionTransformerV2;
-import com.github.tomakehurst.wiremock.http.ResponseDefinition;
-import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
+import java.util.*;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
-/** Path-style, version-aware S3 transport substitute. Does not validate SigV4 authorization. */
+/**
+ * Path-style, version-aware S3 transport substitute. Does not validate SigV4 authorization.
+ */
 public final class S3Stub implements AutoCloseable {
-    private record ObjectKey(String bucket, String key) {}
-    private record StoredObject(String version, byte[] bytes, String sha256, String etag, Instant storedAt) {}
     private final Map<ObjectKey, LinkedHashMap<String, StoredObject>> objects = new HashMap<>();
     private final WireMockServer server = new WireMockServer(options().dynamicPort().extensions(new ObjectResponses()));
-
-    public record UploadedObject(String bucket, String key, String versionId) {}
-    private volatile java.util.function.Consumer<UploadedObject> uploadListener = ignored -> {};
-    public void onUpload(java.util.function.Consumer<UploadedObject> listener) { uploadListener = listener; }
+    private volatile java.util.function.Consumer<UploadedObject> uploadListener = ignored -> {
+    };
     private URI endpoint;
     private volatile boolean readsUnavailable;
-    public void failReads(boolean unavailable) { readsUnavailable=unavailable; }
-    public synchronized void remove(String bucket,String key,String version) { objects.get(new ObjectKey(bucket,key)).remove(version); }
-
-    public void start() {
-        server.start();
-        endpoint = URI.create(server.baseUrl());
-        server.stubFor(any(urlMatching("/.*")).willReturn(aResponse().withTransformers("s3-objects")));
-    }
-    public URI endpoint() { return endpoint; }
-    public boolean isRunning() { return server.isRunning(); }
-
-    public synchronized String store(String bucket, String key, byte[] bytes) {
-        String version = UUID.randomUUID().toString();
-        byte[] copy = bytes.clone();
-        var object = new StoredObject(version, copy, Base64.getEncoder().encodeToString(digest("SHA-256", copy)),
-                "\"" + HexFormat.of().formatHex(digest("MD5", copy)) + "\"", Instant.now());
-        objects.computeIfAbsent(new ObjectKey(bucket, key), ignored -> new LinkedHashMap<>()).put(version, object);
-        return version;
-    }
-
-    public synchronized byte[] get(String bucket, String key, String versionId) {
-        StoredObject object = lookup(bucket, key, versionId);
-        return object == null ? null : object.bytes().clone();
-    }
-
-    public synchronized void reset() { objects.clear(); readsUnavailable=false; server.resetRequests(); }
-    public void close() { server.stop(); }
-
-    private StoredObject lookup(String bucket, String key, String version) {
-        var versions = objects.get(new ObjectKey(bucket, key));
-        if (versions == null) return null;
-        return version == null ? versions.lastEntry().getValue() : versions.get(version);
-    }
 
     private static byte[] digest(String algorithm, byte[] bytes) {
-        try { return MessageDigest.getInstance(algorithm).digest(bytes); }
-        catch (NoSuchAlgorithmException impossible) { throw new IllegalStateException(impossible); }
+        try {
+            return MessageDigest.getInstance(algorithm).digest(bytes);
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException(impossible);
+        }
     }
 
     private static String decodePath(String path) {
@@ -82,7 +47,8 @@ public final class S3Stub implements AutoCloseable {
         int cursor = 0;
         while (cursor < wireBytes.length) {
             int lineEnd = cursor;
-            while (lineEnd + 1 < wireBytes.length && !(wireBytes[lineEnd] == 13 && wireBytes[lineEnd + 1] == 10)) lineEnd++;
+            while (lineEnd + 1 < wireBytes.length && !(wireBytes[lineEnd] == 13 && wireBytes[lineEnd + 1] == 10))
+                lineEnd++;
             if (lineEnd + 1 >= wireBytes.length) throw new IllegalArgumentException("Missing AWS chunk size");
             String sizeLine = new String(wireBytes, cursor, lineEnd - cursor, StandardCharsets.US_ASCII);
             int size = Integer.parseInt(sizeLine.split(";", 2)[0], 16);
@@ -106,6 +72,62 @@ public final class S3Stub implements AutoCloseable {
                 .replace("\"", "&quot;").replace("'", "&apos;");
     }
 
+    public void onUpload(java.util.function.Consumer<UploadedObject> listener) {
+        uploadListener = listener;
+    }
+
+    public void failReads(boolean unavailable) {
+        readsUnavailable = unavailable;
+    }
+
+    public synchronized void remove(String bucket, String key, String version) {
+        objects.get(new ObjectKey(bucket, key)).remove(version);
+    }
+
+    public void start() {
+        server.start();
+        endpoint = URI.create(server.baseUrl());
+        server.stubFor(any(urlMatching("/.*")).willReturn(aResponse().withTransformers("s3-objects")));
+    }
+
+    public URI endpoint() {
+        return endpoint;
+    }
+
+    public boolean isRunning() {
+        return server.isRunning();
+    }
+
+    public synchronized String store(String bucket, String key, byte[] bytes) {
+        String version = UUID.randomUUID().toString();
+        byte[] copy = bytes.clone();
+        var object = new StoredObject(version, copy, Base64.getEncoder().encodeToString(digest("SHA-256", copy)),
+                "\"" + HexFormat.of().formatHex(digest("MD5", copy)) + "\"", Instant.now());
+        objects.computeIfAbsent(new ObjectKey(bucket, key), ignored -> new LinkedHashMap<>()).put(version, object);
+        return version;
+    }
+
+    public synchronized byte[] get(String bucket, String key, String versionId) {
+        StoredObject object = lookup(bucket, key, versionId);
+        return object == null ? null : object.bytes().clone();
+    }
+
+    public synchronized void reset() {
+        objects.clear();
+        readsUnavailable = false;
+        server.resetRequests();
+    }
+
+    public void close() {
+        server.stop();
+    }
+
+    private StoredObject lookup(String bucket, String key, String version) {
+        var versions = objects.get(new ObjectKey(bucket, key));
+        if (versions == null) return null;
+        return version == null ? versions.lastEntry().getValue() : versions.get(version);
+    }
+
     private ResponseDefinition listVersions(String bucket, String prefix) {
         var body = new StringBuilder("<ListVersionsResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">")
                 .append("<Name>").append(xml(bucket)).append("</Name><Prefix>").append(xml(prefix))
@@ -126,13 +148,28 @@ public final class S3Stub implements AutoCloseable {
         return aResponse().withStatus(200).withHeader("Content-Type", "application/xml").withBody(body.toString()).build();
     }
 
+    private record ObjectKey(String bucket, String key) {
+    }
+
+    private record StoredObject(String version, byte[] bytes, String sha256, String etag, Instant storedAt) {
+    }
+
+    public record UploadedObject(String bucket, String key, String versionId) {
+    }
+
     private final class ObjectResponses implements ResponseDefinitionTransformerV2 {
-        public String getName() { return "s3-objects"; }
-        public boolean applyGlobally() { return false; }
+        public String getName() {
+            return "s3-objects";
+        }
+
+        public boolean applyGlobally() {
+            return false;
+        }
+
         public ResponseDefinition transform(ServeEvent event) {
             var request = event.getRequest();
             if (readsUnavailable && ("GET".equals(request.getMethod().getName()) || "HEAD".equals(request.getMethod().getName()))) {
-                return aResponse().withStatus(503).withHeader("Content-Type","application/xml")
+                return aResponse().withStatus(503).withHeader("Content-Type", "application/xml")
                         .withBody("<Error><Code>ServiceUnavailable</Code></Error>").build();
             }
             URI uri = URI.create(request.getUrl());
@@ -155,8 +192,11 @@ public final class S3Stub implements AutoCloseable {
                     byte[] bytes = request.getBody();
                     String decodedLength = request.getHeader("x-amz-decoded-content-length");
                     if (decodedLength != null) {
-                        try { bytes = decodeAwsChunks(bytes, Integer.parseInt(decodedLength)); }
-                        catch (IllegalArgumentException invalid) { return aResponse().withStatus(400).build(); }
+                        try {
+                            bytes = decodeAwsChunks(bytes, Integer.parseInt(decodedLength));
+                        } catch (IllegalArgumentException invalid) {
+                            return aResponse().withStatus(400).build();
+                        }
                     }
                     if (bytes.length > 2097152) return aResponse().withStatus(413).build();
                     String suppliedChecksum = request.getHeader("x-amz-checksum-sha256");

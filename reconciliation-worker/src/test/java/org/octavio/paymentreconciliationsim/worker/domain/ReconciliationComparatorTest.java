@@ -1,16 +1,18 @@
 package org.octavio.paymentreconciliationsim.worker.domain;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.octavio.paymentreconciliationsim.worker.domain.ReconciliationModel.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.octavio.paymentreconciliationsim.worker.domain.ReconciliationModel.*;
 
 class ReconciliationComparatorTest {
     private final ReconciliationComparator comparator = new ReconciliationComparator();
@@ -43,6 +45,15 @@ class ReconciliationComparatorTest {
                         List.of(new SettlementRow(2, "EXT-001", 30000)))));
     }
 
+    static Stream<Arguments> boundaryAmounts() {
+        return Stream.of(Arguments.of(Long.MAX_VALUE, Long.MAX_VALUE, Outcome.MATCHED),
+                Arguments.of(Long.MAX_VALUE, Long.MAX_VALUE - 1, Outcome.AMOUNT_MISMATCH),
+                Arguments.of(Long.MAX_VALUE - 1, Long.MAX_VALUE, Outcome.AMOUNT_MISMATCH),
+                Arguments.of(Long.MAX_VALUE, 0L, Outcome.AMOUNT_MISMATCH),
+                Arguments.of(0L, Long.MAX_VALUE, Outcome.AMOUNT_MISMATCH),
+                Arguments.of(0L, 0L, Outcome.MATCHED));
+    }
+
     @ParameterizedTest
     @MethodSource("canonicalResults")
     void canonicalReferenceHasExpectedOutcomeAndEvidence(Result expected) {
@@ -59,7 +70,7 @@ class ReconciliationComparatorTest {
         assertEquals(4, report.summary().distinctSettlementReferenceCount());
         assertEquals(5, report.summary().totalResultCount());
         assertEquals(Map.of(Outcome.MATCHED, 1, Outcome.MISSING_IN_SETTLEMENT, 1,
-                Outcome.MISSING_INTERNALLY, 1, Outcome.AMOUNT_MISMATCH, 1, Outcome.DUPLICATE, 1),
+                        Outcome.MISSING_INTERNALLY, 1, Outcome.AMOUNT_MISMATCH, 1, Outcome.DUPLICATE, 1),
                 report.summary().outcomeCounts());
         assertEquals(1, report.summary().outcomeCounts().get(Outcome.DUPLICATE));
         assertEquals(List.of("AMOUNT-001", "DUP-001", "EXT-001", "MATCH-001", "MISS-001"),
@@ -71,8 +82,8 @@ class ReconciliationComparatorTest {
         var report = comparator.compare(List.of(new PurchaseInput("B", "merchant-B", 200),
                 new PurchaseInput("A", "merchant-A", 100)), List.of());
         assertEquals(new Summary(2, 0, 0, 2,
-                Map.of(Outcome.MATCHED, 0, Outcome.MISSING_IN_SETTLEMENT, 2,
-                        Outcome.MISSING_INTERNALLY, 0, Outcome.AMOUNT_MISMATCH, 0, Outcome.DUPLICATE, 0)),
+                        Map.of(Outcome.MATCHED, 0, Outcome.MISSING_IN_SETTLEMENT, 2,
+                                Outcome.MISSING_INTERNALLY, 0, Outcome.AMOUNT_MISMATCH, 0, Outcome.DUPLICATE, 0)),
                 report.summary());
         assertEquals(List.of(new Result("A", Outcome.MISSING_IN_SETTLEMENT, 100L, "merchant-A", List.of()),
                 new Result("B", Outcome.MISSING_IN_SETTLEMENT, 200L, "merchant-B", List.of())), report.results());
@@ -82,8 +93,8 @@ class ReconciliationComparatorTest {
     void emptyPurchasesReportEverySingleSettlementReferenceAsMissingInternally() {
         var report = comparator.compare(List.of(), List.of(new SettlementRow(7, "EXT", 300)));
         assertEquals(new Summary(0, 1, 1, 1,
-                Map.of(Outcome.MATCHED, 0, Outcome.MISSING_IN_SETTLEMENT, 0,
-                        Outcome.MISSING_INTERNALLY, 1, Outcome.AMOUNT_MISMATCH, 0, Outcome.DUPLICATE, 0)),
+                        Map.of(Outcome.MATCHED, 0, Outcome.MISSING_IN_SETTLEMENT, 0,
+                                Outcome.MISSING_INTERNALLY, 1, Outcome.AMOUNT_MISMATCH, 0, Outcome.DUPLICATE, 0)),
                 report.summary());
         assertEquals(List.of(new Result("EXT", Outcome.MISSING_INTERNALLY, null, null,
                 List.of(new SettlementRow(7, "EXT", 300)))), report.results());
@@ -112,15 +123,6 @@ class ReconciliationComparatorTest {
                 new Result("a", Outcome.MISSING_IN_SETTLEMENT, 100L, "lower", List.of())), report.results());
     }
 
-    static Stream<Arguments> boundaryAmounts() {
-        return Stream.of(Arguments.of(Long.MAX_VALUE, Long.MAX_VALUE, Outcome.MATCHED),
-                Arguments.of(Long.MAX_VALUE, Long.MAX_VALUE - 1, Outcome.AMOUNT_MISMATCH),
-                Arguments.of(Long.MAX_VALUE - 1, Long.MAX_VALUE, Outcome.AMOUNT_MISMATCH),
-                Arguments.of(Long.MAX_VALUE, 0L, Outcome.AMOUNT_MISMATCH),
-                Arguments.of(0L, Long.MAX_VALUE, Outcome.AMOUNT_MISMATCH),
-                Arguments.of(0L, 0L, Outcome.MATCHED));
-    }
-
     @ParameterizedTest
     @MethodSource("boundaryAmounts")
     void comparesAmountsExactlyWithoutOverflow(long internal, long external, Outcome expected) {
@@ -140,7 +142,7 @@ class ReconciliationComparatorTest {
         assertEquals(1, report.summary().totalResultCount());
         assertEquals(1, report.summary().outcomeCounts().get(Outcome.DUPLICATE));
         assertEquals(List.of(new Result("UNKNOWN", Outcome.DUPLICATE, null, null,
-                List.of(new SettlementRow(3, "UNKNOWN", 100), new SettlementRow(9, "UNKNOWN", 200)))),
+                        List.of(new SettlementRow(3, "UNKNOWN", 100), new SettlementRow(9, "UNKNOWN", 200)))),
                 report.results());
     }
 
@@ -149,7 +151,7 @@ class ReconciliationComparatorTest {
         var report = comparator.compare(List.of(new PurchaseInput("DUP", "merchant", 100)),
                 List.of(new SettlementRow(1, "DUP", 100), new SettlementRow(2, "DUP", 200)));
         assertEquals(List.of(new Result("DUP", Outcome.DUPLICATE, 100L, "merchant",
-                List.of(new SettlementRow(1, "DUP", 100), new SettlementRow(2, "DUP", 200)))),
+                        List.of(new SettlementRow(1, "DUP", 100), new SettlementRow(2, "DUP", 200)))),
                 report.results());
     }
 

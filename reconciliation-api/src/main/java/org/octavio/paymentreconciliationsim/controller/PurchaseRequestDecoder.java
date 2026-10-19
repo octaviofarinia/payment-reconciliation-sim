@@ -1,15 +1,17 @@
 package org.octavio.paymentreconciliationsim.controller;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.util.Set;
 import org.octavio.paymentreconciliationsim.model.CreatePurchase;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.JsonNode;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Set;
+
 public final class PurchaseRequestDecoder {
-    private PurchaseRequestDecoder() {}
+    private PurchaseRequestDecoder() {
+    }
 
     public static CreatePurchase purchase(JsonNode json) {
         fields(json, Set.of("transactionReference", "merchantId", "businessDate", "amountCentavos", "currency"));

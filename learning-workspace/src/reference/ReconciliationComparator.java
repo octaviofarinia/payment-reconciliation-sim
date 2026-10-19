@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
-/** Pure comparison of validated inputs with unique internal purchase references. */
+/**
+ * Pure comparison of validated inputs with unique internal purchase references.
+ */
 public final class ReconciliationComparator {
     public ComparisonReport compare(List<PurchaseInput> purchases, List<SettlementRow> settlement) {
         Map<String, PurchaseInput> internalByReference = new HashMap<>();

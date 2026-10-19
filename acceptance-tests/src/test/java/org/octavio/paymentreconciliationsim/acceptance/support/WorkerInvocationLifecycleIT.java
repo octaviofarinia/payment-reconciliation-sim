@@ -1,16 +1,65 @@
 package org.octavio.paymentreconciliationsim.acceptance.support;
 
-import java.lang.reflect.Field;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Field;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Controlled wait outcomes around real executing tasks, Mongo fixtures, and S3 fixture data. */
+/**
+ * Controlled wait outcomes around real executing tasks, Mongo fixtures, and S3 fixture data.
+ */
 class WorkerInvocationLifecycleIT {
     private static final String COLLECTION = "worker_lifecycle_probe";
     private static final byte[] BYTES = {1, 2, 3};
+
+    private static void assertInterruptedWait(Runnable wait, ControlledInvocation invocation) throws Exception {
+        var failure = new AtomicReference<Throwable>();
+        var interruptPreserved = new AtomicBoolean();
+        var waiter = new Thread(() -> {
+            try {
+                wait.run();
+            } catch (Throwable caught) {
+                failure.set(caught);
+            } finally {
+                interruptPreserved.set(Thread.currentThread().isInterrupted());
+            }
+        }, "worker-interruption-probe");
+        waiter.start();
+        try {
+            assertTrue(invocation.waitEntered.tryAcquire(5, TimeUnit.SECONDS),
+                    "Reset/await must still wait for the active invocation");
+        } finally {
+            waiter.interrupt();
+            waiter.join(10000);
+        }
+        assertFalse(waiter.isAlive());
+        var caught = assertInstanceOf(IllegalStateException.class, failure.get());
+        assertInstanceOf(InterruptedException.class, caught.getCause());
+        assertTrue(interruptPreserved.get());
+    }
+
+    private static void retainFixtures(LocalEnvironment environment) {
+        environment.mongoDatabase().getCollection(COLLECTION).insertOne(new Document("_id", "retained"));
+        environment.s3().store(LocalEnvironment.BUCKET, "worker-lifecycle", BYTES);
+    }
+
+    private static void assertFixturesRetained(LocalEnvironment environment) {
+        assertEquals(1, environment.mongoDatabase().getCollection(COLLECTION).countDocuments());
+        assertArrayEquals(BYTES, environment.s3().get(LocalEnvironment.BUCKET, "worker-lifecycle", null));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T field(LocalEnvironment environment, String name) throws Exception {
+        Field field = LocalEnvironment.class.getDeclaredField(name);
+        field.setAccessible(true);
+        return (T) field.get(environment);
+    }
 
     @Test
     void timeoutCannotForgetActiveInvocationOrPermitScenarioReset() throws Exception {
@@ -74,8 +123,11 @@ class WorkerInvocationLifecycleIT {
 
             var closeFailure = new AtomicReference<Throwable>();
             var closer = new Thread(() -> {
-                try { environment.close(); }
-                catch (Throwable failure) { closeFailure.set(failure); }
+                try {
+                    environment.close();
+                } catch (Throwable failure) {
+                    closeFailure.set(failure);
+                }
             }, "worker-close-probe");
             closer.start();
             try {
@@ -102,46 +154,9 @@ class WorkerInvocationLifecycleIT {
         }
     }
 
-    private static void assertInterruptedWait(Runnable wait, ControlledInvocation invocation) throws Exception {
-        var failure = new AtomicReference<Throwable>();
-        var interruptPreserved = new AtomicBoolean();
-        var waiter = new Thread(() -> {
-            try { wait.run(); }
-            catch (Throwable caught) { failure.set(caught); }
-            finally { interruptPreserved.set(Thread.currentThread().isInterrupted()); }
-        }, "worker-interruption-probe");
-        waiter.start();
-        try {
-            assertTrue(invocation.waitEntered.tryAcquire(5, TimeUnit.SECONDS),
-                    "Reset/await must still wait for the active invocation");
-        } finally {
-            waiter.interrupt();
-            waiter.join(10000);
-        }
-        assertFalse(waiter.isAlive());
-        var caught = assertInstanceOf(IllegalStateException.class, failure.get());
-        assertInstanceOf(InterruptedException.class, caught.getCause());
-        assertTrue(interruptPreserved.get());
-    }
-
-    private static void retainFixtures(LocalEnvironment environment) {
-        environment.mongoDatabase().getCollection(COLLECTION).insertOne(new Document("_id", "retained"));
-        environment.s3().store(LocalEnvironment.BUCKET, "worker-lifecycle", BYTES);
-    }
-
-    private static void assertFixturesRetained(LocalEnvironment environment) {
-        assertEquals(1, environment.mongoDatabase().getCollection(COLLECTION).countDocuments());
-        assertArrayEquals(BYTES, environment.s3().get(LocalEnvironment.BUCKET, "worker-lifecycle", null));
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T field(LocalEnvironment environment, String name) throws Exception {
-        Field field = LocalEnvironment.class.getDeclaredField(name);
-        field.setAccessible(true);
-        return (T) field.get(environment);
-    }
-
-    /** A real executor task with deterministic simulated timeout instead of a 330-second sleep. */
+    /**
+     * A real executor task with deterministic simulated timeout instead of a 330-second sleep.
+     */
     private static final class ControlledInvocation implements Future<Object>, AutoCloseable {
         private final Future<?> delegate;
         private final boolean forceTimeout;
@@ -160,8 +175,10 @@ class WorkerInvocationLifecycleIT {
                 boolean interrupted = false;
                 try {
                     while (true) {
-                        try { release.await(); break; }
-                        catch (InterruptedException ignored) {
+                        try {
+                            release.await();
+                            break;
+                        } catch (InterruptedException ignored) {
                             interrupted = true;
                             interruptions.release();
                         }
@@ -176,21 +193,40 @@ class WorkerInvocationLifecycleIT {
             invocations.add(this);
         }
 
-        boolean active() { return stopped.getCount() != 0; }
+        boolean active() {
+            return stopped.getCount() != 0;
+        }
+
         void finish() throws InterruptedException {
             release.countDown();
             assertTrue(stopped.await(5, TimeUnit.SECONDS));
         }
+
         public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
             waitBudget.set(unit.toNanos(timeout));
             waitEntered.release();
             if (forceTimeout && active()) throw new TimeoutException("Controlled invocation deadline");
             return delegate.get(timeout, unit);
         }
-        public Object get() throws InterruptedException, ExecutionException { return delegate.get(); }
-        public boolean cancel(boolean interrupt) { return delegate.cancel(interrupt); }
-        public boolean isCancelled() { return delegate.isCancelled(); }
-        public boolean isDone() { return delegate.isDone(); }
-        public void close() throws InterruptedException { finish(); }
+
+        public Object get() throws InterruptedException, ExecutionException {
+            return delegate.get();
+        }
+
+        public boolean cancel(boolean interrupt) {
+            return delegate.cancel(interrupt);
+        }
+
+        public boolean isCancelled() {
+            return delegate.isCancelled();
+        }
+
+        public boolean isDone() {
+            return delegate.isDone();
+        }
+
+        public void close() throws InterruptedException {
+            finish();
+        }
     }
 }

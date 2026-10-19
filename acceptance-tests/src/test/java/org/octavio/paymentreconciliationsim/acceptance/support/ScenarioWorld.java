@@ -4,10 +4,12 @@ import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 
-/** A fresh instance is constructor-injected by PicoContainer for each scenario. */
+/**
+ * A fresh instance is constructor-injected by PicoContainer for each scenario.
+ */
 public final class ScenarioWorld {
+    public final Map<String, byte[]> fixtures = new HashMap<>();
     public LocalEnvironment environment;
     public HttpResponse<byte[]> response;
     public String runId;
-    public final Map<String, byte[]> fixtures = new HashMap<>();
 }
