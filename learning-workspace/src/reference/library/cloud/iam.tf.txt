@@ -1,7 +1,7 @@
 resource "aws_iam_role" "api" {
-  name_prefix        = "${var.name}-api-"
+  name_prefix = "${var.name}-api-"
   assume_role_policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [{
       Effect = "Allow", Action = "sts:AssumeRole", Principal = { Service = "ec2.amazonaws.com" }
     }]
@@ -12,9 +12,9 @@ resource "aws_iam_instance_profile" "api" {
   role        = aws_iam_role.api.name
 }
 resource "aws_iam_role_policy" "api" {
-  role   = aws_iam_role.api.id
+  role = aws_iam_role.api.id
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow", Action = ["s3:PutObject", "s3:GetObject", "s3:GetObjectVersion"]
@@ -33,18 +33,18 @@ resource "aws_iam_role_policy" "api" {
   })
 }
 resource "aws_iam_role" "worker" {
-  name_prefix        = "${var.name}-worker-"
+  name_prefix = "${var.name}-worker-"
   assume_role_policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [{
       Effect = "Allow", Action = "sts:AssumeRole", Principal = { Service = "lambda.amazonaws.com" }
     }]
   })
 }
 resource "aws_iam_role_policy" "worker" {
-  role   = aws_iam_role.worker.id
+  role = aws_iam_role.worker.id
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow", Action = ["s3:GetObject", "s3:GetObjectVersion"]
@@ -62,15 +62,15 @@ resource "aws_iam_role_policy" "worker" {
         # Lambda control plane needs these account-wide ENI actions.
         Effect = "Allow"
         Action = ["ec2:CreateNetworkInterface", "ec2:DescribeNetworkInterfaces", "ec2:DescribeSubnets",
-          "ec2:DeleteNetworkInterface", "ec2:AssignPrivateIpAddresses", "ec2:UnassignPrivateIpAddresses"]
+        "ec2:DeleteNetworkInterface", "ec2:AssignPrivateIpAddresses", "ec2:UnassignPrivateIpAddresses"]
         Resource = "*"
       },
       {
         # Prevent function code from using the control-plane ENI permissions.
         Effect = "Deny"
         Action = ["ec2:CreateNetworkInterface", "ec2:DescribeNetworkInterfaces", "ec2:DescribeSubnets",
-          "ec2:DeleteNetworkInterface", "ec2:AssignPrivateIpAddresses", "ec2:UnassignPrivateIpAddresses"]
-        Resource  = "*"
+        "ec2:DeleteNetworkInterface", "ec2:AssignPrivateIpAddresses", "ec2:UnassignPrivateIpAddresses"]
+        Resource = "*"
         Condition = { ArnEquals = {
           "lambda:SourceFunctionArn" = "arn:${data.aws_partition.current.partition}:lambda:${var.region}:${var.account_id}:function:${var.name}-worker"
         } }

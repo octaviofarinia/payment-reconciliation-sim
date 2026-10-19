@@ -2,9 +2,8 @@
 
 This tutorial deploys the reconciliation API, the Lambda worker and their AWS
 infrastructure from a fresh clone. It assumes a MongoDB Atlas cluster already
-exists. [deployment.md](deployment.md) records the design constraints and cloud
-evidence requirements behind this setup; this guide is the step-by-step
-procedure.
+exists. [Deployment reference](deployment.md) describes the networking, runtime
+configuration and operational scripts.
 
 Commands run from the repository root in a Linux, macOS or WSL shell. Examples
 use `sa-east-1`, the repository's default region.
@@ -15,8 +14,9 @@ One `terraform apply` creates 36 AWS resources. Three manual steps finish the
 deployment: allow the EC2 instance in Atlas, trust the instance's SSH host key,
 and run `scripts/deploy-api.sh` to install the API and its secrets.
 
-Nothing is reachable from the internet except SSH from a single operator IPv4
-address. The API is used through an SSH tunnel on `127.0.0.1:8080`.
+EC2 accepts SSH from a single operator IPv4 address. The API is used through an
+SSH tunnel on `127.0.0.1:8080`; port 8080 accepts only the worker security group.
+The private S3 bucket accepts authenticated presigned uploads from the generator.
 
 ```mermaid
 flowchart LR
@@ -138,9 +138,9 @@ aws service-quotas list-requested-service-quota-change-history --region sa-east-
   --service-code lambda --query 'RequestedQuotas[].{value:DesiredValue,status:Status}'
 ~~~
 
-Approval time varies. If AWS refuses the request, the remaining option is to
-remove `reserved_concurrent_executions = 1` from `infra/compute.tf`. The worker
-could then process several runs at once, which the project wasn't designed for.
+Wait for sufficient account capacity before deploying. Keep
+`reserved_concurrent_executions = 1`; the reservation is part of the configured
+worker bounds.
 
 ### Instance type
 
@@ -167,10 +167,10 @@ On-demand prices in `sa-east-1`, from the AWS Price List API on 2026-10-16:
 | Public IPv4 address | $0.005/h | $3.65 |
 | 8 GiB gp3 volume | $0.152 per GB-month | $1.22 |
 
-A t3.small deployment left running costs about $29 a month. Lambda, S3 and
-CloudWatch usage at demo volume should add little, but it hasn't been measured.
-Accounts on the AWS Free plan may have credits that cover some of this. On a
-Paid plan without credits, everything is billed.
+These reference rates cover EC2, IPv4 and EBS only. The total also includes
+Lambda, S3 and CloudWatch usage, with applicable account credits and benefits.
+Check current regional rates in the [AWS Pricing Calculator](https://calculator.aws/)
+before estimating a new deployment.
 
 Before deploying, create a cost budget with an email alert: Billing and Cost
 Management → Budgets → Create budget. Tear the deployment down when it's no
@@ -197,11 +197,11 @@ Privileges. Add two entries:
 - `readWrite` on database `reconciliation`
 - `dbAdmin` on database `reconciliation`
 
-The API manages its own schema. On its first start it creates the `purchases`,
+The API manages its own schema. On startup it creates missing `purchases`,
 `business_days` and `reconciliation_runs` collections with validators and
-indexes. On every later start it updates the validators with `collMod`, which
-`readWrite` doesn't allow. Without `dbAdmin`, the first start succeeds and every
-restart fails.
+indexes. For existing collections it updates validators with `collMod`, which
+requires privileges beyond `readWrite`. The database-scoped `dbAdmin` role
+supplies those privileges.
 
 ### Network access
 
@@ -286,9 +286,9 @@ worker_artifact_path    = "../reconciliation-worker/target/reconciliation-worker
 | --- | --- |
 | `region` | AWS region for every resource |
 | `account_id` | 12-digit account ID. The provider refuses to act on any other account. |
-| `prerequisites_confirmed` | Must be `true` to plan. Set it after completing Steps 2 and 3. It's a switch with no check behind it. |
+| `prerequisites_confirmed` | Must be `true` to plan. Set it after completing Steps 2 and 3. Terraform validates the flag; account and Atlas checks are performed separately. |
 | `name` | Prefix for resource names: 3–30 lowercase letters, digits or hyphens |
-| `instance_type` | x86_64 type for the API host. t3.small has 2 GiB of memory. t3.micro halves the EC2 cost, but its 1 GiB must hold the OS plus a JVM with a 384 MiB heap, which hasn't been tested. |
+| `instance_type` | x86_64 type for the API host. t3.small has 2 GiB of memory; t3.micro has 1 GiB for the OS and JVM, whose heap is capped at 384 MiB. |
 | `developer_cidr` | The only address allowed to SSH in: the public IPv4 from `curl` above, followed by `/32` |
 | `ssh_public_key` | Contents of `~/.ssh/reconciliation-prod.pub`. Never the private key. |
 | `worker_artifact_path` | Lambda jar path, relative to `infra/` |
@@ -311,9 +311,9 @@ terraform -chdir=infra plan -out=reviewed.tfplan
 
 - **`fmt -check`:** If it lists files, run `terraform -chdir=infra fmt` and
   commit the result.
-- **`init`:** Downloads the pinned provider and writes
-  `infra/.terraform.lock.hcl`. Commit the lockfile so every run uses the same
-  provider build.
+- **`init`:** Downloads the pinned provider and verifies it against the committed
+  `infra/.terraform.lock.hcl`. Review and commit lockfile changes when updating
+  provider versions or platform checksums.
 
 A first deployment plans `36 to add, 0 to change, 0 to destroy`. Before
 applying, check:
@@ -324,9 +324,12 @@ applying, check:
   `memory_size = 512` and `timeout = 300`.
 - No NAT gateway or load balancer appears.
 
-Known issue: `scripts/cloud-smoke.py plan` rejects real plans with `Cannot
-verify unknown Lambda environment keys`. The check is wrong, not the plan; skip
-it until it's fixed.
+`scripts/cloud-smoke.py plan` cannot validate plans where Terraform represents
+Lambda environment variables as an unknown map. It returns
+`Cannot verify unknown Lambda environment keys` for that representation. Review
+`infra/compute.tf` and the actual plan manually: the Lambda environment must
+contain only `RECONCILIATION_API_URI`, `RECONCILIATION_CONFIG_BUCKET` and
+`RECONCILIATION_CONFIG_KEY`, with no runtime secrets.
 
 Apply the reviewed plan and save the outputs:
 
@@ -480,7 +483,8 @@ The API is ready when three things are true:
     Open `http://127.0.0.1:8080/swagger-ui/index.html`, choose Authorize, and
     enter `demoToken` from `.runtime/runtime.json`. Run
     `GET /api/v1/reconciliation-runs` with any `businessDate`. A `200` response
-    with `[]` confirms the token works and the API can read from Atlas.
+    confirms the token works and the API can read from Atlas; an unused date
+    returns `[]`.
 
 ### Optional: end-to-end run
 
@@ -498,9 +502,10 @@ Success prints `Verified runId=<id> results=5`.
 
 - **Date:** Use a date before today in `America/Buenos_Aires` that hasn't been
   used yet.
-- **Repeating it:** The canonical scenario uses fixed transaction references, so
-  it runs once per database. To repeat it, drop the `reconciliation` database in
-  Atlas, then restart `reconciliation-api` so the collections are recreated.
+- **Repeating it:** The canonical scenario uses globally unique fixed references.
+  Use a fresh disposable database for a new canonical dataset, or rerun the same
+  date to exercise replay. Recreating a disposable database requires restarting
+  the API to install its collections, validators and indexes.
 - **If it fails:** It prints the run ID and the `reprocess` route to retry with.
 
 ## Operations
@@ -572,10 +577,10 @@ nothing from AWS; it only makes Terraform lose track of what it created.
 
 ## References
 
-- [deployment.md](deployment.md): design constraints, Free-plan preflight and
-  evidence requirements
+- [deployment.md](deployment.md): topology, Free-plan preflight and runtime
+  configuration
 - [api-access.md](api-access.md): tokens, roles and HTTP error codes
-- [demo-evidence.md](demo-evidence.md): cloud evidence and manual verification
-  procedures
+- [demo-evidence.md](demo-evidence.md): cloud checks, benchmarks and recovery
+  verification
 - [Atlas unsupported and limited commands](https://www.mongodb.com/docs/atlas/unsupported-commands/)
 - [Atlas Free cluster limits](https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/)

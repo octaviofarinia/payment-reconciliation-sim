@@ -188,7 +188,7 @@ export function SystemExplorer({ module, selected = 'AMOUNT-001', onSource }) {
         {currentStep && <div className="system-trace-controls"><button onClick={() => goToStep(stepIndex - 1)} disabled={stepIndex === 0}><ArrowLeft size={16} aria-hidden="true" /> Previous</button><span>{stepIndex === steps.length - 1 ? 'Complete report, preserved evidence' : `${steps.length - stepIndex - 1} steps remaining`}</span><button onClick={() => goToStep(stepIndex + 1)} disabled={stepIndex === steps.length - 1}>Next <ArrowRight size={16} aria-hidden="true" /></button></div>}
       </section>
 
-      <footer className="system-scope"><Compass size={18} aria-hidden="true" /><div><strong>Architecture model · no cloud calls</strong><p>The source defines S3 → Lambda delivery, an S3 Gateway endpoint, and private worker → API traffic. There is no queue, NAT gateway, or worker → database connection. Deployment and cloud evidence remain pending.</p><button onClick={() => onSource?.('cloud-network')}>Inspect network definition <ArrowRight size={13} aria-hidden="true" /></button></div></footer>
+      <footer className="system-scope"><Compass size={18} aria-hidden="true" /><div><strong>Architecture model · no cloud calls</strong><p>The source defines S3 → Lambda delivery, an S3 Gateway endpoint, and private worker → API traffic. There is no queue, NAT gateway, or worker → database connection. The deployment reference describes the AWS configuration and validation procedures.</p><button onClick={() => onSource?.('cloud-network')}>Inspect network definition <ArrowRight size={13} aria-hidden="true" /></button></div></footer>
     </section>
   );
 }

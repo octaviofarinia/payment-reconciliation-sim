@@ -3,7 +3,7 @@
 Start the API with two distinct values for `reconciliation.security.demo-token` and
 `reconciliation.security.worker-token`. Each value must contain 1–1024 printable
 ASCII characters without spaces. There are no default tokens. Supply secrets through
-the protected runtime configuration described in the MVP specification.
+the protected [runtime configuration](deployment.md#runtime-configuration-and-artifact-upload).
 
 Requests under `/api/v1` require `Authorization: Bearer <demo-token>`. Requests
 under `/internal/v1` require `Authorization: Bearer <worker-token>`, including reads.

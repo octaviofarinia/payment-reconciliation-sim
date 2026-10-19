@@ -1,6 +1,18 @@
 # Payment Reconciliation Simulator
 
-A Java 21 / Spring Boot 4.1.1 simulator for comparing immutable ARS purchases with a daily settlement CSV. The API stores purchases and reports in MongoDB. The separately packaged Java Lambda parses the CSV and classifies MATCHED, MISSING_IN_SETTLEMENT, MISSING_INTERNALLY, AMOUNT_MISMATCH and DUPLICATE results.
+A Java 21 / Spring Boot 4.1.1 application that compares immutable ARS purchases with a
+daily settlement CSV. The API stores purchases and reports in MongoDB. A separately
+packaged Java Lambda validates the CSV and classifies each reference as MATCHED,
+MISSING_IN_SETTLEMENT, MISSING_INTERNALLY, AMOUNT_MISMATCH or DUPLICATE.
+
+The AWS deployment runs the API on EC2 with MongoDB Atlas, stores settlement files in a
+versioned S3 bucket and invokes the worker through S3 notifications. The scenario
+generator exercises this flow through the public API and checks the complete report
+against independent expected results. The deployment and a generator simulation have
+been verified on AWS.
+
+The project uses synthetic purchases and settlement data. It does not process card data
+or move money.
 
 ## Learn the project interactively
 
@@ -28,27 +40,6 @@ lockfile are committed; `dist/` is generated locally. See the
 [site README](learning-workspace/README.md#run-the-course-from-a-fresh-clone) for
 development, testing, Windows/WSL and progress backup instructions.
 
-## Current handoff status
-
-**Local application verification is established; required cloud evidence is PENDING.**
-The historical reviewed application checkpoint is commit `0ea3358`: 277 unit tests,
-89 acceptance/integration cases including 40 Cucumber scenarios, zero missed
-included unit lines/branches and all three 80% PIT gates. The nine actual build
-modes and isolated negative gate proofs are described in [testing.md](docs/testing.md).
-A final review fix adds an offline AWS transport test: the current focused API
-run has 140 unit tests, zero missed included lines/branches and targeted
-AwsConfiguration PIT verification. The earlier matrix counts remain historical;
-the full nine-mode matrix has not been repeated after this test addition.
-Production Java, POMs and acceptance sources remain unchanged.
-
-Terraform source, deployment scripts and cloud evidence tooling are prepared.
-Actual Terraform validation/provider lockfile, AWS Free-account eligibility,
-Atlas M0 startup, deployment, real S3 authorization/delivery, cold/warm timings,
-outage recovery, usage and teardown remain **REQUIRED PENDING**.
-[The evidence ledger](docs/demo-evidence.md) records those gaps. This is a source
-handoff, not overall project completion or a measured zero-cost claim.
-Use generated data only; this project processes no cards or money movement.
-
 ## Local prerequisites and verification
 
 Use Java 21, the committed Maven wrapper (Maven 3.9.16), Python 3 for verification
@@ -65,7 +56,7 @@ From the repository root on Unix/WSL:
 
 On Windows use `mvnw.cmd` with the same arguments. Maven/PIT builds must run
 sequentially in a worktree. [testing.md](docs/testing.md) lists the seven supported
-commands, both verify skips, reports, gates and [all REQ/AC evidence](docs/testing.md#requirement-traceability).
+commands, both verify skips, reports, gates and [requirement coverage](docs/testing.md#requirement-traceability).
 The acceptance harness is the executable local complete-flow demonstration;
 there is no standalone interactive local complete-flow launcher.
 
@@ -79,15 +70,14 @@ there is no standalone interactive local complete-flow launcher.
 | acceptance-tests | Real API/Mongo/handler/generator verification with simulated AWS | Test-only module; no deployment artifact |
 
 The generator has its own HTTP representations and Jackson runtime dependencies;
-it imports no API/worker implementation and accesses no database. Dependency and
-boundary checks were part of the retained local verification.
+it imports no API/worker implementation and accesses no database.
 
 ## Generator usage
 
 The executable needs a running API and a working upload-to-worker path. For the
-cloud demo, establish the verified SSH tunnel and deployment prerequisites in
-[deployment.md](docs/deployment.md#tunnel-smoke-and-recovery) first. Local acceptance
-runs the actual generator entry point within its managed environment.
+AWS deployment, follow the [deployment guide](docs/deployment-guide.md) and establish
+the SSH tunnel first. Local acceptance runs the actual generator entry point
+within its managed environment.
 
 Privately set `RECONCILIATION_DEMO_TOKEN` in the invoking environment; it must be
 1–1024 printable ASCII characters without spaces. Use a fresh disposable dataset
@@ -134,17 +124,17 @@ An incomplete run may need recovery after more than twenty minutes of inactivity
 UPLOAD_NEEDED/ORIGINAL_UNAVAILABLE remain 409. A replacement version cannot replace
 a bound original.
 
-Follow [deployment.md](docs/deployment.md) for the conditional account/Atlas
-preflight, Terraform validation/plan, artifact and secret deployment, host-verified
-SSH tunnel, smoke and teardown. [demo-evidence.md](docs/demo-evidence.md) contains
-the required manual signature/expiry, outage, benchmark and cleanup procedures.
-No tools are installed or cloud resources created by local verification.
+The [deployment guide](docs/deployment-guide.md) covers account and Atlas setup,
+Terraform, runtime configuration, the SSH tunnel and teardown.
+[Deployment reference](docs/deployment.md) describes networking, permissions and
+script behavior. [Cloud validation](docs/demo-evidence.md) covers upload checks,
+outage recovery, runtime benchmarks and cleanup verification.
 
 ## Architecture and tradeoffs
 
-The [reviewed specification](docs/superpowers/specs/2026-10-01-payment-reconciliation-design.md)
-is the requirements baseline; the current implementation status is above.
-The closed-date dataset and original S3 version make retries reproducible.
+The [architecture reference](docs/architecture.md) describes the data contracts,
+comparison rules and component boundaries. The closed-date dataset and original
+S3 version make retries reproducible.
 An atomic embedded report is bounded at 8 MiB; purchases/CSV are capped at
 1,000/2,000 rows and 2 MiB. Lambda has a five-minute timeout and concurrency one;
 logs retain seven days.
@@ -152,6 +142,6 @@ logs retain seven days.
 The Lambda/EC2 split demonstrates event-driven batch processing but couples worker
 availability to the API. Private worker HTTP and bearer tokens are synthetic-demo
 compromises. There is no queue, NAT gateway, load balancer or transaction snapshot.
-These are source-level design tradeoffs. Cold/warm duration, memory, wall time
-and account costs have **not** been measured; [the pending evidence](docs/demo-evidence.md#architecture-observations)
-must establish them before any runtime or zero-spend conclusion.
+The [benchmark procedure](docs/demo-evidence.md#runtime-benchmark) records cold and
+warm duration, memory and upload-to-completion time. Deployment costs depend on
+the selected resources, usage and account benefits.
